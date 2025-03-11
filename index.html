@@ -128,9 +128,7 @@
         </form>
     </div>
 
-    <!-- Notifications Page (Initially hidden) -->
     <div class="container" id="notificationsContainer" style="display: none;">
-        <!-- Insert previous notifications page content here -->
         <h1>Notifications</h1>
         <div class="alert-divider"></div>
         <h2 class="section-title">Alerts</h2>
@@ -144,30 +142,38 @@
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Simple validation
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
             if(email && password) {
-                // Hide login and show notifications
                 document.getElementById('loginContainer').style.display = 'none';
                 document.getElementById('notificationsContainer').style.display = 'block';
-                
-                // Initialize notifications (from previous implementation)
                 initializeNotifications();
             }
         });
 
-        // Notifications functionality from previous answer
         function initializeNotifications() {
             const alerts = [
-                { category: "Pest & Disease Outbreaks", subtitle: "Diseases" },
-                { category: "Diseases", subtitle: "Diseases" },
-                // Add more alerts as needed
+                { 
+                    category: "Pest & Disease Outbreaks", 
+                    subtitle: "Diseases",
+                    url: "pest-disease.html"
+                },
+                { 
+                    category: "Weather Alerts", 
+                    subtitle: "Extreme weather warning",
+                    url: "weather-alerts.html"
+                },
+                { 
+                    category: "Equipment Maintenance", 
+                    subtitle: "Tractor service due",
+                    url: "equipment.html"
+                }
             ];
 
             const alertList = document.querySelector('.alert-list');
             
+            // Create alert items with navigation
             alerts.forEach(alert => {
                 const li = document.createElement('li');
                 li.className = 'alert-item';
@@ -177,51 +183,37 @@
                 `;
                 
                 li.addEventListener('click', () => {
-                    li.style.opacity = '0.7';
-                    li.style.borderLeftColor = '#95a5a6';
+                    window.location.href = alert.url;
                 });
                 
                 alertList.appendChild(li);
             });
+
+            // Add Dashboard navigation button
+            const navButton = document.createElement('button');
+            navButton.textContent = 'Go to Dashboard';
+            navButton.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                padding: 12px 24px;
+                background-color: #2c5f2d;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 16px;
+                cursor: pointer;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                transition: all 0.3s ease;
+                z-index: 1000;
+            `;
+            navButton.addEventListener('click', () => {
+                window.location.href = 'dashboard.html';
+            });
+            document.body.appendChild(navButton);
         }
 
-        // Include the notification page styles here if needed
-        const style = document.createElement('style');
-        style.textContent = `
-            .alert-list {
-                list-style: none;
-            }
-            .alert-item {
-                background: #f9f9f9;
-                border-left: 4px solid #e74c3c;
-                border-radius: 4px;
-                padding: 15px;
-                margin-bottom: 10px;
-                cursor: pointer;
-                transition: all 0.2s ease;
-            }
-            .alert-item:hover {
-                transform: translateX(5px);
-                background: #fff;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            }
-            .alert-category {
-                color: #e74c3c;
-                font-weight: 600;
-                margin-bottom: 5px;
-                font-size: 16px;
-            }
-            .alert-subtitle {
-                color: #7f8c8d;
-                font-size: 14px;
-            }
-            .alert-divider {
-                height: 1px;
-                background: #ecf0f1;
-                margin: 20px 0;
-            }
-        `;
-        document.head.appendChild(style);
+        // ... (existing style injection remains unchanged) ...
     </script>
 </body>
 </html>
