@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm Management - Login</title>
+    <style>
+        /* Shared styles with notifications page */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #f5f6fa;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        /* Login page specific styles */
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 100px;
+        }
+
+        .login-title {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #34495e;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .login-btn:hover {
+            background: #2980b9;
+        }
+
+        .login-options {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .forgot-password {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div class="container login-container" id="loginContainer">
+        <h1 class="login-title">Farm Management Login</h1>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit" class="login-btn">Login</button>
+            <div class="login-options">
+                <div class="remember-me">
+                    <input type="checkbox" id="rememberMe">
+                    <label for="rememberMe">Remember me</label>
+                </div>
+                <a href="#" class="forgot-password">Forgot Password?</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Notifications Page (Initially hidden) -->
+    <div class="container" id="notificationsContainer" style="display: none;">
+        <!-- Insert previous notifications page content here -->
+        <h1>Notifications</h1>
+        <div class="alert-divider"></div>
+        <h2 class="section-title">Alerts</h2>
+        <ul class="alert-list">
+            <!-- Alert items will be populated here -->
+        </ul>
+    </div>
+
+    <script>
+        // Login Form Handling
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Simple validation
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if(email && password) {
+                // Hide login and show notifications
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('notificationsContainer').style.display = 'block';
+                
+                // Initialize notifications (from previous implementation)
+                initializeNotifications();
+            }
+        });
+
+        // Notifications functionality from previous answer
+        function initializeNotifications() {
+            const alerts = [
+                { category: "Pest & Disease Outbreaks", subtitle: "Diseases" },
+                { category: "Diseases", subtitle: "Diseases" },
+                // Add more alerts as needed
+            ];
+
+            const alertList = document.querySelector('.alert-list');
+            
+            alerts.forEach(alert => {
+                const li = document.createElement('li');
+                li.className = 'alert-item';
+                li.innerHTML = `
+                    <div class="alert-category">${alert.category}</div>
+                    <div class="alert-subtitle">${alert.subtitle}</div>
+                `;
+                
+                li.addEventListener('click', () => {
+                    li.style.opacity = '0.7';
+                    li.style.borderLeftColor = '#95a5a6';
+                });
+                
+                alertList.appendChild(li);
+            });
+        }
+
+        // Include the notification page styles here if needed
+        const style = document.createElement('style');
+        style.textContent = `
+            .alert-list {
+                list-style: none;
+            }
+            .alert-item {
+                background: #f9f9f9;
+                border-left: 4px solid #e74c3c;
+                border-radius: 4px;
+                padding: 15px;
+                margin-bottom: 10px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .alert-item:hover {
+                transform: translateX(5px);
+                background: #fff;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            .alert-category {
+                color: #e74c3c;
+                font-weight: 600;
+                margin-bottom: 5px;
+                font-size: 16px;
+            }
+            .alert-subtitle {
+                color: #7f8c8d;
+                font-size: 14px;
+            }
+            .alert-divider {
+                height: 1px;
+                background: #ecf0f1;
+                margin: 20px 0;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
