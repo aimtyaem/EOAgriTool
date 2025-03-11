@@ -39,7 +39,7 @@ Agriculture faces multiple adversities—including unpredictable weather, pest i
 
 - **Data Integration:**  
   Seamlessly combines data from:
-  - Satellites (e.g., NASA, ESA).
+  - Satellites (e.g., EgSA, NARSS).
   - Aerial platforms (drones, aircraft).
   - Ground-based sensors for localized accuracy.
 
@@ -64,7 +64,7 @@ Agriculture faces multiple adversities—including unpredictable weather, pest i
 
 - **Back-End:**  
   - Node.js with Express.js for building scalable APIs.
-  - Integration with external data providers (NASA Earth Data, ESA APIs).
+  - Integration with external data providers (EgSA Portal, EgSA APIs).
 
 - **Database:**  
   - MongoDB / PostgreSQL for flexible, high-performance data storage.
@@ -99,13 +99,13 @@ Agriculture faces multiple adversities—including unpredictable weather, pest i
    ```
    The app will be available at `http://localhost:3000` by default.
 
-For further details and advanced configurations, please refer to the [documentation](./docs).
+For further details and advanced configurations, please refer to the [documentation](wiki).
 
 ---
 
 ## 5. Screenshots / Mockup Images
 
-Screenshots and wireframes demonstrating key aspects of EO AgriTool’s interface are located in the [`/screenshots`](./screenshots) directory. Here you can view:
+Screenshots and wireframes demonstrating key aspects of EO AgriTool’s interface are located in the [`AgriTool`](https://aimtyaem.github.io/EOAgriTool/dashboard.html) directory. Here you can view:
 - The interactive dashboard.
 - Custom report generation pages.
 - Dynamic interactive maps with real-time data overlays.
