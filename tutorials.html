@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reports & Maps</title>
+    <title>AgriTool Tutorials</title>
     <style>
         :root {
-            --report-purple: #6a1b9a;
-            --map-green: #2c5f2d;
+            --primary: #2c5f2d;
+            --secondary: #97bc62;
+            --background: #f4faf4;
         }
 
         body {
             font-family: 'Segoe UI', sans-serif;
+            background: var(--background);
             padding: 20px;
-            background: #f8f9fa;
         }
 
         .container {
@@ -21,149 +22,184 @@
             margin: 0 auto;
         }
 
-        .report-section {
+        .tutorial-card {
             background: white;
-            border-radius: 10px;
-            padding: 20px;
+            border-radius: 12px;
+            padding: 25px;
             margin-bottom: 30px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
 
-        .map-container {
-            height: 400px;
-            background: #e0e0e0;
-            border-radius: 10px;
-            margin: 20px 0;
+        .video-wrapper {
             position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
         }
 
-        .map-layers {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        .video-iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .tutorial-actions {
+            display: flex;
             gap: 15px;
             margin-top: 20px;
         }
 
-        .layer-item {
-            padding: 10px;
-            border: 2px solid var(--map-green);
-            border-radius: 6px;
-            text-align: center;
-            cursor: pointer;
-        }
-
-        .download-options {
-            display: flex;
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .download-btn {
-            padding: 10px 20px;
-            background: var(--report-purple);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .nav-button {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
+        .action-btn {
             padding: 12px 24px;
-            background: var(--report-purple);
-            color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .watch-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .skip-btn {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .completed {
+            background: #34a853 !important;
+            cursor: default;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+            transition: width 0.3s ease;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Reports Section -->
-        <div class="report-section">
-            <h1>2023 Season Report</h1>
-            <div class="download-options">
-                <button class="download-btn" data-type="full">Download Full Report (PDF)</button>
-                <button class="download-btn" data-type="yield">Yield Forecast (CSV)</button>
-                <button class="download-btn" data-type="health">Health Insights (CSV)</button>
+        <h1>AgriTool Tutorials</h1>
+        
+        <!-- Environmental Data Tutorial -->
+        <div class="tutorial-card">
+            <h2>Understanding Environmental Data</h2>
+            <div class="video-wrapper">
+                <iframe class="video-iframe" 
+                        src="https://www.youtube.com/embed/ENVIRONMENT_VIDEO_ID" 
+                        allowfullscreen></iframe>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="tutorial-actions">
+                <button class="action-btn watch-btn" data-video="environment">Mark as Completed</button>
+                <button class="action-btn skip-btn">Skip for Now</button>
             </div>
         </div>
 
-        <!-- Map Section -->
-        <div class="report-section">
-            <h2>Farm Map View</h2>
-            <div class="map-container" id="mapPreview">
-                <!-- Map placeholder -->
-                <div class="map-overlay">Satellite View</div>
+        <!-- Tool Usage Tutorial -->
+        <div class="tutorial-card">
+            <h2>Using the AgriTool</h2>
+            <div class="video-wrapper">
+                <iframe class="video-iframe" 
+                        src="https://www.youtube.com/embed/TOOL_USAGE_VIDEO_ID" 
+                        allowfullscreen></iframe>
             </div>
-            
-            <div class="map-layers">
-                <div class="layer-item" data-layer="soil">Soil Moisture</div>
-                <div class="layer-item" data-layer="vegetation">Vegetation Index</div>
-                <div class="layer-item" data-layer="crop">Crop Type</div>
-                <div class="layer-item" data-layer="elevation">Elevation</div>
-                <div class="layer-item" data-layer="rainfall">Rainfall</div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="tutorial-actions">
+                <button class="action-btn watch-btn" data-video="toolUsage">Mark as Completed</button>
             </div>
         </div>
-
-        <button class="nav-button" id="dashboardBtn">Go to Dashboard</button>
     </div>
 
     <script>
-        // Report data model
-        const reportData = {
-            lastGenerated: new Date().toISOString(),
-            downloaded: [],
-            activeLayers: [],
-            mapLocations: [
-                "Flagrden", "Lapa Park", "Oso de", 
-                "Highway City", "Biola Junction"
-            ]
+        // Tutorial state management
+        const tutorialState = {
+            progress: {
+                environment: 0,
+                toolUsage: 0
+            },
+            completed: [],
+            saveState() {
+                localStorage.setItem('tutorialProgress', JSON.stringify(this));
+            },
+            loadState() {
+                const saved = JSON.parse(localStorage.getItem('tutorialProgress'));
+                if(saved) Object.assign(this, saved);
+            },
+            updateProgress(videoId, progress) {
+                this.progress[videoId] = progress;
+                if(progress === 100 && !this.completed.includes(videoId)) {
+                    this.completed.push(videoId);
+                }
+                this.saveState();
+                this.updateDashboard();
+            }
         };
 
-        // Handle downloads
-        document.querySelectorAll('.download-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const type = e.target.dataset.type;
-                reportData.downloaded.push({
-                    type,
-                    date: new Date().toISOString()
+        // Initialize tutorial progress
+        tutorialState.loadState();
+
+        // Handle mark as completed buttons
+        document.querySelectorAll('.watch-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const videoId = this.dataset.video;
+                tutorialState.updateProgress(videoId, 100);
+                this.classList.add('completed');
+                this.textContent = '✓ Completed';
+                this.disabled = true;
+                
+                // Update progress bars
+                document.querySelectorAll('.progress-fill').forEach(bar => {
+                    if(bar.parentElement.parentElement === this.closest('.tutorial-card')) {
+                        bar.style.width = '100%';
+                    }
                 });
-                localStorage.setItem('reportData', JSON.stringify(reportData));
-                alert(`Downloading ${type} report...`);
             });
         });
 
-        // Handle map layers
-        document.querySelectorAll('.layer-item').forEach(layer => {
-            layer.addEventListener('click', (e) => {
-                const layerName = e.target.dataset.layer;
-                e.target.classList.toggle('active');
-                
-                if(reportData.activeLayers.includes(layerName)) {
-                    reportData.activeLayers = reportData.activeLayers.filter(l => l !== layerName);
-                } else {
-                    reportData.activeLayers.push(layerName);
-                }
-                
-                localStorage.setItem('reportData', JSON.stringify(reportData));
-            });
-        });
-
-        // Navigation
-        document.getElementById('dashboardBtn').addEventListener('click', () => {
+        // Skip button handler
+        document.querySelector('.skip-btn').addEventListener('click', () => {
             window.location.href = 'dashboard.html';
         });
 
-        // Initialize
+        // Initialize UI state
         window.addEventListener('load', () => {
-            const savedData = localStorage.getItem('reportData');
-            if(savedData) reportData = JSON.parse(savedData);
+            tutorialState.completed.forEach(videoId => {
+                const btn = document.querySelector(`[data-video="${videoId}"]`);
+                if(btn) {
+                    btn.classList.add('completed');
+                    btn.textContent = '✓ Completed';
+                    btn.disabled = true;
+                    document.querySelectorAll('.progress-fill')[videoId === 'environment' ? 0 : 1].style.width = '100%';
+                }
+            });
         });
+
+        // Update dashboard
+        function updateDashboard() {
+            // This function would be in dashboard.html
+            const progress = Math.round((tutorialState.completed.length / 2) * 100);
+            localStorage.setItem('trainingProgress', progress);
+        }
     </script>
 </body>
 </html>
