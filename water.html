@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Management</title>
+    <style>
+        :root {
+            --water-blue: #1a73e8;
+            --surface-blue: #4285f4;
+            --groundwater-teal: #00bcd4;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .water-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            padding: 12px 24px;
+            background: #fff;
+            border: 2px solid var(--water-blue);
+            color: var(--water-blue);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background: var(--water-blue);
+            color: white;
+        }
+
+        .water-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .water-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .water-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .water-item {
+            padding: 10px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .nav-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: var(--water-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Water Resources</h1>
+        
+        <div class="water-tabs">
+            <button class="tab-button active" data-tab="surface">Surface Water</button>
+            <button class="tab-button" data-tab="groundwater">Groundwater</button>
+            <button class="tab-button" data-tab="irrigation">Irrigation</button>
+        </div>
+
+        <div class="water-grid">
+            <!-- Surface Water Card -->
+            <div class="water-card" data-content="surface">
+                <h3>Surface Water Bodies</h3>
+                <ul class="water-list">
+                    <li class="water-item">Lake Tahoe</li>
+                    <li class="water-item">Lake Mead</li>
+                    <li class="water-item">Salton Sea</li>
+                    <li class="water-item">Mono Lake</li>
+                </ul>
+            </div>
+
+            <!-- Groundwater Card -->
+            <div class="water-card hidden" data-content="groundwater">
+                <h3>Groundwater Levels</h3>
+                <ul class="water-list">
+                    <li class="water-item">Napa Valley</li>
+                    <li class="water-item">San Joaquin Valley</li>
+                    <li class="water-item">Sacramento Valley</li>
+                    <li class="water-item">Central Coast</li>
+                </ul>
+            </div>
+
+            <!-- Irrigation Card -->
+            <div class="water-card hidden" data-content="irrigation">
+                <h3>Irrigation Schedules</h3>
+                <div class="search-box">
+                    <input type="text" placeholder="Search schedules...">
+                </div>
+                <!-- Irrigation data would be populated here -->
+            </div>
+        </div>
+
+        <button class="nav-button" id="dashboardBtn">Go to Dashboard</button>
+    </div>
+
+    <script>
+        // Water data model
+        const waterData = {
+            surface: [
+                { name: "Lake Tahoe", level: "85%", status: "Good" },
+                { name: "Lake Mead", level: "42%", status: "Low" },
+                // ... other surface waters
+            ],
+            groundwater: [
+                { name: "Napa Valley", level: "58m", trend: "↓ 0.5m/mo" },
+                { name: "San Joaquin Valley", level: "42m", trend: "↓ 1.2m/mo" },
+                // ... other groundwater
+            ],
+            irrigation: []
+        };
+
+        // Tab functionality
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                // Activate tab
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Show content
+                const tab = button.dataset.tab;
+                document.querySelectorAll('.water-card').forEach(card => {
+                    card.classList.toggle('hidden', card.dataset.content !== tab);
+                });
+            });
+        });
+
+        // Save data to localStorage
+        localStorage.setItem('waterData', JSON.stringify(waterData));
+
+        // Navigation to dashboard
+        document.getElementById('dashboardBtn').addEventListener('click', () => {
+            window.location.href = 'dashboard.html';
+        });
+
+        // Initialize data
+        document.addEventListener('DOMContentLoaded', () => {
+            // Populate dynamic data here
+        });
+    </script>
+</body>
+</html>
