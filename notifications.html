@@ -107,6 +107,158 @@
             
             alertList.appendChild(li);
         });
+// State management object
+const appState = {
+    isNavigating: false,
+    lastError: null,
+    saveState() {
+        localStorage.setItem('appState', JSON.stringify({
+            isNavigating: this.isNavigating,
+            lastError: this.lastError
+        }));
+    },
+    restoreState() {
+        const saved = JSON.parse(localStorage.getItem('appState'));
+        if (saved) {
+            this.isNavigating = saved.isNavigating;
+            this.lastError = saved.lastError;
+        }
+    }
+};
+
+// Create navigation button with accessibility
+const navButton = document.createElement('button');
+navButton.textContent = 'Go to Dashboard';
+navButton.setAttribute('aria-label', 'Navigate to Dashboard');
+navButton.setAttribute('role', 'button');
+navButton.id = 'dashboardNavButton';
+navButton.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 24px;
+    background-color: #2c5f2d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    z-index: 1000;
+`;
+
+// Create loading spinner
+const spinner = document.createElement('div');
+spinner.setAttribute('aria-live', 'polite');
+spinner.style.cssText = `
+    position: fixed;
+    bottom: 30px;
+    right: 100px;
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    display: none;
+`;
+
+// Add styles for spinner animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(style);
+
+// Add elements to DOM
+document.body.append(navButton, spinner);
+
+// Handle button interactions
+navButton.addEventListener('click', async () => {
+    try {
+        appState.isNavigating = true;
+        appState.saveState();
+        
+        // Show loading state
+        navButton.style.opacity = '0.5';
+        navButton.disabled = true;
+        spinner.style.display = 'block';
+        
+        // Check page existence first
+        const response = await fetch('dashboard.html', { method: 'HEAD' });
+        if (!response.ok) throw new Error('Page not found');
+
+        // Add history entry
+        history.pushState({ source: 'notification-center' }, '', window.location.href);
+
+        // Wait for animation and transition
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        window.location.href = 'dashboard.html';
+    } catch (error) {
+        // Error handling
+        appState.lastError = error.message;
+        appState.saveState();
+        
+        // Create error message element
+        const errorMessage = document.createElement('div');
+        errorMessage.textContent = 'Error: Dashboard page not found';
+        errorMessage.style.cssText = `
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            padding: 12px;
+            background: #ff4444;
+            color: white;
+            border-radius: 8px;
+            z-index: 1000;
+        `;
+        errorMessage.setAttribute('role', 'alert');
+        document.body.appendChild(errorMessage);
+
+        // Reset UI state
+        navButton.style.opacity = '1';
+        navButton.disabled = false;
+        spinner.style.display = 'none';
+        
+        // Auto-remove error message
+        setTimeout(() => {
+            errorMessage.remove();
+        }, 5000);
+    } finally {
+        appState.isNavigating = false;
+        appState.saveState();
+    }
+});
+
+// Browser history handling
+window.addEventListener('popstate', (event) => {
+    if (event.state?.source === 'notification-center') {
+        // Handle custom history state
+        console.log('Navigated back from dashboard');
+    }
+});
+
+// Restore previous state
+appState.restoreState();
+if (appState.lastError) {
+    console.error('Previous error:', appState.lastError);
+}
+
+// Keyboard navigation and accessibility
+navButton.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+        navButton.click();
+    }
+});
+
+// Initial focus management
+window.addEventListener('load', () => {
+    navButton.focus();
+});
     </script>
 </body>
 </html>
