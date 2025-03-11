@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Maps</title>
+    <style>
+        :root {
+            --report-purple: #6a1b9a;
+            --map-green: #2c5f2d;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .report-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .map-container {
+            height: 400px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .map-layers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .layer-item {
+            padding: 10px;
+            border: 2px solid var(--map-green);
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .download-options {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .download-btn {
+            padding: 10px 20px;
+            background: var(--report-purple);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .nav-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: var(--report-purple);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Reports Section -->
+        <div class="report-section">
+            <h1>2023 Season Report</h1>
+            <div class="download-options">
+                <button class="download-btn" data-type="full">Download Full Report (PDF)</button>
+                <button class="download-btn" data-type="yield">Yield Forecast (CSV)</button>
+                <button class="download-btn" data-type="health">Health Insights (CSV)</button>
+            </div>
+        </div>
+
+        <!-- Map Section -->
+        <div class="report-section">
+            <h2>Farm Map View</h2>
+            <div class="map-container" id="mapPreview">
+                <!-- Map placeholder -->
+                <div class="map-overlay">Satellite View</div>
+            </div>
+            
+            <div class="map-layers">
+                <div class="layer-item" data-layer="soil">Soil Moisture</div>
+                <div class="layer-item" data-layer="vegetation">Vegetation Index</div>
+                <div class="layer-item" data-layer="crop">Crop Type</div>
+                <div class="layer-item" data-layer="elevation">Elevation</div>
+                <div class="layer-item" data-layer="rainfall">Rainfall</div>
+            </div>
+        </div>
+
+        <button class="nav-button" id="dashboardBtn">Go to Dashboard</button>
+    </div>
+
+    <script>
+        // Report data model
+        const reportData = {
+            lastGenerated: new Date().toISOString(),
+            downloaded: [],
+            activeLayers: [],
+            mapLocations: [
+                "Flagrden", "Lapa Park", "Oso de", 
+                "Highway City", "Biola Junction"
+            ]
+        };
+
+        // Handle downloads
+        document.querySelectorAll('.download-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const type = e.target.dataset.type;
+                reportData.downloaded.push({
+                    type,
+                    date: new Date().toISOString()
+                });
+                localStorage.setItem('reportData', JSON.stringify(reportData));
+                alert(`Downloading ${type} report...`);
+            });
+        });
+
+        // Handle map layers
+        document.querySelectorAll('.layer-item').forEach(layer => {
+            layer.addEventListener('click', (e) => {
+                const layerName = e.target.dataset.layer;
+                e.target.classList.toggle('active');
+                
+                if(reportData.activeLayers.includes(layerName)) {
+                    reportData.activeLayers = reportData.activeLayers.filter(l => l !== layerName);
+                } else {
+                    reportData.activeLayers.push(layerName);
+                }
+                
+                localStorage.setItem('reportData', JSON.stringify(reportData));
+            });
+        });
+
+        // Navigation
+        document.getElementById('dashboardBtn').addEventListener('click', () => {
+            window.location.href = 'dashboard.html';
+        });
+
+        // Initialize
+        window.addEventListener('load', () => {
+            const savedData = localStorage.getItem('reportData');
+            if(savedData) reportData = JSON.parse(savedData);
+        });
+    </script>
+</body>
+</html>
