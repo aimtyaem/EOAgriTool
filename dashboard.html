@@ -9,6 +9,7 @@
             --primary: #2c5f2d;
             --secondary: #97bc62;
             --background: #f4faf4;
+            --card-bg: #ffffff;
         }
 
         * {
@@ -25,26 +26,29 @@
             min-height: 100vh;
         }
 
-        /* Sidebar */
+        /* Sidebar Navigation */
         .sidebar {
-            background: white;
+            background: var(--card-bg);
             padding: 20px;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
         }
 
         .nav-item {
+            display: block;
             padding: 12px;
             margin: 8px 0;
             border-radius: 8px;
-            cursor: pointer;
+            color: #2c3e50;
+            text-decoration: none;
             transition: all 0.3s ease;
         }
 
         .nav-item:hover {
             background: var(--background);
+            transform: translateX(5px);
         }
 
-        /* Main Content */
+        /* Main Dashboard Content */
         .dashboard {
             padding: 30px;
             display: grid;
@@ -54,7 +58,7 @@
         }
 
         .card {
-            background: white;
+            background: var(--card-bg);
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
@@ -87,160 +91,137 @@
         .fair { background: #ffd700; }
         .poor { background: #ff4444; }
 
-        .expert-card {
-            grid-column: 1 / -1;
-            background: #e9f5e9;
-            border: 2px solid var(--primary);
-        }
-
-        /* Responsive Design */
         @media (max-width: 768px) {
-            body {
-                grid-template-columns: 1fr;
-            }
-            .sidebar {
-                display: none;
-            }
+            body { grid-template-columns: 1fr; }
+            .sidebar { display: none; }
         }
     </style>
 </head>
 <body>
     <nav class="sidebar">
-        <h2>AgriTool</h2>
-        <nav>
-  <a href="notifications.html" class="nav-item">🌱 Notifications</a>
-  <a href="climate.html" class="nav-item">🌦️ Climate</a>
-  <a href="fields.html" class="nav-item">🌾 Fields</a>
-  <a href="water.html" class="nav-item">💧 Water</a>
-  <a href="reports.html" class="nav-item">📊 Reports</a>
-  <a href="tutorials.html" class="nav-item">🎓 Tutorials</a>
-</nav>
+        <h2>🌱 AgriTool</h2>
+        <a href="dashboard.html" class="nav-item">🏠 Dashboard</a>
+        <a href="fields.html" class="nav-item">🌾 Fields</a>
+        <a href="climate.html" class="nav-item">🌦️ Climate</a>
+        <a href="water.html" class="nav-item">💧 Water</a>
+        <a href="reports.html" class="nav-item">📊 Reports</a>
+        <a href="tutorials.html" class="nav-item">🎓 Tutorials</a>
+        <a href="notifications.html" class="nav-item">🔔 Notifications</a>
+        <a href="login.html" class="nav-item">🔑 Login</a>
+    </nav>
 
-    <main class="dashboard">
-        <!-- Field Status Cards -->
-        <div class="card">
-            <h3 class="card-title">Field Status</h3>
-            <div class="data-row">
-                <div>
-                    <span class="status-indicator good"></span>
-                    Field 1 (Wheat)
-                </div>
-                <div>Health: Good</div>
-            </div>
-            <div class="data-row">
-                <div>
-                    <span class="status-indicator fair"></span>
-                    Field 2 (Corn)
-                </div>
-                <div>Health: Fair</div>
-            </div>
-            <div class="data-row">
-                <div>
-                    <span class="status-indicator poor"></span>
-                    Field 3 (Barley)
-                </div>
-                <div>Health: Poor</div>
-            </div>
-        </div>
-
-        <!-- Climate Overview -->
-        <div class="card">
-            <h3 class="card-title">Climate Analysis</h3>
-            <div class="data-row">
-                <div>🌡️ Avg Temp</div>
-                <div>23°C</div>
-            </div>
-            <div class="data-row">
-                <div>💧 Precipitation</div>
-                <div>2mm/day</div>
-            </div>
-            <div class="data-row">
-                <div>⚠️ Extreme Events</div>
-                <div>2 alerts</div>
-            </div>
-        </div>
-
-        <!-- Water Resources -->
-        <div class="card">
-            <h3 class="card-title">Water Resources</h3>
-            <div class="data-row">
-                <div>🌊 Surface Water</div>
-                <div>4 sources</div>
-            </div>
-            <div class="data-row">
-                <div>⛲ Groundwater</div>
-                <div>4 basins</div>
-            </div>
-            <div class="data-row">
-                <div>🕒 Irrigation</div>
-                <div>Pivot Active</div>
-            </div>
-        </div>
-
-        <!-- Expert Recommendations -->
-        <div class="card expert-card">
-            <h3 class="card-title">🌱 Expert Recommendations</h3>
-            <div class="data-row">
-                ✅ Increase irrigation for Field 3 (Barley)
-            </div>
-            <div class="data-row">
-                ⚠️ Monitor pest levels in Field 2 (Corn)
-            </div>
-            <div class="data-row">
-                💡 Consider soil amendment for Field 1
-            </div>
-            <div class="data-row">
-                📅 Schedule pre-harvest assessment
-            </div>
-        </div>
-
-        <!-- Report Summary -->
-        <div class="card">
-            <h3 class="card-title">Season Report</h3>
-            <div class="data-row">
-                <div>📈 Yield Forecast</div>
-                <div>6.5 t/ha</div>
-            </div>
-            <div class="data-row">
-                <div>📅 Planting Date</div>
-                <div>Nov 1</div>
-            </div>
-            <div class="data-row">
-                <div>🩺 Disease Pressure</div>
-                <div>Low</div>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="card">
-            <h3 class="card-title">Quick Actions</h3>
-            <div class="data-row" onclick="showVideo()">
-                ▶️ Watch Tutorial
-            </div>
-            <div class="data-row">
-                📤 Share Report
-            </div>
-            <div class="data-row">
-                📥 Download Data
-            </div>
-        </div>
+    <main class="dashboard" id="dashboardMain">
+        <!-- Dynamic Cards Will Be Inserted Here -->
     </main>
 
     <script>
-        function showVideo() {
-            alert("Loading tutorial video...");
-            // Implement actual video modal here
+        // Load all data modules
+        const loadModules = {
+            fields: () => {
+                const data = JSON.parse(localStorage.getItem('fieldData')) || {};
+                return `
+                    <div class="card">
+                        <h3 class="card-title">Field Status</h3>
+                        ${data.fields?.map(field => `
+                            <div class="data-row">
+                                <div>
+                                    <span class="status-indicator ${field.health}"></span>
+                                    ${field.name}
+                                </div>
+                                <div>${field.yield}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            },
+            climate: () => {
+                const data = JSON.parse(localStorage.getItem('climateData')) || {};
+                return `
+                    <div class="card">
+                        <h3 class="card-title">Climate Overview</h3>
+                        <div class="data-row">
+                            <div>🌡️ Avg Temp</div>
+                            <div>${data.temperature?.['2022'] || 'N/A'}°C</div>
+                        </div>
+                        <div class="data-row">
+                            <div>💧 Precipitation</div>
+                            <div>${data.precipitation?.['2022'] || 'N/A'}mm</div>
+                        </div>
+                    </div>
+                `;
+            },
+            water: () => {
+                const data = JSON.parse(localStorage.getItem('waterData')) || {};
+                return `
+                    <div class="card">
+                        <h3 class="card-title">Water Resources</h3>
+                        <div class="data-row">
+                            <div>🌊 Surface Water</div>
+                            <div>${data.surface?.length || 0} sources</div>
+                        </div>
+                        <div class="data-row">
+                            <div>⛲ Groundwater</div>
+                            <div>${data.groundwater?.length || 0} basins</div>
+                        </div>
+                    </div>
+                `;
+            },
+            reports: () => {
+                const data = JSON.parse(localStorage.getItem('reportData')) || {};
+                return `
+                    <div class="card">
+                        <h3 class="card-title">Reports</h3>
+                        <div class="data-row">
+                            <div>📅 Last Report</div>
+                            <div>${new Date(data.lastGenerated).toLocaleDateString() || 'N/A'}</div>
+                        </div>
+                        <div class="data-row">
+                            <div>📥 Downloads</div>
+                            <div>${data.downloaded?.length || 0}</div>
+                        </div>
+                    </div>
+                `;
+            },
+            tutorials: () => {
+                const data = JSON.parse(localStorage.getItem('tutorialData')) || {};
+                return `
+                    <div class="card">
+                        <h3 class="card-title">Training</h3>
+                        <div class="data-row">
+                            <div>📚 Progress</div>
+                            <div>${data.watched?.length || 0}/2 completed</div>
+                        </div>
+                        <div class="data-row" onclick="window.location='tutorials.html'">
+                            ▶️ Continue Learning
+                        </div>
+                    </div>
+                `;
+            }
+        };
+
+        // Initialize Dashboard
+        function initDashboard() {
+            const dashboard = document.getElementById('dashboardMain');
+            dashboard.innerHTML = [
+                loadModules.fields(),
+                loadModules.climate(),
+                loadModules.water(),
+                loadModules.reports(),
+                loadModules.tutorials(),
+                `<div class="card expert-card">
+                    <h3 class="card-title">🌱 Expert Recommendations</h3>
+                    <div class="data-row">✅ Check irrigation schedules</div>
+                    <div class="data-row">⚠️ Monitor field health alerts</div>
+                    <div class="data-row">📅 Schedule soil analysis</div>
+                </div>`
+            ].join('');
         }
 
-        // Dynamic data updates
-        setInterval(() => {
-            document.querySelectorAll('.data-row').forEach(row => {
-                if(row.textContent.includes('Temp')) {
-                    row.querySelector('div:last-child').textContent = 
-                        `${Math.floor(Math.random()*5 + 20)}°C`;
-                }
-            });
-        }, 5000);
+        // Load dashboard when DOM is ready
+        document.addEventListener('DOMContentLoaded', initDashboard);
+
+        // Update data every 30 seconds
+        setInterval(initDashboard, 30000);
     </script>
 </body>
 </html>
