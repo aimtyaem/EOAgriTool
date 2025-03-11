@@ -119,7 +119,7 @@ We welcome contributions to improve EO AgriTool! To contribute:
 2. **Submit Issues:** Report bugs or suggest enhancements by creating new issues.
 3. **Pull Requests:** Ensure your code adheres to our coding standards and includes relevant tests. Submit a pull request for review.
 
-For detailed contributing guidelines, please see our [CONTRIBUTING.md](./CONTRIBUTING.md) file.
+For detailed contributing guidelines, please see our [CONTRIBUTING.md](contributing.md) file.
 
 ---
 
