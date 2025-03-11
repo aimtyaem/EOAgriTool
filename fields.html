@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Field Management</title>
+    <style>
+        :root {
+            --field-green: #2c5f2d;
+            --health-good: #7ac142;
+            --health-fair: #ffd700;
+            --health-poor: #ff4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            padding: 20px;
+            background: #f4faf4;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--field-green);
+            margin-bottom: 30px;
+        }
+
+        .fields-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .field-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .field-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .field-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--field-green);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .health-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+        }
+
+        .good { background: var(--health-good); }
+        .fair { background: var(--health-fair); }
+        .poor { background: var(--health-poor); }
+
+        .upload-section {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            margin-top: 30px;
+            border-radius: 10px;
+        }
+
+        .nav-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: var(--field-green);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your Fields</h1>
+        
+        <div class="fields-grid">
+            <!-- Field 1 Card -->
+            <div class="field-card">
+                <div class="health-indicator good"></div>
+                <div class="field-header">
+                    <div class="field-icon">🌾</div>
+                    <div>
+                        <h3>Field 1</h3>
+                        <p>Crop: Wheat</p>
+                    </div>
+                </div>
+                <div class="field-metrics">
+                    <p>Yield: 8.0 t/ha</p>
+                    <p>Health: Good</p>
+                    <p>Last Updated: 2h ago</p>
+                </div>
+            </div>
+
+            <!-- Repeat for Field 2 and 3 -->
+        </div>
+
+        <div class="upload-section">
+            <h3>Upload Field Media</h3>
+            <input type="file" id="mediaUpload" accept="image/*,video/*" multiple>
+            <p>Drag and drop images/videos or click to upload</p>
+            <div id="mediaPreview"></div>
+        </div>
+
+        <button class="nav-button" id="dashboardBtn">Go to Dashboard</button>
+    </div>
+
+    <script>
+        // Field data structure
+        const fieldData = {
+            fields: [
+                {
+                    id: 1,
+                    name: "Field 1",
+                    crop: "Wheat",
+                    health: "good",
+                    yield: "8.0 t/ha",
+                    media: []
+                },
+                // Add other fields
+            ]
+        };
+
+        // Handle media uploads
+        document.getElementById('mediaUpload').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const mediaPreview = document.getElementById('mediaPreview');
+            
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const mediaItem = document.createElement('div');
+                    mediaItem.className = 'media-item';
+                    mediaItem.innerHTML = `
+                        ${file.type.startsWith('image') ? 
+                            `<img src="${e.target.result}" alt="Field media" style="max-width: 100px;">` :
+                            `<video controls src="${e.target.result}" style="max-width: 100px;"></video>`
+                        }
+                    `;
+                    mediaPreview.appendChild(mediaItem);
+                    
+                    // Store media reference
+                    fieldData.fields[0].media.push({
+                        type: file.type.startsWith('image') ? 'image' : 'video',
+                        url: e.target.result,
+                        timestamp: new Date().toISOString()
+                    });
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // Update localStorage
+            localStorage.setItem('fieldData', JSON.stringify(fieldData));
+        });
+
+        // Navigation to dashboard
+        document.getElementById('dashboardBtn').addEventListener('click', () => {
+            // Save final data
+            localStorage.setItem('fieldData', JSON.stringify(fieldData));
+            window.location.href = 'dashboard.html';
+        });
+
+        // Load existing data
+        window.addEventListener('load', () => {
+            const savedData = localStorage.getItem('fieldData');
+            if(savedData) fieldData = JSON.parse(savedData));
+        });
+    </script>
+</body>
+</html>
