@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriTool Dashboard</title>
+    <style>
+        :root {
+            --primary: #2c5f2d;
+            --secondary: #97bc62;
+            --background: #f4faf4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: white;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-item {
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover {
+            background: var(--background);
+        }
+
+        /* Main Content */
+        .dashboard {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            align-content: start;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .card-title {
+            color: var(--primary);
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 8px;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px;
+            background: #f8f8f8;
+            border-radius: 6px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .good { background: #7ac142; }
+        .fair { background: #ffd700; }
+        .poor { background: #ff4444; }
+
+        .expert-card {
+            grid-column: 1 / -1;
+            background: #e9f5e9;
+            border: 2px solid var(--primary);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <h2>AgriTool</h2>
+        <div class="nav-item">🌱 Overview</div>
+        <div class="nav-item">🌦️ Climate</div>
+        <div class="nav-item">🌾 Fields</div>
+        <div class="nav-item">💧 Water</div>
+        <div class="nav-item">📊 Reports</div>
+        <div class="nav-item">🎓 Tutorials</div>
+    </nav>
+
+    <main class="dashboard">
+        <!-- Field Status Cards -->
+        <div class="card">
+            <h3 class="card-title">Field Status</h3>
+            <div class="data-row">
+                <div>
+                    <span class="status-indicator good"></span>
+                    Field 1 (Wheat)
+                </div>
+                <div>Health: Good</div>
+            </div>
+            <div class="data-row">
+                <div>
+                    <span class="status-indicator fair"></span>
+                    Field 2 (Corn)
+                </div>
+                <div>Health: Fair</div>
+            </div>
+            <div class="data-row">
+                <div>
+                    <span class="status-indicator poor"></span>
+                    Field 3 (Barley)
+                </div>
+                <div>Health: Poor</div>
+            </div>
+        </div>
+
+        <!-- Climate Overview -->
+        <div class="card">
+            <h3 class="card-title">Climate Analysis</h3>
+            <div class="data-row">
+                <div>🌡️ Avg Temp</div>
+                <div>23°C</div>
+            </div>
+            <div class="data-row">
+                <div>💧 Precipitation</div>
+                <div>2mm/day</div>
+            </div>
+            <div class="data-row">
+                <div>⚠️ Extreme Events</div>
+                <div>2 alerts</div>
+            </div>
+        </div>
+
+        <!-- Water Resources -->
+        <div class="card">
+            <h3 class="card-title">Water Resources</h3>
+            <div class="data-row">
+                <div>🌊 Surface Water</div>
+                <div>4 sources</div>
+            </div>
+            <div class="data-row">
+                <div>⛲ Groundwater</div>
+                <div>4 basins</div>
+            </div>
+            <div class="data-row">
+                <div>🕒 Irrigation</div>
+                <div>Pivot Active</div>
+            </div>
+        </div>
+
+        <!-- Expert Recommendations -->
+        <div class="card expert-card">
+            <h3 class="card-title">🌱 Expert Recommendations</h3>
+            <div class="data-row">
+                ✅ Increase irrigation for Field 3 (Barley)
+            </div>
+            <div class="data-row">
+                ⚠️ Monitor pest levels in Field 2 (Corn)
+            </div>
+            <div class="data-row">
+                💡 Consider soil amendment for Field 1
+            </div>
+            <div class="data-row">
+                📅 Schedule pre-harvest assessment
+            </div>
+        </div>
+
+        <!-- Report Summary -->
+        <div class="card">
+            <h3 class="card-title">Season Report</h3>
+            <div class="data-row">
+                <div>📈 Yield Forecast</div>
+                <div>6.5 t/ha</div>
+            </div>
+            <div class="data-row">
+                <div>📅 Planting Date</div>
+                <div>Nov 1</div>
+            </div>
+            <div class="data-row">
+                <div>🩺 Disease Pressure</div>
+                <div>Low</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <h3 class="card-title">Quick Actions</h3>
+            <div class="data-row" onclick="showVideo()">
+                ▶️ Watch Tutorial
+            </div>
+            <div class="data-row">
+                📤 Share Report
+            </div>
+            <div class="data-row">
+                📥 Download Data
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function showVideo() {
+            alert("Loading tutorial video...");
+            // Implement actual video modal here
+        }
+
+        // Dynamic data updates
+        setInterval(() => {
+            document.querySelectorAll('.data-row').forEach(row => {
+                if(row.textContent.includes('Temp')) {
+                    row.querySelector('div:last-child').textContent = 
+                        `${Math.floor(Math.random()*5 + 20)}°C`;
+                }
+            });
+        }, 5000);
+    </script>
+</body>
+</html>
