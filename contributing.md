@@ -37,49 +37,6 @@ Thank you for your interest in contributing to EO AgriTool! Your contributions a
 
 ---
 
-## Table of Contents
-
-- [Getting Started](#getting-started)
-- [How to Contribute](#how-to-contribute)
-  - [Reporting Issues](#reporting-issues)
-  - [Submitting Pull Requests](#submitting-pull-requests)
-- [Code Guidelines](#code-guidelines)
-  - [Code Style & Standards](#code-style--standards)
-  - [Commit Conventions](#commit-conventions)
-- [Testing](#testing)
-- [Documentation](#documentation)
-- [Community & Communication](#community--communication)
-- [Additional Resources](#additional-resources)
-- [Contact](#contact)
-
----
-
-## Getting Started
-
-1. **Fork this repository**  
-   Click the "Fork" button at the top right of the GitHub page to create your own copy of the EO AgriTool repository.
-
-2. **Clone your fork locally**  
-   ```bash
-   git clone https://github.com/yourusername/EO-AgriTool.git
-   cd EO-AgriTool
-   ```
-
-3. **Install dependencies**  
-   Make sure you have [Node.js](https://nodejs.org/en/) installed. Then, run:
-   ```bash
-   npm install
-   ```
-
-4. **Run the Application Locally**  
-   Start the development server with:
-   ```bash
-   npm start
-   ```
-   The application should be running at `http://localhost:3000`.
-
----
-
 ## How to Contribute
 
 ### Reporting Issues
@@ -186,9 +143,9 @@ Your ideas and expertise are highly valued, regardless of whether your contribut
 
 ## Additional Resources
 
-- [EO AgriTool Documentation](./docs)
-- [Project Roadmap](./ROADMAP.md)
-- [Code of Conduct](./CODE_OF_CONDUCT.md)
+- [EO AgriTool Documentation](https://github.com/aimtyaem/EOAgriTool/wiki)
+- [Project Roadmap](ROADMAP.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ---
 
