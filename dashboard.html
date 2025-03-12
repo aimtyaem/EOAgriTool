@@ -1,227 +1,118 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgriTool Dashboard</title>
-    <style>
-        :root {
-            --primary: #2c5f2d;
-            --secondary: #97bc62;
-            --background: #f4faf4;
-            --card-bg: #ffffff;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        body {
-            background: var(--background);
-            display: grid;
-            grid-template-columns: 250px 1fr;
-            min-height: 100vh;
-        }
-
-        /* Sidebar Navigation */
-        .sidebar {
-            background: var(--card-bg);
-            padding: 20px;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-        }
-
-        .nav-item {
-            display: block;
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 8px;
-            color: #2c3e50;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .nav-item:hover {
-            background: var(--background);
-            transform: translateX(5px);
-        }
-
-        /* Main Dashboard Content */
-        .dashboard {
-            padding: 30px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            align-content: start;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-
-        .card-title {
-            color: var(--primary);
-            margin-bottom: 15px;
-            border-bottom: 2px solid var(--secondary);
-            padding-bottom: 8px;
-        }
-
-        .data-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-            padding: 8px;
-            background: #f8f8f8;
-            border-radius: 6px;
-        }
-
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 10px;
-        }
-
-        .good { background: #7ac142; }
-        .fair { background: #ffd700; }
-        .poor { background: #ff4444; }
-
-        @media (max-width: 768px) {
-            body { grid-template-columns: 1fr; }
-            .sidebar { display: none; }
-        }
-    </style>
-</head>
-<body>
-    <nav class="sidebar">
-        <h2>🌱 AgriTool</h2>
-        <a href="dashboard.html" class="nav-item">🏠 Dashboard</a>
-        <a href="fields.html" class="nav-item">🌾 Fields</a>
-        <a href="climate.html" class="nav-item">🌦️ Climate</a>
-        <a href="water.html" class="nav-item">💧 Water</a>
-        <a href="reports.html" class="nav-item">📊 Reports</a>
-        <a href="tutorials.html" class="nav-item">🎓 Tutorials</a>
-        <a href="notifications.html" class="nav-item">🔔 Notifications</a>
-        <a href="index.html" class="nav-item">🔑 Login</a>
-    </nav>
-
-    <main class="dashboard" id="dashboardMain">
-        <!-- Dynamic Cards Will Be Inserted Here -->
-    </main>
-
-    <script>
-        // Load all data modules
-        const loadModules = {
-            fields: () => {
-                const data = JSON.parse(localStorage.getItem('fieldData')) || {};
-                return `
-                    <div class="card">
-                        <h3 class="card-title">Field Status</h3>
-                        ${data.fields?.map(field => `
+<script>
+    // Enhanced load modules with field integration
+    const loadModules = {
+        fields: () => {
+            const data = JSON.parse(localStorage.getItem('fieldData')) || { fields: [] };
+            return `
+                <div class="card">
+                    <h3 class="card-title">Field Status</h3>
+                    ${data.fields.length > 0 ? 
+                        data.fields.map(field => `
                             <div class="data-row">
                                 <div>
                                     <span class="status-indicator ${field.health}"></span>
                                     ${field.name}
                                 </div>
-                                <div>${field.yield}</div>
+                                <div class="field-metrics">
+                                    <span>${field.yield}</span>
+                                    <small>${timeSince(field.lastUpdated)} ago</small>
+                                </div>
                             </div>
-                        `).join('')}
-                    </div>
-                `;
-            },
-            climate: () => {
-                const data = JSON.parse(localStorage.getItem('climateDashboardData')) || {};
-                return `
-                    <div class="card">
-                        <h3 class="card-title">Climate Overview</h3>
-                        <div class="data-row">
-                            <div>📊 Avg Temp</div>
-                            <div>${data.avgTemp || 'N/A'}°C</div>
-                        </div>
-                        <div class="data-row">
-                            <div>💧 Precipitation</div>
-                            <div>${data.lastPrecip || 'N/A'}mm</div>
-                        </div>
-                    </div>
-                `;
-            },
-            water: () => {
-                const data = JSON.parse(localStorage.getItem('waterData')) || {};
-                return `
-                    <div class="card">
-                        <h3 class="card-title">Water Resources</h3>
-                        <div class="data-row">
-                            <div>🌊 Surface Water</div>
-                            <div>${data.surface?.length || 0} sources</div>
-                        </div>
-                        <div class="data-row">
-                            <div>⛲ Groundwater</div>
-                            <div>${data.groundwater?.length || 0} basins</div>
-                        </div>
-                    </div>
-                `;
-            },
-            reports: () => {
-                const data = JSON.parse(localStorage.getItem('reportData')) || {};
-                return `
-                    <div class="card">
-                        <h3 class="card-title">Reports</h3>
-                        <div class="data-row">
-                            <div>📅 Last Report</div>
-                            <div>${new Date(data.lastGenerated).toLocaleDateString() || 'N/A'}</div>
-                        </div>
-                        <div class="data-row">
-                            <div>📥 Downloads</div>
-                            <div>${data.downloaded?.length || 0}</div>
-                        </div>
-                    </div>
-                `;
-            },
-            tutorials: () => {
-                const data = JSON.parse(localStorage.getItem('tutorialData')) || {};
-                return `
-                    <div class="card">
-                        <h3 class="card-title">Training</h3>
-                        <div class="data-row">
-                            <div>📚 Progress</div>
-                            <div>${data.watched?.length || 0}/2 completed</div>
-                        </div>
-                        <div class="data-row" onclick="window.location='tutorials.html'">
-                            ▶️ Continue Learning
-                        </div>
-                    </div>
-                `;
-            }
+                        `).join('') 
+                        : '<div class="data-row">No fields registered yet</div>'
+                    }
+                </div>
+            `;
+        },
+        // Keep other modules unchanged
+    };
+
+    // Add time formatting helper
+    function timeSince(dateString) {
+        const date = new Date(dateString);
+        const seconds = Math.floor((new Date() - date) / 1000);
+        const intervals = {
+            year: 31536000,
+            month: 2592000,
+            day: 86400,
+            hour: 3600,
+            minute: 60
         };
-
-        // Initialize Dashboard
-        function initDashboard() {
-            const dashboard = document.getElementById('dashboardMain');
-            dashboard.innerHTML = [
-                loadModules.fields(),
-                loadModules.climate(),
-                loadModules.water(),
-                loadModules.reports(),
-                loadModules.tutorials(),
-                `<div class="card expert-card">
-                    <h3 class="card-title">🌱 Expert Recommendations</h3>
-                    <div class="data-row">✅ Check irrigation schedules</div>
-                    <div class="data-row">⚠️ Monitor field health alerts</div>
-                    <div class="data-row">📅 Schedule soil analysis</div>
-                </div>`
-            ].join('');
+        
+        for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+            const interval = Math.floor(seconds / secondsInUnit);
+            if (interval >= 1) {
+                return `${interval} ${unit}${interval !== 1 ? 's' : ''}`;
+            }
         }
+        return 'just now';
+    }
 
-        // Load dashboard when DOM is ready
-        document.addEventListener('DOMContentLoaded', initDashboard);
+    // Enhanced initialization with real-time updates
+    function initDashboard() {
+        const dashboard = document.getElementById('dashboardMain');
+        
+        // Create refreshable card container
+        dashboard.innerHTML = `
+            <div id="cardsContainer">
+                ${[
+                    loadModules.fields(),
+                    loadModules.climate(),
+                    loadModules.water(),
+                    loadModules.reports(),
+                    loadModules.tutorials(),
+                    `<div class="card expert-card">
+                        <h3 class="card-title">🌱 Expert Recommendations</h3>
+                        ${getRecommendations()}
+                    </div>`
+                ].join('')}
+            </div>
+        `;
+        
+        // Add live update listeners
+        window.addEventListener('storage', handleStorageUpdate);
+    }
 
-        // Update data every 30 seconds
-        setInterval(initDashboard, 30000);
-    </script>
-</body>
-</html>
+    // Handle real-time data updates
+    function handleStorageUpdate(e) {
+        if(e.key === 'fieldData') {
+            const cardsContainer = document.getElementById('cardsContainer');
+            cardsContainer.innerHTML = loadModules.fields();
+        }
+    }
+
+    // Generate dynamic recommendations
+    function getRecommendations() {
+        const fields = JSON.parse(localStorage.getItem('fieldData'))?.fields || [];
+        return fields.map(field => {
+            if(field.health === 'poor') {
+                return `<div class="data-row">⚠️ Check irrigation for ${field.name}</div>`;
+            }
+            if(field.health === 'fair') {
+                return `<div class="data-row">🔍 Monitor ${field.name} soil levels</div>`;
+            }
+            return '';
+        }).join('') + '<div class="data-row">📅 Schedule weekly review</div>';
+    }
+
+    // Initialize with error handling
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            initDashboard();
+            setInterval(() => {
+                document.querySelectorAll('.data-row small').forEach(el => {
+                    const timestamp = el.closest('.data-row').dataset.timestamp;
+                    if(timestamp) el.textContent = timeSince(timestamp) + ' ago';
+                });
+            }, 60000); // Update timestamps every minute
+        } catch (error) {
+            console.error('Dashboard initialization failed:', error);
+            document.getElementById('dashboardMain').innerHTML = `
+                <div class="card">
+                    <h3 class="card-title">⚠️ System Error</h3>
+                    <div class="data-row">Please refresh the page</div>
+                </div>
+            `;
+        }
+    });
+</script>
