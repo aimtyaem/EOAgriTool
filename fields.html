@@ -94,31 +94,24 @@
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
+
+        .media-item {
+            display: inline-block;
+            margin: 10px;
+        }
+
+        .media-item img, .media-item video {
+            max-width: 100px;
+            border-radius: 6px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Your Fields</h1>
         
-        <div class="fields-grid">
-            <!-- Field 1 Card -->
-            <div class="field-card">
-                <div class="health-indicator good"></div>
-                <div class="field-header">
-                    <div class="field-icon">🌾</div>
-                    <div>
-                        <h3>Field 1</h3>
-                        <p>Crop: Wheat</p>
-                    </div>
-                </div>
-                <div class="field-metrics">
-                    <p>Yield: 8.0 t/ha</p>
-                    <p>Health: Good</p>
-                    <p>Last Updated: 2h ago</p>
-                </div>
-            </div>
-
-            <!-- Repeat for Field 2 and 3 -->
+        <div class="fields-grid" id="fieldsGrid">
+            <!-- Fields dynamically loaded here -->
         </div>
 
         <div class="upload-section">
@@ -132,45 +125,65 @@
     </div>
 
     <script>
-        // Field data structure
-        const fieldData = {
-            fields: [
-                {
-                    id: 1,
-                    name: "Field 1",
-                    crop: "Wheat",
-                    health: "good",
-                    yield: "8.0 t/ha",
-                    media: []
-                },
-                // Add other fields
-            ]
-        };
+        // Load fields from localStorage
+        function loadFields() {
+            const fieldsGrid = document.getElementById('fieldsGrid');
+            fieldsGrid.innerHTML = ''; // Clear existing content
+
+            let fieldData = JSON.parse(localStorage.getItem('fieldData')) || { fields: [] };
+
+            if (fieldData.fields.length === 0) {
+                fieldsGrid.innerHTML = '<p>No fields registered yet.</p>';
+                return;
+            }
+
+            fieldData.fields.forEach(field => {
+                const fieldCard = document.createElement('div');
+                fieldCard.classList.add('field-card');
+                fieldCard.innerHTML = `
+                    <div class="health-indicator ${field.health}"></div>
+                    <div class="field-header">
+                        <div class="field-icon">🌾</div>
+                        <div>
+                            <h3>${field.name}</h3>
+                            <p>Crop: ${field.crop}</p>
+                        </div>
+                    </div>
+                    <div class="field-metrics">
+                        <p>Yield: ${field.yield}</p>
+                        <p>Health: ${field.health.charAt(0).toUpperCase() + field.health.slice(1)}</p>
+                        <p>Last Updated: ${timeSince(field.lastUpdated)} ago</p>
+                    </div>
+                `;
+                fieldsGrid.appendChild(fieldCard);
+            });
+        }
 
         // Handle media uploads
         document.getElementById('mediaUpload').addEventListener('change', function(e) {
             const files = Array.from(e.target.files);
             const mediaPreview = document.getElementById('mediaPreview');
-            
+            let fieldData = JSON.parse(localStorage.getItem('fieldData')) || { fields: [] };
+
             files.forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const mediaItem = document.createElement('div');
                     mediaItem.className = 'media-item';
-                    mediaItem.innerHTML = `
-                        ${file.type.startsWith('image') ? 
-                            `<img src="${e.target.result}" alt="Field media" style="max-width: 100px;">` :
-                            `<video controls src="${e.target.result}" style="max-width: 100px;"></video>`
-                        }
-                    `;
+                    mediaItem.innerHTML = file.type.startsWith('image') ?
+                        `<img src="${e.target.result}" alt="Field media">` :
+                        `<video controls src="${e.target.result}"></video>`;
+
                     mediaPreview.appendChild(mediaItem);
-                    
+
                     // Store media reference
-                    fieldData.fields[0].media.push({
-                        type: file.type.startsWith('image') ? 'image' : 'video',
-                        url: e.target.result,
-                        timestamp: new Date().toISOString()
-                    });
+                    if (fieldData.fields.length > 0) {
+                        fieldData.fields[0].media.push({
+                            type: file.type.startsWith('image') ? 'image' : 'video',
+                            url: e.target.result,
+                            timestamp: new Date().toISOString()
+                        });
+                    }
                 };
                 reader.readAsDataURL(file);
             });
@@ -181,15 +194,39 @@
 
         // Navigation to dashboard
         document.getElementById('dashboardBtn').addEventListener('click', () => {
-            // Save final data
-            localStorage.setItem('fieldData', JSON.stringify(fieldData));
             window.location.href = 'dashboard.html';
         });
 
-        // Load existing data
-        window.addEventListener('load', () => {
-            const savedData = localStorage.getItem('fieldData');
-            if(savedData) fieldData = JSON.parse(savedData));
+        // Format timestamps
+        function timeSince(dateString) {
+            const date = new Date(dateString);
+            const seconds = Math.floor((new Date() - date) / 1000);
+            const intervals = {
+                year: 31536000,
+                month: 2592000,
+                day: 86400,
+                hour: 3600,
+                minute: 60
+            };
+
+            for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+                const interval = Math.floor(seconds / secondsInUnit);
+                if (interval >= 1) {
+                    return `${interval} ${unit}${interval !== 1 ? 's' : ''}`;
+                }
+            }
+            return 'just now';
+        }
+
+        // Initialize fields on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFields();
+            setInterval(() => {
+                document.querySelectorAll('.field-metrics p:last-child').forEach(el => {
+                    const timestamp = new Date().toISOString(); // Mock last updated time
+                    el.textContent = `Last Updated: ${timeSince(timestamp)} ago`;
+                });
+            }, 60000);
         });
     </script>
 </body>
