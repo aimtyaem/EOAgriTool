@@ -103,7 +103,8 @@
         <div class="report-section">
             <h2>Farm Map View</h2>
             <div class="map-container" id="mapPreview">
-                <img id="reportImage" class="report-image" style="display: none;">
+                <!-- Satellite image will be loaded here -->
+                <img id="satelliteImage" alt="Satellite Image" style="width: 100%; height: 100%; border-radius: 10px;">
                 <div class="map-overlay">Satellite View</div>
             </div>
 
@@ -115,6 +116,44 @@
                 <div class="layer-item" data-layer="rainfall">Rainfall</div>
             </div>
         </div>
+        <button class="nav-button" id="dashboardBtn">Go to Dashboard</button>
+    </div>
+
+    <script>
+        // Satellite image URL (replace with your GitHub raw URL)
+        const satelliteImageUrl = "https://raw.githubusercontent.com/username/repo-name/sane-branch/path/to/satellite-image.jpg";
+
+        // Function to load the satellite image
+        function loadSatelliteImage() {
+            const imgElement = document.getElementById('satelliteImage');
+            imgElement.src = satelliteImageUrl;
+
+            imgElement.onload = () => {
+                console.log("Satellite image loaded successfully!");
+                // Optionally, save the image to localStorage for offline use
+                localStorage.setItem('satelliteImage', satelliteImageUrl);
+            };
+
+            imgElement.onerror = () => {
+                console.error("Failed to load satellite image.");
+                imgElement.src = "placeholder.jpg"; // Fallback image
+            };
+        }
+
+        // Initialize the page
+        window.addEventListener('load', () => {
+            // Load saved data
+            const savedData = localStorage.getItem('agritoolReport');
+            if(savedData) {
+                reportData = JSON.parse(savedData);
+                populateReport();
+                initializeDownloadHandlers();
+            }
+
+            // Load the satellite image
+            loadSatelliteImage();
+        });
+
 
         <button class="nav-button" id="dashboardBtn">Go to Dashboard</button>
     </div>
