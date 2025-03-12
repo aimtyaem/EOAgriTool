@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AgriTool Dashboard</title>
     <style>
-    <!-- head content -->
-    <style>
-        <style>
         :root {
             --primary: #2c5f2d;
             --secondary: #97bc62;
@@ -94,19 +91,9 @@
         .fair { background: #ffd700; }
         .poor { background: #ff4444; }
 
-       
-            
-        /* Add field metrics styling */
-        .field-metrics {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-        }
-
-        .field-metrics small {
-            color: #95a5a6;
-            font-size: 0.8em;
-            margin-top: 4px;
+        @media (max-width: 768px) {
+            body { grid-template-columns: 1fr; }
+            .sidebar { display: none; }
         }
     </style>
 </head>
@@ -235,122 +222,6 @@
 
         // Update data every 30 seconds
         setInterval(initDashboard, 30000);
-    <script>
-        // Enhanced JavaScript integration
-        const loadModules = {
-            fields: () => {
-                const data = JSON.parse(localStorage.getItem('fieldData')) || { fields: [] };
-                return `
-                    <div class="card">
-                        <h3 class="card-title">Field Status</h3>
-                        ${data.fields.length > 0 ? 
-                            data.fields.map(field => `
-                                <div class="data-row" data-timestamp="${field.lastUpdated}">
-                                    <div>
-                                        <span class="status-indicator ${field.health}"></span>
-                                        ${field.name}
-                                    </div>
-                                    <div class="field-metrics">
-                                        <span>${field.yield}</span>
-                                        <small>${timeSince(field.lastUpdated)} ago</small>
-                                    </div>
-                                </div>
-                            `).join('') 
-                            : '<div class="data-row">No fields registered yet</div>'
-                        }
-                    </div>
-                `;
-            },
-            // Keep other modules unchanged
-        };
-
-        // Time formatting helper
-        function timeSince(dateString) {
-            const date = new Date(dateString);
-            const seconds = Math.floor((new Date() - date) / 1000);
-            const intervals = {
-                year: 31536000,
-                month: 2592000,
-                day: 86400,
-                hour: 3600,
-                minute: 60
-            };
-            
-            for (const [unit, secondsInUnit] of Object.entries(intervals)) {
-                const interval = Math.floor(seconds / secondsInUnit);
-                if (interval >= 1) {
-                    return `${interval} ${unit}${interval !== 1 ? 's' : ''}`;
-                }
-            }
-            return 'just now';
-        }
-
-        // Real-time dashboard updates
-        function initDashboard() {
-            const dashboard = document.getElementById('dashboardMain');
-            dashboard.innerHTML = `
-                <div id="cardsContainer">
-                    ${[
-                        loadModules.fields(),
-                        loadModules.climate(),
-                        loadModules.water(),
-                        loadModules.reports(),
-                        loadModules.tutorials(),
-                        `<div class="card expert-card">
-                            <h3 class="card-title">🌱 Expert Recommendations</h3>
-                            ${getRecommendations()}
-                        </div>`
-                    ].join('')}
-                </div>
-            `;
-            
-            window.addEventListener('storage', handleStorageUpdate);
-        }
-
-        // Handle storage updates
-        function handleStorageUpdate(e) {
-            if(e.key === 'fieldData') {
-                const container = document.getElementById('cardsContainer');
-                if(container) {
-                    container.innerHTML = loadModules.fields() + 
-                        container.innerHTML.replace(loadModules.fields(), '');
-                }
-            }
-        }
-
-        // Dynamic recommendations
-        function getRecommendations() {
-            const fields = JSON.parse(localStorage.getItem('fieldData'))?.fields || [];
-            const recommendations = fields.map(field => {
-                if(field.health === 'poor') return `⚠️ Check ${field.name} irrigation`;
-                if(field.health === 'fair') return `🔍 Monitor ${field.name} soil`;
-                return '';
-            }).filter(r => r);
-            
-            return recommendations.concat(['📅 Schedule weekly review'])
-                .map(r => `<div class="data-row">${r}</div>`).join('');
-        }
-
-        // Initialize with error handling
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                initDashboard();
-                setInterval(() => {
-                    document.querySelectorAll('.data-row small').forEach(el => {
-                        const timestamp = el.closest('.data-row').dataset.timestamp;
-                        if(timestamp) el.textContent = timeSince(timestamp) + ' ago';
-                    });
-                }, 60000);
-            } catch (error) {
-                console.error('Dashboard error:', error);
-                document.getElementById('dashboardMain').innerHTML = `
-                    <div class="card">
-                        <h3 class="card-title">⚠️ System Error</h3>
-                        <div class="data-row">Please refresh the page</div>
-                    </div>
-                `;
-            }
-        });
     </script>
 </body>
 </html>
