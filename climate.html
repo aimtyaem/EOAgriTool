@@ -108,57 +108,75 @@
         <button class="nav-button" id="dashboardBtn">Go to Dashboard</button>
     </div>
 
-    <script>
-        // Climate data model
-        const climateData = {
-            historical: {
-                predictive: true,
-                deltas: 1.2,
-                extremeEvents: 3
-            },
-            temperature: {
-                '2010': 23.4,
-                '2012': 23.8,
-                // Add all years
-            },
-            precipitation: {
-                '2010': 450,
-                '2012': 420,
-                // Add all years
-            }
+<script>
+    const currentYear = new Date().getFullYear();
+    const climateData = {
+        temperature: {
+            '2010': 23.4,
+            '2012': 23.8,
+            '2014': 24.1,
+            '2016': 24.5,
+            '2018': 24.8,
+            '2020': 25.1,
+            '2022': 25.4,
+            [currentYear]: 25.7
+        },
+        precipitation: {
+            '2010': 450,
+            '2012': 420,
+            '2014': 435,
+            '2016': 410,
+            '2018': 398,
+            '2020': 385,
+            '2022': 375,
+            [currentYear]: 365
+        }
+    };
+
+    // Calculate average temperature
+    function calculateAverageTemp() {
+        const temps = Object.values(climateData.temperature);
+        return temps.reduce((sum, temp) => sum + temp, 0) / temps.length;
+    }
+
+    // Save data before navigation
+    function saveClimateData() {
+        const dashboardData = {
+            avgTemp: calculateAverageTemp().toFixed(1),
+            lastPrecip: climateData.precipitation[currentYear]
         };
+        localStorage.setItem('climateDashboardData', JSON.stringify(dashboardData));
+    }
 
-        // Save data to localStorage for dashboard
-        localStorage.setItem('climateData', JSON.stringify(climateData));
+    // Navigation functionality with data save
+    document.getElementById('dashboardBtn').addEventListener('click', () => {
+        saveClimateData();
+        window.location.href = 'dashboard.html';
+    });
 
-        // Navigation functionality
-        document.getElementById('dashboardBtn').addEventListener('click', () => {
-            window.location.href = 'dashboard.html';
+    // Dynamic data population (unchanged)
+    document.addEventListener('DOMContentLoaded', () => {
+        const tempCard = document.querySelector('[style*="--temp-red"]');
+        const precipCard = document.querySelector('[style*="--precip-blue"]');
+
+        Object.entries(climateData.temperature).forEach(([year, temp]) => {
+            tempCard.innerHTML += `
+                <div class="data-item">
+                    <span>${year}</span>
+                    <span>${temp}°C</span>
+                </div>
+            `;
         });
 
-        // Dynamic data population
-        document.addEventListener('DOMContentLoaded', () => {
-            const tempCard = document.querySelector('[style*="--temp-red"]');
-            const precipCard = document.querySelector('[style*="--precip-blue"]');
-
-            Object.entries(climateData.temperature).forEach(([year, temp]) => {
-                tempCard.innerHTML += `
-                    <div class="data-item">
-                        <span>${year}</span>
-                        <span>${temp}°C</span>
-                    </div>
-                `;
-            });
-
-            Object.entries(climateData.precipitation).forEach(([year, precip]) => {
-                precipCard.innerHTML += `
-                    <div class="data-item">
-                        <span>${year}</span>
-                        <span>${precip}mm</span>
-                    </div>
-                `;
-            });
+        Object.entries(climateData.precipitation).forEach(([year, precip]) => {
+            precipCard.innerHTML += `
+                <div class="data-item">
+                    <span>${year}</span>
+                    <span>${precip}mm</span>
+                </div>
+            `;
         });
-    </script>
+    });
+</script>
 </body>
 </html>
