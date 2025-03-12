@@ -220,6 +220,11 @@
             }
         });
     </script>
-
+<script>    // Navigation functionality with data save
+    document.getElementById('dashboardBtn').addEventListener('click', () => {
+        saveClimateData();
+        window.location.href = 'dashboard.html';
+    });
+</script>
 </body>
 </html>
