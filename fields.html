@@ -1,139 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Field Management</title>
+    <!-- Keep existing head content -->
     <style>
+        /* Add updated CSS to match dashboard styling */
         :root {
-            --field-green: #2c5f2d;
-            --health-good: #7ac142;
-            --health-fair: #ffd700;
-            --health-poor: #ff4444;
-        }
-
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            padding: 20px;
-            background: #f4faf4;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        h1 {
-            color: var(--field-green);
-            margin-bottom: 30px;
-        }
-
-        .fields-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
+            --primary: #2c5f2d;
+            --secondary: #97bc62;
+            --background: #f4faf4;
+            --card-bg: #ffffff;
         }
 
         .field-card {
-            background: white;
-            border-radius: 10px;
+            background: var(--card-bg);
+            border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
         }
 
-        .field-header {
+        .field-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .data-row {
             display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px;
+            background: #f8f8f8;
+            border-radius: 6px;
         }
 
-        .field-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--field-green);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-
-        .health-indicator {
+        .status-indicator {
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            position: absolute;
-            top: 15px;
-            right: 15px;
-        }
-
-        .good { background: var(--health-good); }
-        .fair { background: var(--health-fair); }
-        .poor { background: var(--health-poor); }
-
-        .upload-section {
-            border: 2px dashed #ccc;
-            padding: 20px;
-            text-align: center;
-            margin-top: 30px;
-            border-radius: 10px;
-        }
-
-        .nav-button {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 12px 24px;
-            background: var(--field-green);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-right: 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Your Fields</h1>
-        
+        <!-- Updated field cards to match dashboard style -->
         <div class="fields-grid">
-            <!-- Field 1 Card -->
             <div class="field-card">
                 <div class="health-indicator good"></div>
                 <div class="field-header">
                     <div class="field-icon">🌾</div>
                     <div>
                         <h3>Field 1</h3>
-                        <p>Crop: Wheat</p>
+                        <div class="data-row">
+                            <span>Crop Type</span>
+                            <span>Wheat</span>
+                        </div>
                     </div>
                 </div>
-                <div class="field-metrics">
-                    <p>Yield: 8.0 t/ha</p>
-                    <p>Health: Good</p>
-                    <p>Last Updated: 2h ago</p>
+                <div class="data-row">
+                    <div>
+                        <span class="status-indicator good"></span>
+                        Health Status
+                    </div>
+                    <span>Good</span>
+                </div>
+                <div class="data-row">
+                    <span>Yield</span>
+                    <span>8.0 t/ha</span>
+                </div>
+                <div class="data-row">
+                    <span>Last Updated</span>
+                    <span>2h ago</span>
                 </div>
             </div>
-
-            <!-- Repeat for Field 2 and 3 -->
+            <!-- Repeat for other fields -->
         </div>
 
+        <!-- Updated media upload section -->
         <div class="upload-section">
-            <h3>Upload Field Media</h3>
+            <h3>📤 Upload Field Documentation</h3>
             <input type="file" id="mediaUpload" accept="image/*,video/*" multiple>
-            <p>Drag and drop images/videos or click to upload</p>
-            <div id="mediaPreview"></div>
+            <p>Drag files here or click to upload</p>
+            <div id="mediaPreview" class="preview-grid"></div>
         </div>
 
-        <button class="nav-button" id="dashboardBtn">Go to Dashboard</button>
+        <!-- Enhanced navigation button -->
+        <button class="nav-button" id="dashboardBtn">
+            📊 View Dashboard
+        </button>
     </div>
 
     <script>
-        // Field data structure
-        const fieldData = {
+        // Enhanced field data structure
+        let fieldData = {
             fields: [
                 {
                     id: 1,
@@ -141,55 +99,94 @@
                     crop: "Wheat",
                     health: "good",
                     yield: "8.0 t/ha",
+                    lastUpdated: new Date().toISOString(),
                     media: []
-                },
-                // Add other fields
+                }
             ]
         };
 
-        // Handle media uploads
+        // Improved media upload handler
         document.getElementById('mediaUpload').addEventListener('change', function(e) {
             const files = Array.from(e.target.files);
             const mediaPreview = document.getElementById('mediaPreview');
             
-            files.forEach(file => {
+            files.forEach((file, index) => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const mediaItem = document.createElement('div');
                     mediaItem.className = 'media-item';
                     mediaItem.innerHTML = `
                         ${file.type.startsWith('image') ? 
-                            `<img src="${e.target.result}" alt="Field media" style="max-width: 100px;">` :
-                            `<video controls src="${e.target.result}" style="max-width: 100px;"></video>`
+                            `<img src="${e.target.result}" alt="Field documentation ${index + 1}">` :
+                            `<video controls src="${e.target.result}"></video>`
                         }
+                        <div class="media-meta">
+                            <span>${new Date().toLocaleDateString()}</span>
+                            <span>${file.type.split('/')[0]}</span>
+                        </div>
                     `;
-                    mediaPreview.appendChild(mediaItem);
                     
-                    // Store media reference
+                    mediaPreview.appendChild(mediaItem);
                     fieldData.fields[0].media.push({
-                        type: file.type.startsWith('image') ? 'image' : 'video',
+                        type: file.type.split('/')[0],
                         url: e.target.result,
                         timestamp: new Date().toISOString()
                     });
+                    
+                    // Update last modified time
+                    fieldData.fields[0].lastUpdated = new Date().toISOString();
+                    refreshFieldCards();
                 };
                 reader.readAsDataURL(file);
             });
-
-            // Update localStorage
-            localStorage.setItem('fieldData', JSON.stringify(fieldData));
         });
 
-        // Navigation to dashboard
-        document.getElementById('dashboardBtn').addEventListener('click', () => {
-            // Save final data
-            localStorage.setItem('fieldData', JSON.stringify(fieldData));
-            window.location.href = 'dashboard.html';
-        });
+        // Refresh field cards display
+        function refreshFieldCards() {
+            const fieldCards = document.querySelectorAll('.field-card');
+            fieldCards.forEach((card, index) => {
+                const field = fieldData.fields[index];
+                card.querySelector('.health-indicator').className = 
+                    `health-indicator ${field.health}`;
+                card.querySelector('[data-field="yield"]').textContent = 
+                    field.yield;
+                card.querySelector('[data-field="lastUpdated"]').textContent = 
+                    `${timeSince(new Date(field.lastUpdated))} ago`;
+            });
+        }
 
-        // Load existing data
+        // Time formatting helper
+        function timeSince(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            const intervals = {
+                year: 31536000,
+                month: 2592000,
+                day: 86400,
+                hour: 3600,
+                minute: 60
+            };
+            
+            for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+                const interval = Math.floor(seconds / secondsInUnit);
+                if (interval >= 1) {
+                    return `${interval} ${unit}${interval !== 1 ? 's' : ''}`;
+                }
+            }
+            return `${Math.floor(seconds)} seconds`;
+        }
+
+        // Initialize on load
         window.addEventListener('load', () => {
-            const savedData = localStorage.getItem('fieldData');
-            if(savedData) fieldData = JSON.parse(savedData));
+            try {
+                const savedData = localStorage.getItem('fieldData');
+                if(savedData) {
+                    fieldData = JSON.parse(savedData);
+                    refreshFieldCards();
+                }
+            } catch (error) {
+                console.error('Error loading field data:', error);
+                localStorage.setItem('fieldData', JSON.stringify(fieldData));
+            }
         });
     </script>
 </body>
