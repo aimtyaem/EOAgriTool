@@ -83,8 +83,8 @@ We welcome community contributions! Please see our [Contribution Guide](CONTRIBU
 
 ---
 
-*Last Updated: ${new Date().toISOString().split('T')[0]}*  
-*Maintained by [Your Name/Team Name]*  
+*Last Updated: 12 March 2025*  
+*Maintained by Ahmed Ibrahim Metawee'*  
 ``` 
 
 This roadmap organizes features from our development discussions into versioned milestones while maintaining technical accuracy. The markdown structure allows easy tracking of implementation progress and future plans.
