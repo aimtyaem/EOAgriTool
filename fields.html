@@ -219,6 +219,12 @@
                 localStorage.setItem('fieldData', JSON.stringify(fieldData));
             }
         });
+    // Initialize navigation
+    function initializeNavigation() {
+      document.getElementById('dashboardBtn').addEventListener('click', () => {
+        window.location.href = 'dashboard.html';
+      });
+    }
     </script>
 </body>
 </html>
