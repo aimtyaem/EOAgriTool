@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reports & Maps</title>
+    <!-- Required Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
         :root {
             --report-purple: #6a1b9a;
@@ -87,9 +91,11 @@
         <div class="report-section">
             <h1>2023 Season Report</h1>
             <div class="download-options">
-                <button class="download-btn" data-type="full">Download Full Report (PDF)</button>
-                <button class="download-btn" data-type="yield">Yield Forecast (CSV)</button>
-                <button class="download-btn" data-type="health">Health Insights (CSV)</button>
+                <button class="download-btn" id="downloadPdf">Download Full Report (PDF)</button>
+                <button class="download-btn" id="downloadCsv">Yield Forecast (CSV)</button>
+                <button class="download-btn" id="downloadExcel">Health Insights (Excel)</button>
+                <button class="download-btn" id="downloadText">Text Report</button>
+                <button class="download-btn" id="printReport">Print Report</button>
             </div>
         </div>
 
@@ -97,10 +103,10 @@
         <div class="report-section">
             <h2>Farm Map View</h2>
             <div class="map-container" id="mapPreview">
-                <!-- Map placeholder -->
+                <img id="reportImage" class="report-image" style="display: none;">
                 <div class="map-overlay">Satellite View</div>
             </div>
-            
+
             <div class="map-layers">
                 <div class="layer-item" data-layer="soil">Soil Moisture</div>
                 <div class="layer-item" data-layer="vegetation">Vegetation Index</div>
@@ -114,55 +120,117 @@
     </div>
 
     <script>
-        // Report data model
-        const reportData = {
+        // Initialize report data
+        let reportData = {
             lastGenerated: new Date().toISOString(),
             downloaded: [],
             activeLayers: [],
-            mapLocations: [
-                "Flagrden", "Lapa Park", "Oso de", 
-                "Highway City", "Biola Junction"
-            ]
+            mapLocations: ["Flagrden", "Lapa Park", "Oso de", "Highway City", "Biola Junction"],
+            analysis: {}
         };
 
-        // Handle downloads
-        document.querySelectorAll('.download-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const type = e.target.dataset.type;
-                reportData.downloaded.push({
-                    type,
-                    date: new Date().toISOString()
-                });
-                localStorage.setItem('reportData', JSON.stringify(reportData));
-                alert(`Downloading ${type} report...`);
-            });
+        // Load saved data
+        window.addEventListener('load', () => {
+            const savedData = localStorage.getItem('agritoolReport');
+            if(savedData) {
+                reportData = JSON.parse(savedData);
+                populateReport();
+                initializeDownloadHandlers();
+            }
         });
+
+        function populateReport() {
+            const img = document.getElementById('reportImage');
+            if(reportData.image) {
+                img.src = reportData.image;
+                img.style.display = 'block';
+            }
+            
+            // Populate other report data as needed
+        }
+
+        function initializeDownloadHandlers() {
+            // PDF Generation
+            document.getElementById('downloadPdf').addEventListener('click', () => {
+                const pdf = new jsPDF();
+                const img = document.getElementById('reportImage');
+                
+                // Add image
+                pdf.addImage(img, 'JPEG', 10, 10, 50, 50);
+                
+                // Add report data
+                pdf.setFontSize(12);
+                pdf.text(20, 70, `Soil Moisture: ${(reportData.analysis.soilMoisture * 100).toFixed(0)}%`);
+                // ... add other fields ...
+                
+                pdf.save('agritool-report.pdf');
+                reportData.downloaded.push({ type: 'pdf', date: new Date().toISOString() });
+            });
+
+            // CSV Generation
+            document.getElementById('downloadCsv').addEventListener('click', () => {
+                const csvContent = [
+                    ['Metric', 'Value'],
+                    ['Soil Moisture', reportData.analysis.soilMoisture],
+                    ['Vegetation Index', reportData.analysis.vegetationIndex],
+                    // ... other fields ...
+                ].map(e => e.join(",")).join("\n");
+
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                saveAs(blob, 'report.csv');
+                reportData.downloaded.push({ type: 'csv', date: new Date().toISOString() });
+            });
+
+            // Excel Generation
+            document.getElementById('downloadExcel').addEventListener('click', () => {
+                const ws = XLSX.utils.json_to_sheet([reportData.analysis]);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Report");
+                XLSX.writeFile(wb, 'report.xlsx');
+                reportData.downloaded.push({ type: 'excel', date: new Date().toISOString() });
+            });
+
+            // Text File Generation
+            document.getElementById('downloadText').addEventListener('click', () => {
+                const textContent = `AGRITOOL REPORT\n\n
+                    Soil Moisture: ${(reportData.analysis.soilMoisture * 100).toFixed(0)}%\n
+                    Vegetation Index: ${reportData.analysis.vegetationIndex.toFixed(2)}\n
+                    // ... other fields ...`;
+                
+                const blob = new Blob([textContent], { type: 'text/plain' });
+                saveAs(blob, 'report.txt');
+                reportData.downloaded.push({ type: 'text', date: new Date().toISOString() });
+            });
+
+            // Print Functionality
+            document.getElementById('printReport').addEventListener('click', () => {
+                window.print();
+                reportData.downloaded.push({ type: 'print', date: new Date().toISOString() });
+            });
+
+            // Save updated report data
+            localStorage.setItem('agritoolReport', JSON.stringify(reportData));
+        }
 
         // Handle map layers
         document.querySelectorAll('.layer-item').forEach(layer => {
             layer.addEventListener('click', (e) => {
                 const layerName = e.target.dataset.layer;
                 e.target.classList.toggle('active');
-                
+
                 if(reportData.activeLayers.includes(layerName)) {
                     reportData.activeLayers = reportData.activeLayers.filter(l => l !== layerName);
                 } else {
                     reportData.activeLayers.push(layerName);
                 }
-                
-                localStorage.setItem('reportData', JSON.stringify(reportData));
+
+                localStorage.setItem('agritoolReport', JSON.stringify(reportData));
             });
         });
 
         // Navigation
         document.getElementById('dashboardBtn').addEventListener('click', () => {
             window.location.href = 'dashboard.html';
-        });
-
-        // Initialize
-        window.addEventListener('load', () => {
-            const savedData = localStorage.getItem('reportData');
-            if(savedData) reportData = JSON.parse(savedData);
         });
     </script>
 </body>
