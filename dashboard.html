@@ -115,25 +115,32 @@
     </main>
 
     <script>
-        // Load all data modules
-        const loadModules = {
-            fields: () => {
-                const data = JSON.parse(localStorage.getItem('fieldData')) || {};
-                return `
-                    <div class="card">
-                        <h3 class="card-title">Field Status</h3>
-                        ${data.fields?.map(field => `
-                            <div class="data-row">
-                                <div>
-                                    <span class="status-indicator ${field.health}"></span>
-                                    ${field.name}
-                                </div>
-                                <div>${field.yield}</div>
-                            </div>
-                        `).join('')}
+        
+    // Load all data modules
+    const loadModules = {
+      fields: () => {
+        const data = JSON.parse(localStorage.getItem('fieldData')) || { fields: [] };
+        return `
+          <div class="card">
+            <h3 class="card-title">Field Status</h3>
+            ${data.fields.length > 0
+              ? data.fields.map(field => `
+                  <div class="data-row" data-timestamp="${field.lastUpdated}">
+                    <div>
+                      <span class="status-indicator ${field.health}"></span>
+                      ${field.name}
                     </div>
-                `;
-            },
+                    <div class="field-metrics">
+                      <span>${field.yield}</span>
+                      <small>${timeSince(field.lastUpdated)} ago</small>
+                    </div>
+                  </div>
+                `).join('')
+              : '<div class="data-row">No fields registered yet</div>'
+            }
+          </div>
+        `;
+      },
             climate: () => {
                 const data = JSON.parse(localStorage.getItem('climateDashboardData')) || {};
                 return `
