@@ -135,25 +135,17 @@
                 `;
             },
             climate: () => {
-    const data = JSON.parse(localStorage.getItem('climateDashboardData')) || {};
-    return `
-        <div class="card">
-            <h3 class="card-title">Climate Overview</h3>
-            <div class="data-row">
-                <div>📊 Avg Temp</div>
-                <div>${data.avgTemp || 'N/A'}°C</div>
-            </div>
-            <div class="data-row">
-                <div>💧 Precipitation</div>
-                <div>${data.lastPrecip || 'N/A'}mm</div>
-            </div>
-        </div>
-    `;
-}</div>
+                const data = JSON.parse(localStorage.getItem('climateDashboardData')) || {};
+                return `
+                    <div class="card">
+                        <h3 class="card-title">Climate Overview</h3>
+                        <div class="data-row">
+                            <div>📊 Avg Temp</div>
+                            <div>${data.avgTemp || 'N/A'}°C</div>
                         </div>
                         <div class="data-row">
                             <div>💧 Precipitation</div>
-                            <div>${data.precipitation?.['2022'] || 'N/A'}mm</div>
+                            <div>${data.lastPrecip || 'N/A'}mm</div>
                         </div>
                     </div>
                 `;
