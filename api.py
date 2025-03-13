@@ -1,9 +1,11 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS  # Required for cross-origin requests
 from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # Initialize the sentence transformer model
 model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
@@ -24,39 +26,21 @@ detailed_knowledge = [
 - Adjust schedules based on crop growth stages
 - Consider evapotranspiration rates
 - Implement drip irrigation for efficiency""",
-
-    """Field Health Monitoring Details:
-- Regular satellite imagery analysis
-- Drone-based NDVI scans weekly
-- Soil nutrient level tracking
-- Early stress detection algorithms""",
-
-    """Pest & Disease Alerts Details:
-- Automated pheromone trap monitoring
-- Weather-based outbreak prediction
-- Image recognition for disease identification
-- Integrated pest management strategies""",
-
-    """Soil Analysis Details:
-- Seasonal nutrient profiling
-- pH balance optimization
-- Organic matter content analysis
-- Custom fertilizer blending recommendations""",
-
-    """Weather-based Farming Details:
-- Microclimate prediction models
-- Frost/heatwave early warning systems
-- Rainfall pattern adaptation
-- Crop variety selection advisor"""
+    
+    # ... (keep other detailed knowledge entries the same)
 ]
 
-# Create embeddings for detailed knowledge
+# Create embeddings and FAISS index
 doc_embeddings = np.array([model.encode(doc) for doc in detailed_knowledge])
-
-# Build FAISS index
 index = faiss.IndexFlatL2(doc_embeddings.shape[1])
 index.add(doc_embeddings)
 
+# Serve HTML interface
+@app.route('/')
+def home():
+    return render_template('index.html')  # Make sure index.html is in templates/ folder
+
+# Existing API endpoints
 @app.route('/recommendations', methods=['GET'])
 def get_recommendations():
     return jsonify(recommendations)
@@ -68,8 +52,7 @@ def get_details():
     
     if recommendation_index is None or not 0 <= recommendation_index < len(recommendations):
         return jsonify({"error": "Invalid recommendation index"}), 400
-    
-    # Get relevant details using semantic search
+
     query = recommendations[recommendation_index]
     query_embedding = model.encode(query)
     _, indices = index.search(np.array([query_embedding]), k=1)
