@@ -1,5 +1,5 @@
 # EO AgriTool
-
+![EOAgriTool](EOAgriTool.gif)
 EO AgriTool is a cutting-edge web application designed to empower Egyptian farmers and agricultural businesses to overcome environmental challenges. By leveraging high-resolution Earth observation data and embracing regenerative agriculture practices, the app provides actionable insights for sustainable farming. Whether you're confronting unpredictable weather, pest outbreaks, or water management issues, EO AgriTool helps you monitor, analyze, and optimize your agricultural practices in real time.
 
 ---
