@@ -12,7 +12,35 @@
             padding: 20px;
             background-color: #f4f4f9;
         }
-
+         /* Container for the horizontal menu bar */
+    .menu-bar {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      background-color: #f8f8f8;
+      padding: 10px 0;
+      margin: 0;
+      list-style: none;
+    }
+    /* Menu items styled as links */
+    .menu-item {
+      text-decoration: none;
+      color: #333;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      padding: 5px 10px;
+      transition: background-color 0.3s;
+    }
+    /* Hover effect */
+    .menu-item:hover {
+      background-color: #ddd;
+    }
+    /* Icon styling */
+    .menu-item .icon {
+      font-size: 20px;
+      margin-right: 5px;
+    }
         .dashboard-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -90,6 +118,32 @@
     </style>
 </head>
 <body>
+<nav>
+    <a href="notifications.html" class="menu-item">
+      <span class="icon">🌱</span>
+      <span class="label">Notifications</span>
+    </a>
+    <a href="climate.html" class="menu-item">
+      <span class="icon">🌦️</span>
+      <span class="label">Climate</span>
+    </a>
+    <a href="fields.html" class="menu-item">
+      <span class="icon">🌾</span>
+      <span class="label">Fields</span>
+    </a>
+    <a href="water.html" class="menu-item">
+      <span class="icon">💧</span>
+      <span class="label">Water</span>
+    </a>
+    <a href="reports.html" class="menu-item">
+      <span class="icon">📊</span>
+      <span class="label">Reports</span>
+    </a>
+    <a href="tutorials.html" class="menu-item">
+      <span class="icon">🎓</span>
+      <span class="label">Tutorials</span>
+    </a>
+  </nav>
     <div class="dashboard-container">
         <!-- Fields Card -->
         <div class="card" id="fields-card">
