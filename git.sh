@@ -1,14 +1,5 @@
-# Initialize Git
-git init
-
-# Add files
+### 6. Commit and Push
+```bash
 git add .
-
-# Initial commit
-git commit -m "Initial commit"
-
-# Create new repository on GitHub (via website)
-# Then link and push
-git remote add origin https://github.com/your-username/your-repo.git
-git branch -M main
-git push -u origin main
+git commit -m "Initial commit with Python application setup"
+git push origin main
