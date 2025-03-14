@@ -21,10 +21,16 @@ recommendations = [
 
 detailed_knowledge = [
     # ... (keep your detailed knowledge entries)
+    # Example entry format:
+    {
+        "title": "Irrigation Optimization",
+        "description": "Use soil moisture sensors to determine optimal watering times...",
+        "steps": ["Install sensors", "Analyze data", "Implement schedule"]
+    }
 ]
 
 # Create FAISS index
-doc_embeddings = np.array([model.encode(doc) for doc in detailed_knowledge])
+doc_embeddings = np.array([model.encode(doc["title"] + " " + doc["description"]) for doc in detailed_knowledge])
 index = faiss.IndexFlatL2(doc_embeddings.shape[1])
 index.add(doc_embeddings)
 
@@ -63,4 +69,4 @@ def get_details():
     })
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
