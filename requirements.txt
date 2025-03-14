@@ -1,8 +1,7 @@
-Flask==2.3.2
+flask==2.0.3
 flask-cors==3.0.10
 sentence-transformers==2.2.2
-faiss-cpu==1.7.2
+faiss-cpu==1.7.4
 numpy==1.23.5
-torch==2.0.1
-pytest==7.4.0
-flake8==6.0.0
+torch==1.13.1
+transformers==4.31.0
