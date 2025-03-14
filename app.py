@@ -1,16 +1,16 @@
+import os
 from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS  # Required for cross-origin requests
+from flask_cors import CORS
 from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 
-app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+app = Flask(__name__, template_folder=os.path.abspath('templates'))
+CORS(app)
 
-# Initialize the sentence transformer model
+# Initialize model and data
 model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
 
-# Expert recommendations
 recommendations = [
     "Optimize irrigation scheduling",
     "Implement field health monitoring",
@@ -19,46 +19,46 @@ recommendations = [
     "Follow weather-based farming recommendations"
 ]
 
-# Detailed knowledge base for each recommendation
 detailed_knowledge = [
-    """Irrigation Scheduling Details:
-- Use soil moisture sensors for precision watering
-- Adjust schedules based on crop growth stages
-- Consider evapotranspiration rates
-- Implement drip irrigation for efficiency""",
-
-    # ... (keep other detailed knowledge entries the same)
+    # ... (keep your detailed knowledge entries)
 ]
 
-# Create embeddings and FAISS index
+# Create FAISS index
 doc_embeddings = np.array([model.encode(doc) for doc in detailed_knowledge])
 index = faiss.IndexFlatL2(doc_embeddings.shape[1])
 index.add(doc_embeddings)
 
-# Serve HTML interface
 @app.route('/')
 def home():
-    return render_template('index.html')  # Make sure index.html is in templates/ folder
+    return render_template('index.html')
 
-# Existing API endpoints
 @app.route('/recommendations', methods=['GET'])
 def get_recommendations():
-    return jsonify(recommendations)
+    return jsonify({
+        "count": len(recommendations),
+        "recommendations": recommendations
+    })
 
 @app.route('/details', methods=['POST'])
 def get_details():
     data = request.json
-    recommendation_index = data.get('index')
+    if not data or 'index' not in data:
+        return jsonify({"error": "Missing index parameter"}), 400
+    
+    try:
+        index_num = int(data['index'])
+    except ValueError:
+        return jsonify({"error": "Invalid index format"}), 400
 
-    if recommendation_index is None or not 0 <= recommendation_index < len(recommendations):
-        return jsonify({"error": "Invalid recommendation index"}), 400
+    if not 0 <= index_num < len(recommendations):
+        return jsonify({"error": "Index out of range"}), 400
 
-    query = recommendations[recommendation_index]
+    query = recommendations[index_num]
     query_embedding = model.encode(query)
     _, indices = index.search(np.array([query_embedding]), k=1)
-
+    
     return jsonify({
-        "recommendation": recommendations[recommendation_index],
+        "recommendation": recommendations[index_num],
         "details": detailed_knowledge[indices[0][0]]
     })
 
