@@ -8,7 +8,7 @@ const hnswlib = require('hnswlib-node');
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static('public'));
+app.use(express.static('template'));
 
 // Sample data
 const recommendations = [
@@ -57,7 +57,7 @@ const initApp = async () => {
 
 // Routes
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/public/index.html');
+    res.sendFile(__dirname + '/template/index.html');
 });
 
 app.get('/recommendations', (req, res) => {
