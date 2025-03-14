@@ -1,5 +1,7 @@
-Flask==2.3.2
-   sentence-transformers==2.2.2
-   faiss-cpu==1.7.2
-   numpy==1.23.5
-   torch==2.0.1
+# For production dependencies
+# numpy==1.24.3
+# pandas==2.0.2
+
+# For development/testing
+pytest==7.4.0
+flake8==6.0.0
