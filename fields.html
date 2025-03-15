@@ -104,6 +104,29 @@
             max-width: 100px;
             border-radius: 6px;
         }
+
+        .field-form {
+            margin-top: 30px;
+            border: 2px solid #ccc;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .field-form input, .field-form select, .field-form button {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .field-form button {
+            background: var(--field-green);
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
     </style>
 </head>
 <body>
@@ -119,6 +142,18 @@
             <input type="file" id="mediaUpload" accept="image/*,video/*" multiple>
             <p>Drag and drop images/videos or click to upload</p>
             <div id="mediaPreview"></div>
+        </div>
+
+        <div class="field-form">
+            <h3>Register New Field</h3>
+            <input type="text" id="fieldName" placeholder="Field Name" required>
+            <input type="text" id="fieldCrop" placeholder="Crop Type" required>
+            <select id="fieldHealth">
+                <option value="good">Good</option>
+                <option value="fair">Fair</option>
+                <option value="poor">Poor</option>
+            </select>
+            <button id="registerFieldBtn">Register Field</button>
         </div>
 
         <button class="nav-button" id="dashboardBtn">Go to Dashboard</button>
@@ -190,6 +225,31 @@
 
             // Update localStorage
             localStorage.setItem('fieldData', JSON.stringify(fieldData));
+        });
+
+        // Register new field
+        document.getElementById('registerFieldBtn').addEventListener('click', () => {
+            const fieldName = document.getElementById('fieldName').value;
+            const fieldCrop = document.getElementById('fieldCrop').value;
+            const fieldHealth = document.getElementById('fieldHealth').value;
+
+            if (!fieldName || !fieldCrop) {
+                alert('Please complete all fields.');
+                return;
+            }
+
+            let fieldData = JSON.parse(localStorage.getItem('fieldData')) || { fields: [] };
+            fieldData.fields.push({
+                name: fieldName,
+                crop: fieldCrop,
+                health: fieldHealth,
+                yield: 'N/A',
+                lastUpdated: new Date().toISOString(),
+                media: []
+            });
+
+            localStorage.setItem('fieldData', JSON.stringify(fieldData));
+            loadFields();
         });
 
         // Navigation to dashboard
