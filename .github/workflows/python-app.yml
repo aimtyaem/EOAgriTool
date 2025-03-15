@@ -15,7 +15,7 @@ jobs:
       with:
         python-version: '3.9'
 
-    - name: Login to Azure
+    - name: aimtyaem
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
