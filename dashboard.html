@@ -180,6 +180,8 @@
 </div>
 
 <script>
+    const AZURE_API_ENDPOINT = "https://EOAgriTool.azurewebsites.net";
+
     document.addEventListener('DOMContentLoaded', () => {
         loadDashboardData();
     });
@@ -234,9 +236,7 @@
         `;
     }
 
-    const AZURE_API_ENDPOINT = "https://your-azure-app.azurewebsites.net";
-
-    async function loadRecommendations() {
+    async function fetchRecommendationsData() {
         try {
             const response = await fetch(`${AZURE_API_ENDPOINT}/recommendations`);
             const data = await response.json();
@@ -262,24 +262,50 @@
 
     async function loadDashboardData() {
         try {
-            const [fields, climate, water, reports] = await Promise.all([
+            const [fields, climate, water, reports, recommendations] = await Promise.all([
                 fetchFieldsData(),
                 fetchClimateData(),
                 fetchWaterData(),
                 fetchReportsData(),
-                loadRecommendations()
+                fetchRecommendationsData()
             ]);
 
             document.getElementById('fields-card').innerHTML = `<h3 class="card-title">Field Status</h3>${fields}`;
             document.getElementById('climate-card').innerHTML = `<h3 class="card-title">Climate Overview</h3>${climate}`;
             document.getElementById('water-card').innerHTML = `<h3 class="card-title">Water Resources</h3>${water}`;
             document.getElementById('reports-card').innerHTML = `<h3 class="card-title">Reports</h3>${reports}`;
+            document.getElementById('recommendations-card').innerHTML = `<h3 class="card-title">🌱 Expert Recommendations</h3>${recommendations}`;
         } catch (error) {
             console.error('Dashboard error:', error);
             document.querySelectorAll('.loading').forEach(el => {
                 el.textContent = '❌ Failed to load data.';
             });
         }
+    }
+
+    function renderRecommendationCards(recommendations) {
+        const recommendationsCard = document.getElementById('recommendations-card');
+        recommendationsCard.innerHTML = `<h3 class="card-title">🌱 Expert Recommendations</h3>`;
+        recommendations.forEach((rec, index) => {
+            const recElement = document.createElement('div');
+            recElement.innerHTML = `
+                <p><strong>${rec.title}</strong></p>
+                <p>${rec.summary}</p>
+                <button onclick="getRecommendationDetails(${index})">View Details</button>
+            `;
+            recommendationsCard.appendChild(recElement);
+        });
+    }
+
+    function displayDetailsModal(details) {
+        const modal = document.getElementById('detail-modal');
+        document.getElementById('modal-title').innerText = details.title;
+        document.getElementById('modal-details').innerText = details.content;
+        modal.style.display = 'flex';
+    }
+
+    function showError(message) {
+        console.error(message);
     }
 
     function timeSince(dateString) {
