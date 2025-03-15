@@ -234,31 +234,46 @@
         `;
     }
 
-    async function fetchRecommendationsData() {
-        const tutorialState = JSON.parse(localStorage.getItem('tutorialProgress')) || {};
-        const completedTutorials = tutorialState.completed || [];
-        return `
-            <div>
-                <p>Completed Tutorials: ${completedTutorials.length}</p>
-            </div>
-        `;
+    const AZURE_API_ENDPOINT = "https://your-azure-app.azurewebsites.net";
+
+    async function loadRecommendations() {
+        try {
+            const response = await fetch(`${AZURE_API_ENDPOINT}/recommendations`);
+            const data = await response.json();
+            renderRecommendationCards(data.recommendations);
+        } catch (error) {
+            showError("Failed to load agricultural recommendations");
+        }
+    }
+
+    async function getRecommendationDetails(index) {
+        try {
+            const response = await fetch(`${AZURE_API_ENDPOINT}/details`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ index })
+            });
+            const details = await response.json();
+            displayDetailsModal(details);
+        } catch (error) {
+            showError("Could not load recommendation details");
+        }
     }
 
     async function loadDashboardData() {
         try {
-            const [fields, climate, water, reports, recommendations] = await Promise.all([
+            const [fields, climate, water, reports] = await Promise.all([
                 fetchFieldsData(),
                 fetchClimateData(),
                 fetchWaterData(),
                 fetchReportsData(),
-                fetchRecommendationsData()
+                loadRecommendations()
             ]);
 
             document.getElementById('fields-card').innerHTML = `<h3 class="card-title">Field Status</h3>${fields}`;
             document.getElementById('climate-card').innerHTML = `<h3 class="card-title">Climate Overview</h3>${climate}`;
             document.getElementById('water-card').innerHTML = `<h3 class="card-title">Water Resources</h3>${water}`;
             document.getElementById('reports-card').innerHTML = `<h3 class="card-title">Reports</h3>${reports}`;
-            document.getElementById('recommendations-card').innerHTML = `<h3 class="card-title">🌱 Expert Recommendations</h3>${recommendations}`;
         } catch (error) {
             console.error('Dashboard error:', error);
             document.querySelectorAll('.loading').forEach(el => {
