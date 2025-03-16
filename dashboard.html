@@ -243,6 +243,10 @@
             renderRecommendationCards(data.recommendations);
         } catch (error) {
             showError("Failed to load agricultural recommendations");
+            document.getElementById('recommendations-card').innerHTML = `
+                <h3 class="card-title">🌱 Expert Recommendations</h3>
+                <div class="loading">❌ Failed to load recommendations.</div>
+            `;
         }
     }
 
