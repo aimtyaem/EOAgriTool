@@ -51,6 +51,10 @@ def generate_recommendation_cards(num_cards=3):
 
     return recommendation_cards
 
+@app.route("/api/recommendations")
+def api_recommendations():
+    return jsonify(generate_recommendation_cards())
+
 @app.route("/")
 def home():
     return render_template("index.html", recommendations=generate_recommendation_cards())
