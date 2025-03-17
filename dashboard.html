@@ -180,8 +180,6 @@
 </div>
 
 <script>
-    const AZURE_API_ENDPOINT = "https://eoagritool-cwfzfndaazauawex.canadacentral-01.azurewebsites.net";
-
     document.addEventListener('DOMContentLoaded', () => {
         loadDashboardData();
     });
@@ -238,9 +236,9 @@
 
     async function fetchRecommendationsData() {
         try {
-            const response = await fetch(`${AZURE_API_ENDPOINT}/recommendations`);
+            const response = await fetch("/api/recommendations");
             const data = await response.json();
-            renderRecommendationCards(data.recommendations);
+            renderRecommendationCards(data);
         } catch (error) {
             showError("Failed to load agricultural recommendations");
             document.getElementById('recommendations-card').innerHTML = `
@@ -294,8 +292,7 @@
             const recElement = document.createElement('div');
             recElement.innerHTML = `
                 <p><strong>${rec.title}</strong></p>
-                <p>${rec.summary}</p>
-                <button onclick="getRecommendationDetails(${index})">View Details</button>
+                <p>${rec.details}</p>
             `;
             recommendationsCard.appendChild(recElement);
         });
