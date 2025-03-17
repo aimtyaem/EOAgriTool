@@ -180,40 +180,153 @@
 </div>
 
 <script>
-    const API_BASE = "http:// aimty.pythonanywhere.com"; 
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDashboardData();
+    });
+
+    async function fetchFieldsData() {
+        const fieldsData = JSON.parse(localStorage.getItem('fieldData')) || { fields: [] };
+        if (fieldsData.fields.length === 0) {
+            return '<p>No fields registered yet.</p>';
+        }
+        return fieldsData.fields.map(field => `
+            <div>
+                <p><strong>${field.name}</strong></p>
+                <p>Crop: ${field.crop}</p>
+                <p>Yield: ${field.yield}</p>
+                <p>Health: ${field.health.charAt(0).toUpperCase() + field.health.slice(1)}</p>
+                <p>Last Updated: ${timeSince(field.lastUpdated)} ago</p>
+            </div>
+        `).join('');
+    }
+
+    async function fetchClimateData() {
+        const climateData = JSON.parse(localStorage.getItem('climateDashboardData')) || {};
+        return `
+            <div>
+                <p>Average Temperature: ${climateData.avgTemp}°C</p>
+                <p>Last Recorded Precipitation: ${climateData.lastPrecip}mm</p>
+            </div>
+        `;
+    }
+
+    async function fetchWaterData() {
+        const waterData = JSON.parse(localStorage.getItem('waterData')) || {
+            surface: [],
+            groundwater: [],
+            irrigation: []
+        };
+        return `
+            <div>
+                <p>Surface Water: ${waterData.surface.length} bodies</p>
+                <p>Groundwater: ${waterData.groundwater.length} regions</p>
+                <p>Irrigation: ${waterData.irrigation.length} schedules</p>
+            </div>
+        `;
+    }
+
+    async function fetchReportsData() {
+        const reportData = JSON.parse(localStorage.getItem('agritoolReport')) || {};
+        return `
+            <div>
+                <p>Last Report Generated: ${new Date(reportData.lastGenerated).toLocaleDateString()}</p>
+            </div>
+        `;
+    }
+
+    async function fetchRecommendationsData() {
+        try {
+            const response = await fetch("/api/recommendations");
+            const data = await response.json();
+            renderRecommendationCards(data);
+        } catch (error) {
+            showError("Failed to load agricultural recommendations");
+            document.getElementById('recommendations-card').innerHTML = `
+                <h3 class="card-title">🌱 Expert Recommendations</h3>
+                <div class="loading">❌ Failed to load recommendations.</div>
+            `;
+        }
+    }
+
+    async function getRecommendationDetails(index) {
+        try {
+            const response = await fetch("/api/details", {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ index })
+            });
+            const details = await response.json();
+            displayDetailsModal(details);
+        } catch (error) {
+            showError("Could not load recommendation details");
+        }
+    }
 
     async function loadDashboardData() {
         try {
-            const [fields, climate, water, reports, recommendations] = await Promise.all([
-                fetchData('fields'),
-                fetchData('climate'),
-                fetchData('water'),
-                fetchData('reports'),
-                fetchData('recommendations')
+            const [fields, climate, water, reports] = await Promise.all([
+                fetchFieldsData(),
+                fetchClimateData(),
+                fetchWaterData(),
+                fetchReportsData(),
+                fetchRecommendationsData()
             ]);
 
-            updateDashboardUI({ fields, climate, water, reports, recommendations });
+            document.getElementById('fields-card').innerHTML = `<h3 class="card-title">Field Status</h3>${fields}`;
+            document.getElementById('climate-card').innerHTML = `<h3 class="card-title">Climate Overview</h3>${climate}`;
+            document.getElementById('water-card').innerHTML = `<h3 class="card-title">Water Resources</h3>${water}`;
+            document.getElementById('reports-card').innerHTML = `<h3 class="card-title">Reports</h3>${reports}`;
         } catch (error) {
             console.error('Dashboard error:', error);
+            document.querySelectorAll('.loading').forEach(el => {
+                el.textContent = '❌ Failed to load data.';
+            });
         }
     }
 
-    async function fetchData(endpoint) {
-        try {
-            const response = await fetch(`${API_BASE}/${endpoint}`);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return await response.json();
-        } catch (error) {
-            console.error(`Error fetching ${endpoint}:`, error);
-            return { error: true };
+    function renderRecommendationCards(recommendations) {
+        const recommendationsCard = document.getElementById('recommendations-card');
+        recommendationsCard.innerHTML = `<h3 class="card-title">🌱 Expert Recommendations</h3>`;
+        recommendations.forEach((rec, index) => {
+            const recElement = document.createElement('div');
+            recElement.innerHTML = `
+                <p><strong>${rec.title}</strong></p>
+                <p>${rec.details}</p>
+            `;
+            recommendationsCard.appendChild(recElement);
+        });
+    }
+
+    function displayDetailsModal(details) {
+        const modal = document.getElementById('detail-modal');
+        document.getElementById('modal-title').innerText = details.title;
+        document.getElementById('modal-details').innerText = details.content;
+        modal.style.display = 'flex';
+    }
+
+    function showError(message) {
+        console.error(message);
+    }
+
+    function timeSince(dateString) {
+        const date = new Date(dateString);
+        const seconds = Math.floor((new Date() - date) / 1000);
+        const intervals = {
+            year: 31536000,
+            month: 2592000,
+            day: 86400,
+            hour: 3600,
+            minute: 60
+        };
+
+        for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+            const interval = Math.floor(seconds / secondsInUnit);
+            if (interval >= 1) {
+                return `${interval} ${unit}${interval !== 1 ? 's' : ''}`;
+            }
         }
+        return 'just now';
     }
-
-    function updateDashboardUI(data) {
-        document.getElementById('fields-card').innerHTML = `<h3 class="card-title">Field Status</h3>${data.fields.length > 0 ? data.fields.map(f => `<p>${f.name}: ${f.yield}</p>`).join('') : '<p>No data</p>'}`;
-    }
-
-    document.addEventListener('DOMContentLoaded', loadDashboardData);
 </script>
 
 </body>
