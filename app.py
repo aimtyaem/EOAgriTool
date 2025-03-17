@@ -1,89 +1,63 @@
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-import numpy as np
+from flask import Flask, render_template, jsonify
+import random
 
 app = Flask(__name__)
-CORS(app)
 
-# Expert recommendations
-recommendations = [
-    "Optimize irrigation scheduling",
-    "Implement field health monitoring",
-    "Set up pest & disease alerts",
-    "Conduct soil analysis & fertilization advice",
-    "Follow weather-based farming recommendations"
-]
+# Agriculture Knowledge Base
+AGRICULTURE_KNOWLEDGE_BASE = {
+    "recommendations": [
+        "Implement precision irrigation scheduling",
+        "Adopt integrated pest management",
+        "Use soil moisture sensors",
+        "Apply crop rotation strategies",
+        "Monitor weather patterns for planting",
+        "Utilize organic fertilizers",
+        "Practice conservation tillage",
+        "Install windbreaks for soil protection"
+    ],
+    "details": [
+        """Precision Irrigation Best Practices:
+        - Use soil moisture sensors for data-driven watering
+        - Implement drip irrigation systems
+        - Schedule irrigation during cooler hours
+        - Monitor evapotranspiration rates
+        - Adjust for crop growth stages""",
 
-# Detailed knowledge base for each recommendation
-detailed_knowledge = {
-    "Optimize irrigation scheduling": """Irrigation Scheduling Details:
-- Use soil moisture sensors for precision watering
-- Adjust schedules based on crop growth stages
-- Consider evapotranspiration rates
-- Implement drip irrigation for efficiency""",
-
-    "Implement field health monitoring": """Field Health Monitoring Details:
-- Regular satellite imagery analysis
-- Drone-based NDVI scans weekly
-- Soil nutrient level tracking
-- Early stress detection algorithms""",
-
-    "Set up pest & disease alerts": """Pest & Disease Alerts Details:
-- Automated pheromone trap monitoring
-- Weather-based outbreak prediction
-- Image recognition for disease identification
-- Integrated pest management strategies""",
-
-    "Conduct soil analysis & fertilization advice": """Soil Analysis Details:
-- Seasonal nutrient profiling
-- pH balance optimization
-- Organic matter content analysis
-- Custom fertilizer blending recommendations""",
-
-    "Follow weather-based farming recommendations": """Weather-based Farming Details:
-- Microclimate prediction models
-- Frost/heatwave early warning systems
-- Rainfall pattern adaptation
-- Crop variety selection advisor"""
+        """Integrated Pest Management:
+        - Regular field scouting
+        - Use biological control agents
+        - Implement trap cropping
+        - Apply targeted pesticides
+        - Maintain pest monitoring records"""
+    ]
 }
 
-# Convert recommendations into numerical vectors for search
-def text_to_vector(text):
-    return np.array([ord(char) for char in text])
+def generate_recommendation_cards(num_cards=3):
+    """
+    Generates recommendation dashboard cards for farmers.
+    """
+    recommendations = AGRICULTURE_KNOWLEDGE_BASE["recommendations"]
+    details = AGRICULTURE_KNOWLEDGE_BASE["details"]
 
-recommendation_vectors = {rec: text_to_vector(rec) for rec in recommendations}
+    selected_recommendations = random.sample(recommendations, min(num_cards, len(recommendations)))
 
-def find_best_match(query):
-    """Find the most relevant recommendation using cosine similarity"""
-    query_vector = text_to_vector(query)
-    similarities = {
-        rec: np.dot(query_vector, rec_vector) / (np.linalg.norm(query_vector) * np.linalg.norm(rec_vector))
-        for rec, rec_vector in recommendation_vectors.items()
-    }
-    return max(similarities, key=similarities.get)
+    recommendation_cards = []
+    for rec in selected_recommendations:
+        detail_index = recommendations.index(rec) if recommendations.index(rec) < len(details) else None
+        recommendation_cards.append({
+            "title": rec,
+            "details": details[detail_index] if detail_index is not None else "Additional information not available."
+        })
 
-@app.route('/')
+    return recommendation_cards
+
+@app.route("/")
 def home():
-    return jsonify({"message": "Welcome to the Agricultural Expert System API!"})
+    return render_template("index.html", recommendations=generate_recommendation_cards())
 
-@app.route('/recommendations', methods=['GET'])
-def get_recommendations():
-    return jsonify({"recommendations": recommendations})
+@app.route("/api/recommendations")
+def api_recommendations():
+    return jsonify(generate_recommendation_cards())
 
-@app.route('/recommendation/detail', methods=['GET'])
-def get_recommendation_detail():
-    query = request.args.get('query', '').strip()
-    if not query:
-        return jsonify({"error": "Query parameter is required"}), 400
-
-    best_match = find_best_match(query)
-    detail = detailed_knowledge.get(best_match, "No details available.")
-
-    return jsonify({
-        "query": query,
-        "matched_recommendation": best_match,
-        "details": detail
-    })
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000)
