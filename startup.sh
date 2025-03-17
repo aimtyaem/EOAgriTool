@@ -1,9 +1,6 @@
-gunicorn --bind=0.0.0.0:$PORT --timeout 600 app:app
-Name: WEBSITES_PORT
-   Value: 8000
-
-   Name: SCM_DO_BUILD_DURING_DEPLOYMENT
-   Value: true
-
-   Name: WEBSITE_WEBDEPLOY_USE_SCM
-   Value: true
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/aimtyaem/EOAgriTool.git
+git push -u origin main
