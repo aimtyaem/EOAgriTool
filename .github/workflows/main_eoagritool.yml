@@ -77,5 +77,4 @@ jobs:
         id: deploy-to-webapp
         with:
           app-name: 'EOAgriTool'
-          slot-name: 'Production'
-          
+          slot-name: 'Production'
