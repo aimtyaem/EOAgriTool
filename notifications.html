@@ -113,6 +113,47 @@
 
             alertList.appendChild(li);
         });
+ document.addEventListener('DOMContentLoaded', () => {
+        loadNotifications();
+    });
+
+    function loadNotifications() {
+        const notificationsData = JSON.parse(localStorage.getItem('notificationsData')) || { alerts: [] };
+        const notificationsContainer = document.getElementById('notifications-container');
+
+        if (!notificationsData.alerts.length) {
+            notificationsContainer.innerHTML = '<p>No notifications available.</p>';
+            return;
+        }
+
+        notificationsContainer.innerHTML = notificationsData.alerts.map(alert => `
+            <div class="alert">
+                <p><strong>${alert.title}</strong></p>
+                <p>${alert.message}</p>
+                <p>Received: ${timeSince(alert.timestamp)} ago</p>
+            </div>
+        `).join('');
+    }
+
+    function timeSince(dateString) {
+        const date = new Date(dateString);
+        const seconds = Math.floor((new Date() - date) / 1000);
+        const intervals = {
+            year: 31536000,
+            month: 2592000,
+            day: 86400,
+            hour: 3600,
+            minute: 60
+        };
+
+        for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+            const interval = Math.floor(seconds / secondsInUnit);
+            if (interval >= 1) {
+                return `${interval} ${unit}${interval !== 1 ? 's' : ''}`;
+            }
+        }
+        return 'just now';
+    }
 
         // Navigation Button Component
         const navButton = document.createElement('button');
