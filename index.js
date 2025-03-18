@@ -4,6 +4,7 @@ const cors = require('cors'); // Added CORS support
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const DOMAIN = '20.48.204.5';
 
 app.use(cors()); // Enable CORS for frontend communication
 app.use(bodyParser.json());
@@ -53,7 +54,7 @@ app.post('/api/details', (req, res) => {
     res.json({ detail: detailed_knowledge[index] });
 });
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+// Start the server on the specified domain and port
+app.listen(PORT, DOMAIN, () => {
+    console.log(`Server running on http://${DOMAIN}:${PORT}`);
 });
