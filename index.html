@@ -15,6 +15,22 @@
 
         body {
             background: #f5f6fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+       } 
+        #messageContainer {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
         .container {
@@ -152,68 +168,13 @@
             }
         });
 
-        function initializeNotifications() {
-            const alerts = [
-                { 
-                    category: "Pest & Disease Outbreaks", 
-                    subtitle: "Diseases",
-                    url: "pest-disease.html"
-                },
-                { 
-                    category: "Weather Alerts", 
-                    subtitle: "Extreme weather warning",
-                    url: "weather-alerts.html"
-                },
-                { 
-                    category: "Equipment Maintenance", 
-                    subtitle: "Tractor service due",
-                    url: "equipment.html"
-                }
-            ];
+    <div id="messageContainer">Welcome to EOAgriTool</div>
 
-            const alertList = document.querySelector('.alert-list');
-            
-            // Create alert items with navigation
-            alerts.forEach(alert => {
-                const li = document.createElement('li');
-                li.className = 'alert-item';
-                li.innerHTML = `
-                    <div class="alert-category">${alert.category}</div>
-                    <div class="alert-subtitle">${alert.subtitle}</div>
-                `;
-                
-                li.addEventListener('click', () => {
-                    window.location.href = alert.url;
-                });
-                
-                alertList.appendChild(li);
-            });
+    <script>
+        setTimeout(() => {
+            window.location.href = "dashboard.html"; // Redirect after 3 seconds
+        }, 3000);
 
-            // Add Dashboard navigation button
-            const navButton = document.createElement('button');
-            navButton.textContent = 'Go to Dashboard';
-            navButton.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                padding: 12px 24px;
-                background-color: #2c5f2d;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-size: 16px;
-                cursor: pointer;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                transition: all 0.3s ease;
-                z-index: 1000;
-            `;
-            navButton.addEventListener('click', () => {
-                window.location.href = 'dashboard.html';
-            });
-            document.body.appendChild(navButton);
-        }
-
-        // ... (existing style injection remains unchanged) ...
     </script>
 </body>
 </html>
