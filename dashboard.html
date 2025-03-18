@@ -168,26 +168,6 @@
         <h3 class="card-title">🌱 Expert Recommendations</h3>
         <div class="loading">⏳ Loading...</div>
     </div>
-
-    <div class="card" id="tutorials-card">
-        <h3 class="card-title">🎓 Tutorials</h3>
-        <div class="loading">⏳ Loading...</div>
-    </div>
-
-    <div class="card" id="iot-sensor-card">
-        <h3 class="card-title">🌡️ Real-Time Field Sensors</h3>
-        <div class="sensor-grid" id="sensor-readings"></div>
-    </div>
-
-    <div class="card" id="predictive-card">
-        <h3 class="card-title">🔮 Yield Prediction</h3>
-        <div id="predictive-chart"></div>
-    </div>
-
-    <div class="card" id="equipment-card">
-        <h3 class="card-title">🚜 Equipment Status</h3>
-        <div class="equipment-list" id="equipment-status"></div>
-    </div>
 </div>
 
 <!-- Modal -->
@@ -204,27 +184,12 @@
         loadDashboardData();
     });
 
-    function loadDashboardData() {
-        const fieldsData = JSON.parse(localStorage.getItem('fieldsData')) || { fields: [] };
-        const climateData = JSON.parse(localStorage.getItem('climateData')) || {};
-        const waterData = JSON.parse(localStorage.getItem('waterData')) || {};
-        const reportsData = JSON.parse(localStorage.getItem('reportsData')) || {};
-        const recommendationsData = JSON.parse(localStorage.getItem('recommendationsData')) || {};
-        const tutorialsData = JSON.parse(localStorage.getItem('tutorialsData')) || {};
-
-        document.getElementById('fields-card').innerHTML = `<h3 class="card-title">Field Status</h3>${renderFields(fieldsData)}`;
-        document.getElementById('climate-card').innerHTML = `<h3 class="card-title">Climate Overview</h3>${renderClimate(climateData)}`;
-        document.getElementById('water-card').innerHTML = `<h3 class="card-title">Water Resources</h3>${renderWater(waterData)}`;
-        document.getElementById('reports-card').innerHTML = `<h3 class="card-title">Reports</h3>${renderReports(reportsData)}`;
-        document.getElementById('recommendations-card').innerHTML = `<h3 class="card-title">🌱 Expert Recommendations</h3>${renderRecommendations(recommendationsData)}`;
-        document.getElementById('tutorials-card').innerHTML = `<h3 class="card-title">🎓 Tutorials</h3>${renderTutorials(tutorialsData)}`;
-    }
-
-    function renderFields(data) {
-        if (!data.fields.length) {
+    async function fetchFieldsData() {
+        const fieldsData = JSON.parse(localStorage.getItem('fieldData')) || { fields: [] };
+        if (fieldsData.fields.length === 0) {
             return '<p>No fields registered yet.</p>';
         }
-        return data.fields.map(field => `
+        return fieldsData.fields.map(field => `
             <div>
                 <p><strong>${field.name}</strong></p>
                 <p>Crop: ${field.crop}</p>
@@ -235,56 +200,112 @@
         `).join('');
     }
 
-    function renderClimate(data) {
+    async function fetchClimateData() {
+        const climateData = JSON.parse(localStorage.getItem('climateDashboardData')) || {};
         return `
             <div>
-                <p>Average Temperature: ${data.avgTemp}°C</p>
-                <p>Last Recorded Precipitation: ${data.lastPrecip}mm</p>
+                <p>Average Temperature: ${climateData.avgTemp}°C</p>
+                <p>Last Recorded Precipitation: ${climateData.lastPrecip}mm</p>
             </div>
         `;
     }
 
-    function renderWater(data) {
+    async function fetchWaterData() {
+        const waterData = JSON.parse(localStorage.getItem('waterData')) || {
+            surface: [],
+            groundwater: [],
+            irrigation: []
+        };
         return `
             <div>
-                <p>Surface Water: ${data.surface.length} bodies</p>
-                <p>Groundwater: ${data.groundwater.length} regions</p>
-                <p>Irrigation: ${data.irrigation.length} schedules</p>
+                <p>Surface Water: ${waterData.surface.length} bodies</p>
+                <p>Groundwater: ${waterData.groundwater.length} regions</p>
+                <p>Irrigation: ${waterData.irrigation.length} schedules</p>
             </div>
         `;
     }
 
-    function renderReports(data) {
+    async function fetchReportsData() {
+        const reportData = JSON.parse(localStorage.getItem('agritoolReport')) || {};
         return `
             <div>
-                <p>Last Report Generated: ${new Date(data.lastGenerated).toLocaleDateString()}</p>
+                <p>Last Report Generated: ${new Date(reportData.lastGenerated).toLocaleDateString()}</p>
             </div>
         `;
     }
 
-    function renderRecommendations(data) {
-        if (!data.recommendations.length) {
-            return '<p>No recommendations available.</p>';
+    async function fetchRecommendationsData() {
+        try {
+            const response = await fetch("/api/recommendations");
+            const data = await response.json();
+            renderRecommendationCards(data);
+        } catch (error) {
+            showError("Failed to load agricultural recommendations");
+            document.getElementById('recommendations-card').innerHTML = `
+                <h3 class="card-title">🌱 Expert Recommendations</h3>
+                <div class="loading">❌ Failed to load recommendations.</div>
+            `;
         }
-        return data.recommendations.map(rec => `
-            <div>
+    }
+
+    async function getRecommendationDetails(index) {
+        try {
+            const response = await fetch("/api/details", {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ index })
+            });
+            const details = await response.json();
+            displayDetailsModal(details);
+        } catch (error) {
+            showError("Could not load recommendation details");
+        }
+    }
+
+    async function loadDashboardData() {
+        try {
+            const [fields, climate, water, reports] = await Promise.all([
+                fetchFieldsData(),
+                fetchClimateData(),
+                fetchWaterData(),
+                fetchReportsData(),
+                fetchRecommendationsData()
+            ]);
+
+            document.getElementById('fields-card').innerHTML = `<h3 class="card-title">Field Status</h3>${fields}`;
+            document.getElementById('climate-card').innerHTML = `<h3 class="card-title">Climate Overview</h3>${climate}`;
+            document.getElementById('water-card').innerHTML = `<h3 class="card-title">Water Resources</h3>${water}`;
+            document.getElementById('reports-card').innerHTML = `<h3 class="card-title">Reports</h3>${reports}`;
+        } catch (error) {
+            console.error('Dashboard error:', error);
+            document.querySelectorAll('.loading').forEach(el => {
+                el.textContent = '❌ Failed to load data.';
+            });
+        }
+    }
+
+    function renderRecommendationCards(recommendations) {
+        const recommendationsCard = document.getElementById('recommendations-card');
+        recommendationsCard.innerHTML = `<h3 class="card-title">🌱 Expert Recommendations</h3>`;
+        recommendations.forEach((rec, index) => {
+            const recElement = document.createElement('div');
+            recElement.innerHTML = `
                 <p><strong>${rec.title}</strong></p>
                 <p>${rec.details}</p>
-            </div>
-        `).join('');
+            `;
+            recommendationsCard.appendChild(recElement);
+        });
     }
 
-    function renderTutorials(data) {
-        if (!data.tutorials.length) {
-            return '<p>No tutorials available.</p>';
-        }
-        return data.tutorials.map(tutorial => `
-            <div>
-                <p><strong>${tutorial.title}</strong></p>
-                <p>${tutorial.description}</p>
-                <p>Duration: ${tutorial.duration} minutes</p>
-            </div>
-        `).join('');
+    function displayDetailsModal(details) {
+        const modal = document.getElementById('detail-modal');
+        document.getElementById('modal-title').innerText = details.title;
+        document.getElementById('modal-details').innerText = details.content;
+        modal.style.display = 'flex';
+    }
+
+    function showError(message) {
+        console.error(message);
     }
 
     function timeSince(dateString) {
