@@ -8,12 +8,11 @@
     "dev": "nodemon index.js"
   },
   "dependencies": {
-  "@azure/communication-common": "^10.7.0" 
-  }
+    "@azure/communication-common": "^10.7.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.0"
- },
+  },
   "engines": {
     "node": ">=14.0.0"
   },
