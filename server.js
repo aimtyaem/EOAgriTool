@@ -68,5 +68,5 @@ app.get("/api/recommendations", (req, res) => {
 
 // Start the server
 app.listen(PORT, () => {
-    console.log(`Server is running on http://0.0.0.0:${PORT}`);
+    console.log(`Server is running on http://20.48.204.5:${PORT}`);
 });
