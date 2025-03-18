@@ -14,7 +14,7 @@
     "nodemon": "^10.7.0"
   },
   "engines": {
-    "node": ">=18.20.3"
+    "node": ">=14.0.0"
   },
   "keywords": ["agriculture", "recommendations", "API"],
   "license": "MIT"
