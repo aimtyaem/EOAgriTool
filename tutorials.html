@@ -194,12 +194,27 @@
             });
         });
 
-        // Update dashboard
-        function updateDashboard() {
-            // This function would be in dashboard.html
-            const progress = Math.round((tutorialState.completed.length / 2) * 100);
-            localStorage.setItem('trainingProgress', progress);
-        }
+        <!-- tutorials.html -->
+    document.addEventListener('DOMContentLoaded', () => {
+        const tutorialsData = {
+            tutorials: [
+                {
+                    title: 'Understanding Environmental Data',
+                    description: 'Learn about the importance of environmental data.',
+                    duration: 15,
+                    completed: false
+                },
+                {
+                    title: 'Using the AgriTool',
+                    description: 'A comprehensive guide to using the AgriTool.',
+                    duration: 20,
+                    completed: false
+                }
+            ]
+        };
+        localStorage.setItem('tutorialsData', JSON.stringify(tutorialsData));
+    });
+
     </script>
 </body>
 </html>
