@@ -9,7 +9,7 @@
   },
   "dependencies": {
   "@azure/communication-common": "^10.7.0" 
-}
+  }
   },
   "devDependencies": {
     "nodemon": "^3.0.0"
