@@ -14,6 +14,9 @@
   "devDependencies": {
     "nodemon": "^3.0.0"
   },
+"dependencies": {
+  "@azure/communication-common": "^1.x.x" 
+}, 
   "engines": {
     "node": ">=14.0.0"
   },
