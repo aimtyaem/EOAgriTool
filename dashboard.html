@@ -167,6 +167,11 @@
     <div class="card" id="recommendations-card">
         <h3 class="card-title">🌱 Expert Recommendations</h3>
         <div class="loading">⏳ Loading...</div>
+
+    <div class="card" id="recommendations-card">
+        <h3 class="card-title"></h3>
+        <button id="refresh-recommendations">🔄 Refresh Recommendations</button>
+        <div id="recommendations-list"></div>
     </div>
 </div>
 
@@ -178,155 +183,115 @@
         <p id="modal-details"></p>
     </div>
 </div>
+    </div>
+
+    <div class="card" id="tutorials-card">
+        <h3 class="card-title">🎓 Tutorials</h3>
+        <div class="loading">⏳ Loading...</div>
+    </div>
+
+    <div class="card" id="iot-sensor-card">
+        <h3 class="card-title">🌡️ Real-Time Field Sensors</h3>
+        <div class="sensor-grid" id="sensor-readings"></div>
+    </div>
+
+    <div class="card" id="predictive-card">
+        <h3 class="card-title">🔮 Yield Prediction</h3>
+        <div id="predictive-chart"></div>
+    </div>
+
+    <div class="card" id="equipment-card">
+        <h3 class="card-title">🚜 Equipment Status</h3>
+        <div class="equipment-list" id="equipment-status"></div>
+    </div>
+
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        loadDashboardData();
-    });
+    // Function to handle dynamic active class for navigation
+    function updateActiveNavLink() {
+        const navLinks = document.querySelectorAll('.nav-links .menu-item');
+        const currentPath = window.location.pathname.split('/').pop(); // Get the last part of the URL
 
-    async function fetchFieldsData() {
-        const fieldsData = JSON.parse(localStorage.getItem('fieldData')) || { fields: [] };
-        if (fieldsData.fields.length === 0) {
-            return '<p>No fields registered yet.</p>';
-        }
-        return fieldsData.fields.map(field => `
-            <div>
-                <p><strong>${field.name}</strong></p>
-                <p>Crop: ${field.crop}</p>
-                <p>Yield: ${field.yield}</p>
-                <p>Health: ${field.health.charAt(0).toUpperCase() + field.health.slice(1)}</p>
-                <p>Last Updated: ${timeSince(field.lastUpdated)} ago</p>
-            </div>
-        `).join('');
-    }
-
-    async function fetchClimateData() {
-        const climateData = JSON.parse(localStorage.getItem('climateDashboardData')) || {};
-        return `
-            <div>
-                <p>Average Temperature: ${climateData.avgTemp}°C</p>
-                <p>Last Recorded Precipitation: ${climateData.lastPrecip}mm</p>
-            </div>
-        `;
-    }
-
-    async function fetchWaterData() {
-        const waterData = JSON.parse(localStorage.getItem('waterData')) || {
-            surface: [],
-            groundwater: [],
-            irrigation: []
-        };
-        return `
-            <div>
-                <p>Surface Water: ${waterData.surface.length} bodies</p>
-                <p>Groundwater: ${waterData.groundwater.length} regions</p>
-                <p>Irrigation: ${waterData.irrigation.length} schedules</p>
-            </div>
-        `;
-    }
-
-    async function fetchReportsData() {
-        const reportData = JSON.parse(localStorage.getItem('agritoolReport')) || {};
-        return `
-            <div>
-                <p>Last Report Generated: ${new Date(reportData.lastGenerated).toLocaleDateString()}</p>
-            </div>
-        `;
-    }
-
-    async function fetchRecommendationsData() {
-        try {
-            const response = await fetch("/api/recommendations");
-            const data = await response.json();
-            renderRecommendationCards(data);
-        } catch (error) {
-            showError("Failed to load agricultural recommendations");
-            document.getElementById('recommendations-card').innerHTML = `
-                <h3 class="card-title">🌱 Expert Recommendations</h3>
-                <div class="loading">❌ Failed to load recommendations.</div>
-            `;
-        }
-    }
-
-    async function getRecommendationDetails(index) {
-        try {
-            const response = await fetch(`${AZURE_API_ENDPOINT}/details`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ index })
-            });
-            const details = await response.json();
-            displayDetailsModal(details);
-        } catch (error) {
-            showError("Could not load recommendation details");
-        }
-    }
-
-    async function loadDashboardData() {
-        try {
-            const [fields, climate, water, reports, recommendations] = await Promise.all([
-                fetchFieldsData(),
-                fetchClimateData(),
-                fetchWaterData(),
-                fetchReportsData(),
-                fetchRecommendationsData()
-            ]);
-
-            document.getElementById('fields-card').innerHTML = `<h3 class="card-title">Field Status</h3>${fields}`;
-            document.getElementById('climate-card').innerHTML = `<h3 class="card-title">Climate Overview</h3>${climate}`;
-            document.getElementById('water-card').innerHTML = `<h3 class="card-title">Water Resources</h3>${water}`;
-            document.getElementById('reports-card').innerHTML = `<h3 class="card-title">Reports</h3>${reports}`;
-            document.getElementById('recommendations-card').innerHTML = `<h3 class="card-title">🌱 Expert Recommendations</h3>${recommendations}`;
-        } catch (error) {
-            console.error('Dashboard error:', error);
-            document.querySelectorAll('.loading').forEach(el => {
-                el.textContent = '❌ Failed to load data.';
-            });
-        }
-    }
-
-    function renderRecommendationCards(recommendations) {
-        const recommendationsCard = document.getElementById('recommendations-card');
-        recommendationsCard.innerHTML = `<h3 class="card-title">🌱 Expert Recommendations</h3>`;
-        recommendations.forEach((rec, index) => {
-            const recElement = document.createElement('div');
-            recElement.innerHTML = `
-                <p><strong>${rec.title}</strong></p>
-                <p>${rec.details}</p>
-            `;
-            recommendationsCard.appendChild(recElement);
+        navLinks.forEach(link => {
+            const linkPath = link.getAttribute('href').split('/').pop();
+            if (linkPath === currentPath) {
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
         });
     }
 
-    function displayDetailsModal(details) {
-        const modal = document.getElementById('detail-modal');
-        document.getElementById('modal-title').innerText = details.title;
-        document.getElementById('modal-details').innerText = details.content;
-        modal.style.display = 'flex';
-    }
+    // Call the function on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        updateActiveNavLink();
+        fetchReportsData();
+        fetchTutorialsData();
+    });
 
-    function showError(message) {
-        console.error(message);
-    }
-
-    function timeSince(dateString) {
-        const date = new Date(dateString);
-        const seconds = Math.floor((new Date() - date) / 1000);
-        const intervals = {
-            year: 31536000,
-            month: 2592000,
-            day: 86400,
-            hour: 3600,
-            minute: 60
-        };
-
-        for (const [unit, secondsInUnit] of Object.entries(intervals)) {
-            const interval = Math.floor(seconds / secondsInUnit);
-            if (interval >= 1) {
-                return `${interval} ${unit}${interval !== 1 ? 's' : ''}`;
+    // Sync Reports and Tutorials (Assuming these functions are meant to fetch and display data)
+    async function fetchReportsData() {
+        // 'https://eoagritool.z39.web.core.windows.net'  API endpoint
+        try {
+            const response = await fetch('reports.html');
+            if (!response.ok) {
+                console.error('Failed to fetch reports:', response.status);
+                document.getElementById('reports-card').innerHTML = `
+                    <h3 class="card-title">📊 Reports</h3>
+                    <p class="error-message">Failed to load reports.</p>
+                `;
+                return;
             }
+            const data = await response.json();
+            document.getElementById('reports-card').innerHTML = `
+                <h3 class="card-title">📊 Reports</h3>
+                <div>
+                    ${data.map(report => `
+                        <p><strong>${report.title}</strong></p>
+                        <p>${report.summary}</p>
+                        <p>Date: ${new Date(report.date).toLocaleDateString()}</p>
+                    `).join('')}
+                </div>
+            `;
+        } catch (error) {
+            console.error('Error fetching reports:', error);
+            document.getElementById('reports-card').innerHTML = `
+                <h3 class="card-title">📊 Reports</h3>
+                <p class="error-message">Error loading reports.</p>
+            `;
         }
-        return 'just now';
+    }
+
+    async function fetchTutorialsData() {
+        // 'https://eoagritool.africa.communication.azure.com' API endpoint
+        try {
+            const response = await fetch('tutorials.html');
+            if (!response.ok) {
+                console.error('Failed to fetch tutorials:', response.status);
+                document.getElementById('tutorials-card').innerHTML = `
+                    <h3 class="card-title">🎓 Tutorials</h3>
+                    <p class="error-message">Failed to load tutorials.</p>
+                `;
+                return;
+            }
+            const data = await response.json();
+            document.getElementById('tutorials-card').innerHTML = `
+                <h3 class="card-title">🎓 Tutorials</h3>
+                <div>
+                    ${data.map(tutorial => `
+                        <p><strong>${tutorial.title}</strong></p>
+                        <p>${tutorial.description}</p>
+                        <p>Duration: ${tutorial.duration} minutes</p>
+                    `).join('')}
+                </div>
+            `;
+        } catch (error) {
+            console.error('Error fetching tutorials:', error);
+            document.getElementById('tutorials-card').innerHTML = `
+                <h3 class="card-title">🎓 Tutorials</h3>
+                <p class="error-message">Error loading tutorials.</p>
+            `;
+        }
     }
 </script>
 
