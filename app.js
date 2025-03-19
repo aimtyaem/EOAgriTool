@@ -1,60 +1,106 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const cors = require('cors'); // Added CORS support
+const express = require("express");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-const DOMAIN = '20.48.204.5';
+const PORT = 8000;
 
-app.use(cors()); // Enable CORS for frontend communication
-app.use(bodyParser.json());
+// Set up EJS for rendering templates
+app.set("view engine", "ejs");
 
-// Sample recommendations
-const recommendations = [
-    "Optimize irrigation scheduling",
-    "Implement field health monitoring",
-    "Set up pest & disease alerts",
-    "Conduct soil analysis & fertilization advice",
-    "Follow weather-based farming recommendations"
-];
-
-// Corresponding detailed knowledge for each recommendation
-const detailed_knowledge = [
-    "Use soil moisture sensors and weather forecasts to adjust watering schedules.",
-    "Deploy drones or satellite imagery to assess crop health and detect stress early.",
-    "Install automated pest monitoring systems and receive AI-driven alerts.",
-    "Regularly test soil composition and apply fertilizers based on analysis.",
-    "Leverage climate data to optimize planting and harvesting times."
-];
-
-// Initialize application
-const initApp = async () => {
-    try {
-        console.log("App initialized successfully.");
-    } catch (error) {
-        console.error("Failed to initialize app:", error);
-    }
+// FAO Best Practices URLs
+const FAO_URLS = {
+    climate_smart_agriculture: "https://www.fao.org/climate-smart-agriculture/en/",
+    sustainable_agriculture: "https://www.fao.org/sustainable-agriculture/en/",
+    soil_management: "https://www.fao.org/soils-portal/soil-management/en/",
+    water_management: "https://www.fao.org/water/en/",
+    digital_agriculture: "https://www.fao.org/digital-agriculture/en/"
 };
 
-initApp();
-
-// Get all recommendations
-app.get('/api/recommendations', (req, res) => {
-    res.json(recommendations);
-});
-
-// Get detailed information about a specific recommendation
-app.post('/api/details', (req, res) => {
-    const { index } = req.body;
-
-    if (typeof index !== 'number' || index < 0 || index >= recommendations.length) {
-        return res.status(400).json({ error: 'Invalid index. Please provide a valid recommendation index.' });
+// Agriculture Knowledge Base with Expert Recommendations
+const AGRICULTURE_KNOWLEDGE_BASE = [
+    {
+        title: "Implement Precision Irrigation Scheduling",
+        details: `Precision Irrigation Best Practices:
+        - Use soil moisture sensors for data-driven watering
+        - Implement drip irrigation systems
+        - Schedule irrigation during cooler hours
+        - Monitor evapotranspiration rates
+        - Adjust for crop growth stages`,
+        source: FAO_URLS.water_management
+    },
+    {
+        title: "Adopt Integrated Pest Management",
+        details: `Integrated Pest Management:
+        - Regular field scouting
+        - Use biological control agents
+        - Implement trap cropping
+        - Apply targeted pesticides
+        - Maintain pest monitoring records`,
+        source: FAO_URLS.climate_smart_agriculture
+    },
+    {
+        title: "Use Soil Moisture Sensors",
+        details: `Soil moisture sensors help monitor soil water levels to prevent over-irrigation and water waste.`,
+        source: FAO_URLS.water_management
+    },
+    {
+        title: "Apply Crop Rotation Strategies",
+        details: `Crop rotation improves soil fertility and reduces pests by changing plant species each season.`,
+        source: FAO_URLS.soil_management
+    },
+    {
+        title: "Monitor Weather Patterns for Planting",
+        details: `Using climate data helps optimize planting schedules and reduce risks from extreme weather.`,
+        source: FAO_URLS.climate_smart_agriculture
+    },
+    {
+        title: "Utilize Organic Fertilizers",
+        details: `Organic fertilizers improve soil health while reducing environmental impact.`,
+        source: FAO_URLS.soil_management
+    },
+    {
+        title: "Practice Conservation Tillage",
+        details: `Reducing tillage minimizes soil erosion and retains soil moisture for better crop growth.`,
+        source: FAO_URLS.sustainable_agriculture
+    },
+    {
+        title: "Install Windbreaks for Soil Protection",
+        details: `Planting trees or shrubs as windbreaks prevents soil erosion and protects crops from wind damage.`,
+        source: FAO_URLS.sustainable_agriculture
+    },
+    {
+        title: "Leverage Digital Farming Tools",
+        details: `Use satellite imagery, IoT sensors, and AI-based analytics to improve decision-making in agriculture.`,
+        source: FAO_URLS.digital_agriculture
     }
+];
 
-    res.json({ detail: detailed_knowledge[index] });
+// Function to generate a random selection of recommendations
+function generateRecommendationCards(numCards = 3) {
+    // Select random recommendations without modifying the original array
+    const shuffled = [...AGRICULTURE_KNOWLEDGE_BASE].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, Math.min(numCards, AGRICULTURE_KNOWLEDGE_BASE.length));
+}
+
+// Home Route (renders recommendations)
+app.get("/", (req, res) => {
+    res.render("index", { recommendations: generateRecommendationCards() });
 });
 
-// Start the server on the specified domain and port
-app.listen(PORT, DOMAIN, () => {
-    console.log(`Server running on http://${DOMAIN}:${PORT}`);
+// API Route (returns recommendations in JSON format)
+app.get("/api/recommendations", (req, res) => {
+    res.json(generateRecommendationCards());
+});
+
+// API Route to fetch a specific recommendation by index
+app.get("/api/recommendations/:index", (req, res) => {
+    const index = parseInt(req.params.index, 10);
+    if (isNaN(index) || index < 0 || index >= AGRICULTURE_KNOWLEDGE_BASE.length) {
+        return res.status(400).json({ error: "Invalid index. Please provide a valid recommendation index." });
+    }
+    res.json(AGRICULTURE_KNOWLEDGE_BASE[index]);
+});
+
+// Start the server
+app.listen(PORT, () => {
+    console.log(`Server is running on http://20.48.204.5:${PORT}`);
 });
