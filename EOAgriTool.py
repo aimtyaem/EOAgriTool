@@ -1,6 +1,9 @@
+!pip install Flask requests beautifulsoup4
+
 from flask import Flask, render_template, jsonify
 import random
 import requests
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
@@ -23,21 +26,18 @@ AGRICULTURE_KNOWLEDGE_BASE = {
 }
 
 def generate_expert_recommendations(sensor_data):
-    """
-    Generates AI-driven recommendations based on sensor data.
-    """
     recommendations = []
-    
+
     if sensor_data["soil_moisture"] < 20:
         recommendations.append({"title": "Soil Moisture Alert", "details": AGRICULTURE_KNOWLEDGE_BASE["low_moisture"]})
     elif sensor_data["soil_moisture"] > 50:
         recommendations.append({"title": "Soil Overwatering Risk", "details": AGRICULTURE_KNOWLEDGE_BASE["high_moisture"]})
-    
+
     if sensor_data["temperature"] > 35:
         recommendations.append({"title": "Heat Stress Alert", "details": AGRICULTURE_KNOWLEDGE_BASE["high_temperature"]})
     elif sensor_data["temperature"] < 20:
         recommendations.append({"title": "Cold Stress Alert", "details": AGRICULTURE_KNOWLEDGE_BASE["low_temperature"]})
-    
+
     if sensor_data["humidity"] > 80:
         recommendations.append({"title": "High Humidity Warning", "details": AGRICULTURE_KNOWLEDGE_BASE["high_humidity"]})
     elif sensor_data["humidity"] < 40:
@@ -45,25 +45,48 @@ def generate_expert_recommendations(sensor_data):
 
     return recommendations if recommendations else [{"title": "Optimal Conditions", "details": "No immediate actions required."}]
 
+FAO_URLS = [
+    "https://www.fao.org/climate-smart-agriculture/en/",
+    "https://www.fao.org/sustainable-agriculture/en/",
+    "https://www.fao.org/soils-portal/soil-management/en/",
+    "https://www.fao.org/water/en/",
+    "https://www.fao.org/digital-agriculture/en/"
+]
+
 def fetch_real_time_best_practices():
-    """
-    Fetches web-based best practices for farm management.
-    """
-    try:
-        response = requests.get("https://api.farmmanagement.best-practices.com/agriculture")
-        if response.status_code == 200:
-            return response.json().get("best_practices", [])
-        else:
-            return [{"title": "Web Data Unavailable", "details": "Real-time recommendations could not be retrieved."}]
-    except Exception as e:
-        return [{"title": "Error Fetching Data", "details": str(e)}]
+    best_practices = []
+    headers = {"User-Agent": "Mozilla/5.0"}
+
+    for url in FAO_URLS:
+        try:
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, "html.parser")
+
+            titles = soup.find_all(["h2", "h3"], limit=5) or []
+            paragraphs = soup.find_all("p", limit=5) or []
+
+            for title, paragraph in zip(titles, paragraphs):
+                best_practices.append({
+                    "title": title.get_text(strip=True),
+                    "details": paragraph.get_text(strip=True),
+                    "source": url
+                })
+
+        except requests.exceptions.RequestException as e:
+            best_practices.append({
+                "title": "Error Fetching Data",
+                "details": str(e),
+                "source": url
+            })
+
+    return best_practices or [{"title": "No Data", "details": "Could not retrieve best practices.", "source": "N/A"}]
 
 @app.route("/api/dashboard")
 def api_dashboard():
     sensor_data = get_sensor_data()
     recommendations = generate_expert_recommendations(sensor_data)
     web_best_practices = fetch_real_time_best_practices()
-    
     return jsonify({
         "sensor_data": sensor_data,
         "recommendations": recommendations,
@@ -75,8 +98,10 @@ def home():
     sensor_data = get_sensor_data()
     recommendations = generate_expert_recommendations(sensor_data)
     web_best_practices = fetch_real_time_best_practices()
-    
-    return render_template("index.html", sensor_data=sensor_data, recommendations=recommendations, web_best_practices=web_best_practices)
+    return render_template("index.html", 
+                         sensor_data=sensor_data,
+                         recommendations=recommendations,
+                         web_best_practices=web_best_practices)
 
 if __name__ == "__main__":
-    app.run(host="20.48.204.5", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=True)
