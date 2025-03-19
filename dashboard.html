@@ -287,27 +287,26 @@
     function renderRecommendationCards(recommendations) {
         const recommendationsCard = document.getElementById('recommendations-card');
         recommendationsCard.innerHTML = `<h3 class="card-title">🌱 Expert Recommendations</h3>`;
-        recommendations.forEach((rec, index) => {
-            const recElement = document.createElement('div');
-            recElement.innerHTML = `
-                <p><strong>${rec.title}</strong></p>
-                <p>${rec.details}</p>
-            `;
-            recommendationsCard.appendChild(recElement);
-        });
-    }
-
-    function displayDetailsModal(details) {
-        const modal = document.getElementById('detail-modal');
-        document.getElementById('modal-title').innerText = details.title;
-        document.getElementById('modal-details').innerText = details.content;
-        modal.style.display = 'flex';
-    }
-
-    function showError(message) {
-        console.error(message);
-    }
-
+        recommendations.forEach((rec, index) 
+        function refreshData() {
+            fetch('/api/dashboard')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("soil-moisture").innerText = data.sensor_data.soil_moisture + "%";
+                    document.getElementById("temperature").innerText = data.sensor_data.temperature + "°C";
+                    document.getElementById("humidity").innerText = data.sensor_data.humidity + "%";
+                    
+                    let recommendationsDiv = document.getElementById("recommendations");
+                    recommendationsDiv.innerHTML = "";
+                    data.recommendations.forEach(rec => {
+                        let recItem = document.createElement("p");
+                        recItem.innerHTML = `<strong>${rec.title}:</strong> ${rec.details}`;
+                        recommendationsDiv.appendChild(recItem);
+                    });
+                })
+                .catch(error => console.error("Error fetching data:", error));
+        }
+        setInterval(refreshData, 5000);
     function timeSince(dateString) {
         const date = new Date(dateString);
         const seconds = Math.floor((new Date() - date) / 1000);
