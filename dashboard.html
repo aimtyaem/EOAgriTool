@@ -79,93 +79,6 @@
             align-items: center;
             height: 80px;
         }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .dashboard-container {
-                flex-direction: column;
-            }
-
-            nav {
-                flex-wrap: wrap;
-                padding: 8px 0;
-            }
-
-            .menu-item {
-                font-size: 14px;
-                padding: 8px 12px;
-            }
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        .close-modal {
-            float: right;
-            font-size: 22px;
-            cursor: pointer;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-    /* new styles */
-    .recommendation-item {
-        margin: 10px 0;
-        padding: 12px;
-        border-radius: 8px;
-        background-color: #f5f5f5;
-        transition: background-color 0.2s ease;
-    }
-
-    .recommendation-link {
-        text-decoration: none;
-        color: #333;
-        display: block;
-    }
-
-    .recommendation-link:hover {
-        color: #2c662d;
-    }
-
-    .recommendation-item:hover {
-        background-color: #ebf6eb;
-    }
-
-    .recommendation-link strong {
-        display: block;
-        margin-bottom: 4px;
-        color: #4CAF50;
-    }
-
-    .recommendation-link span {
-        display: block;
-        font-size: 0.9em;
-        line-height: 1.4;
-    }
-
     </style>
 </head>
 <body>
@@ -206,196 +119,153 @@
     </div>
 </div>
 
-<!-- Modal -->
-<div id="detail-modal" class="modal">
-    <div class="modal-content">
-        <span class="close-modal">&times;</span>
-        <h3 id="modal-title"></h3>
-        <p id="modal-details"></p>
-    </div>
-</div>
-
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        loadDashboardData();
-    });
+document.addEventListener('DOMContentLoaded', () => {
+    loadDashboardData();
+});
 
-    async function fetchFieldsData() {
-        const fieldsData = JSON.parse(localStorage.getItem('fieldData')) || { fields: [] };
-        if (fieldsData.fields.length === 0) {
-            return '<p>No fields registered yet.</p>';
+async function fetchFieldsData() {
+    const fieldsData = JSON.parse(localStorage.getItem('fieldData')) || { fields: [] };
+    if (fieldsData.fields.length === 0) {
+        return '<p>No fields registered yet.</p>';
+    }
+    return fieldsData.fields.map(field => `
+        <div>
+            <p><strong>${field.name}</strong></p>
+            <p>Crop: ${field.crop}</p>
+            <p>Yield: ${field.yield}</p>
+            <p>Health: ${field.health.charAt(0).toUpperCase() + field.health.slice(1)}</p>
+            <p>Last Updated: ${timeSince(field.lastUpdated)} ago</p>
+        </div>`).join('');
+}
+
+async function fetchClimateData() {
+    const climateData = JSON.parse(localStorage.getItem('climateDashboardData')) || {};
+    return `
+        <div>
+            <p>Average Temperature: ${climateData.avgTemp}°C</p>
+            <p>Last Recorded Precipitation: ${climateData.lastPrecip}mm</p>
+        </div>`;
+}
+
+async function fetchWaterData() {
+    const waterData = JSON.parse(localStorage.getItem('waterData')) || {
+        surface: [],
+        groundwater: [],
+        irrigation: []
+    };
+    return `
+        <div>
+            <p>Surface Water: ${waterData.surface.length} bodies</p>
+            <p>Groundwater: ${waterData.groundwater.length} regions</p>
+            <p>Irrigation: ${waterData.irrigation.length} schedules</p>
+        </div>`;
+}
+
+async function fetchReportsData() {
+    const reportData = JSON.parse(localStorage.getItem('agritoolReport')) || {};
+    if (!reportData.lastGenerated) {
+        return '<p>No reports generated yet.</p>';
+    }
+    return `
+        <div>
+            <p>Last Report Generated: ${new Date(reportData.lastGenerated).toLocaleDateString()}</p>
+        </div>`;
+}
+
+async function fetchRecommendationsData() {
+    const urls = [
+        "https://www.fao.org/climate-smart-agriculture/en/",
+        "https://www.fao.org/sustainable-agriculture/en/",
+        "https://www.fao.org/soils-portal/soil-management/en/",
+        "https://www.fao.org/water/en/",
+        "https://www.fao.org/digital-agriculture/en/"
+    ];
+
+    let recommendations = [];
+    try {
+        const responses = await Promise.all(urls.map(url =>
+            fetch(url).then(res => res.text()).catch(() => null)
+        ));
+
+        recommendations = responses.map((response, index) => {
+            if (!response) return ''; // Skip failed fetches
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(response, 'text/html');
+
+            // Extract meta description or fallback to meaningful paragraph
+            const metaDesc = doc.querySelector('meta[name="description"]')?.content;
+            let summary = metaDesc || Array.from(doc.querySelectorAll('p')).find(p =>
+                p.textContent.length > 50 && !p.textContent.includes('©')
+            )?.textContent || 'Best practices information not available';
+
+            // Clean and truncate summary
+            summary = summary.replace(/\s+/g, ' ').trim();
+            summary = summary.split('.')[0] + '.';
+
+            return `
+                <div class="recommendation-item">
+                    <a href="${urls[index]}" target="_blank" class="recommendation-link">
+                        <strong>${doc.title || `Recommendation ${index + 1}`}:</strong>
+                        <span>${summary}</span>
+                    </a>
+                </div>`;
+        }).filter(Boolean); // Remove empty entries
+
+        if (recommendations.length === 0) {
+            recommendations.push('<p>No recommendations available at this time.</p>');
         }
-        return fieldsData.fields.map(field => `
-            <div>
-                <p><strong>${field.name}</strong></p>
-                <p>Crop: ${field.crop}</p>
-                <p>Yield: ${field.yield}</p>
-                <p>Health: ${field.health.charAt(0).toUpperCase() + field.health.slice(1)}</p>
-                <p>Last Updated: ${timeSince(field.lastUpdated)} ago</p>
-            </div>
-        `).join('');
+    } catch (error) {
+        console.error('Recommendations error:', error);
+        recommendations = ['<div class="loading">❌ Failed to load recommendations. Please try again later.</div>'];
     }
 
-    async function fetchClimateData() {
-        const climateData = JSON.parse(localStorage.getItem('climateDashboardData')) || {};
-        return `
-            <div>
-                <p>Average Temperature: ${climateData.avgTemp}°C</p>
-                <p>Last Recorded Precipitation: ${climateData.lastPrecip}mm</p>
-            </div>
-        `;
-    }
+    return recommendations.join('');
+}
 
-    async function fetchWaterData() {
-        const waterData = JSON.parse(localStorage.getItem('waterData')) || {
-            surface: [],
-            groundwater: [],
-            irrigation: []
-        };
-        return `
-            <div>
-                <p>Surface Water: ${waterData.surface.length} bodies</p>
-                <p>Groundwater: ${waterData.groundwater.length} regions</p>
-                <p>Irrigation: ${waterData.irrigation.length} schedules</p>
-            </div>
-        `;
-    }
+async function loadDashboardData() {
+    try {
+        const [fields, climate, water, reports, recommendations] = await Promise.all([
+            fetchFieldsData(),
+            fetchClimateData(),
+            fetchWaterData(),
+            fetchReportsData(),
+            fetchRecommendationsData()
+        ]);
 
-    async function fetchReportsData() {
-        const reportData = JSON.parse(localStorage.getItem('agritoolReport')) || {};
-        return `
-            <div>
-                <p>Last Report Generated: ${new Date(reportData.lastGenerated).toLocaleDateString()}</p>
-            </div>
-        `;
-    }
-
-    until fetchRecommendationsData)
-
-    async function fetchRecommendationsData() {
-        const urls = [
-            "https://www.fao.org/climate-smart-agriculture/en/",
-            "https://www.fao.org/sustainable-agriculture/en/",
-            "https://www.fao.org/soils-portal/soil-management/en/",
-            "https://www.fao.org/water/en/",
-            "https://www.fao.org/digital-agriculture/en/"
-        ];
-        
-        let recommendations = [];
-        try {
-            const responses = await Promise.all(urls.map(url => 
-                fetch(url).then(res => res.text()).catch(() => null)
-            ));
-
-            recommendations = responses.map((response, index) => {
-                if (!response) return '';  // Skip failed fetches
-                
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(response, 'text/html');
-                
-                // Try to extract meta description
-                const metaDesc = doc.querySelector('meta[name="description"]')?.content;
-                
-                // Fallback to first meaningful paragraph
-                let summary = metaDesc || Array.from(doc.querySelectorAll('p')).find(p => 
-                    p.textContent.length > 50 && !p.textContent.includes('©')
-                )?.textContent || 'Best practices information not available';
-
-                // Clean and truncate summary
-                summary = summary.replace(/\s+/g, ' ').trim();
-                summary = summary.split('.')[0] + '.';
-                
-                return `
-                    <div class="recommendation-item">
-                        <a href="${urls[index]}" target="_blank" class="recommendation-link">
-                            <strong>${doc.title || `Recommendation ${index + 1}`}:</strong>
-                            <span>${summary}</span>
-                        </a>
-                    </div>
-                `;
-            }).filter(Boolean);  // Remove empty entries
-
-            if (recommendations.length === 0) {
-                recommendations.push('<p>No recommendations available at this time</p>');
-            }
-        } catch (error) {
-            console.error('Recommendations error:', error);
-            recommendations = ['<div class="loading">❌ Failed to load recommendations. Please try again later.</div>'];
-        }
-        
-        renderRecommendationCards(recommendations);
-    }
-
-    function renderRecommendationCards(recommendations) {
-        const recommendationsCard = document.getElementById('recommendations-card');
-        recommendationsCard.innerHTML = `
-            <h3 class="card-title">🌱 Expert Recommendations</h3>
-            ${recommendations.join('')}
-        `;
-    }
-
-    async function loadDashboardData() {
-        try {
-            const [fields, climate, water, reports] = await Promise.all([
-                fetchFieldsData(),
-                fetchClimateData(),
-                fetchWaterData(),
-                fetchReportsData(),
-                fetchRecommendationsData()
-            ]);
-
-            document.getElementById('fields-card').innerHTML = `<h3 class="card-title">Field Status</h3>${fields}`;
-            document.getElementById('climate-card').innerHTML = `<h3 class="card-title">Climate Overview</h3>${climate}`;
-            document.getElementById('water-card').innerHTML = `<h3 class="card-title">Water Resources</h3>${water}`;
-            document.getElementById('reports-card').innerHTML = `<h3 class="card-title">Reports</h3>${reports}`;
-        } catch (error) {
-            console.error('Dashboard error:', error);
-            document.querySelectorAll('.loading').forEach(el => {
-                el.textContent = '❌ Failed to load data.';
-            });
-        }
-    }
-
-    function renderRecommendationCards(recommendations) {
-        const recommendationsCard = document.getElementById('recommendations-card');
-        recommendationsCard.innerHTML = `<h3 class="card-title">🌱 Expert Recommendations</h3>`;
-        recommendations.forEach(rec => {
-            const recElement = document.createElement('div');
-            recElement.innerHTML = rec;
-            recommendationsCard.appendChild(recElement);
+        document.getElementById('fields-card').innerHTML = `<h3 class="card-title">Field Status</h3>${fields}`;
+        document.getElementById('climate-card').innerHTML = `<h3 class="card-title">Climate Overview</h3>${climate}`;
+        document.getElementById('water-card').innerHTML = `<h3 class="card-title">Water Resources</h3>${water}`;
+        document.getElementById('reports-card').innerHTML = `<h3 class="card-title">Reports</h3>${reports}`;
+        document.getElementById('recommendations-card').innerHTML = `<h3 class="card-title">🌱 Expert Recommendations</h3>${recommendations}`;
+    } catch (error) {
+        console.error('Dashboard error:', error);
+        document.querySelectorAll('.loading').forEach(el => {
+            el.textContent = '❌ Failed to load data.';
         });
     }
+}
 
-    function displayDetailsModal(details) {
-        const modal = document.getElementById('detail-modal');
-        document.getElementById('modal-title').innerText = details.title;
-        document.getElementById('modal-details').innerText = details.content;
-        modal.style.display = 'flex';
-    }
+function timeSince(dateString) {
+    const date = new Date(dateString);
+    const seconds = Math.floor((new Date() - date) / 1000);
+    const intervals = {
+        year: 31536000,
+        month: 2592000,
+        day: 86400,
+        hour: 3600,
+        minute: 60
+    };
 
-    function showError(message) {
-        console.error(message);
-    }
-
-    function timeSince(dateString) {
-        const date = new Date(dateString);
-        const seconds = Math.floor((new Date() - date) / 1000);
-        const intervals = {
-            year: 31536000,
-            month: 2592000,
-            day: 86400,
-            hour: 3600,
-            minute: 60
-        };
-
-        for (const [unit, secondsInUnit] of Object.entries(intervals)) {
-            const interval = Math.floor(seconds / secondsInUnit);
-            if (interval >= 1) {
-                return `${interval} ${unit}${interval !== 1 ? 's' : ''}`;
-            }
+    for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+        const interval = Math.floor(seconds / secondsInUnit);
+        if (interval >= 1) {
+            return `${interval} ${unit}${interval !== 1 ? 's' : ''}`;
         }
-        return 'just now';
     }
+    return 'just now';
+}
 </script>
 
 </body>
