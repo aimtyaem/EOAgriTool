@@ -79,4 +79,4 @@ def home():
     return render_template("index.html", sensor_data=sensor_data, recommendations=recommendations, web_best_practices=web_best_practices)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    app.run(host="20.48.204.5", port=8000, debug=True)
