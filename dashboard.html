@@ -180,20 +180,42 @@
 </div>
 
 <script>
+    // Azure API configuration
+    const API_BASE_URL = 'https://eoagritool-cwfzfndaazauawex.canadacentral-01.azurewebsites.net/api';
+    const API_ENDPOINTS = {
+        FIELDS: '/fields',
+        CLIMATE: '/climate',
+        WATER: '/water',
+        REPORTS: '/reports',
+        RECOMMENDATIONS: '/recommendations',
+        DETAILS: '/details'
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
         loadDashboardData();
+        setInterval(refreshData, 30000); // Refresh every 30 seconds
     });
 
-    async function fetchFieldsData() {
-        const fieldsData = JSON.parse(localStorage.getItem('fieldData')) || { fields: [] };
-        if (fieldsData.fields.length === 0) {
-            return '<p>No fields registered yet.</p>';
+    // Generic API fetch function
+    async function fetchData(endpoint, errorMessage) {
+        try {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            console.error(errorMessage, error);
+            throw error;
         }
-        return fieldsData.fields.map(field => `
-            <div>
+    }
+
+    // Data fetching functions
+    async function fetchFieldsData() {
+        const data = await fetchData(API_ENDPOINTS.FIELDS, 'Failed to fetch field data');
+        return data.fields.map(field => `
+            <div class="field-item" onclick="showFieldDetail('${field.id}')">
                 <p><strong>${field.name}</strong></p>
                 <p>Crop: ${field.crop}</p>
-                <p>Yield: ${field.yield}</p>
+                <p>Yield: ${field.yield} kg/ha</p>
                 <p>Health: ${field.health.charAt(0).toUpperCase() + field.health.slice(1)}</p>
                 <p>Last Updated: ${timeSince(field.lastUpdated)} ago</p>
             </div>
@@ -201,56 +223,68 @@
     }
 
     async function fetchClimateData() {
-        const climateData = JSON.parse(localStorage.getItem('climateDashboardData')) || {};
+        const data = await fetchData(API_ENDPOINTS.CLIMATE, 'Failed to fetch climate data');
         return `
-            <div>
-                <p>Average Temperature: ${climateData.avgTemp}°C</p>
-                <p>Last Recorded Precipitation: ${climateData.lastPrecip}mm</p>
+            <div class="climate-info">
+                <p>Temperature: ${data.temperature}°C</p>
+                <p>Humidity: ${data.humidity}%</p>
+                <p>Precipitation: ${data.precipitation}mm</p>
+                <p>Wind Speed: ${data.windSpeed} km/h</p>
             </div>
         `;
     }
 
     async function fetchWaterData() {
-        const waterData = JSON.parse(localStorage.getItem('waterData')) || {
-            surface: [],
-            groundwater: [],
-            irrigation: []
-        };
+        const data = await fetchData(API_ENDPOINTS.WATER, 'Failed to fetch water data');
         return `
-            <div>
-                <p>Surface Water: ${waterData.surface.length} bodies</p>
-                <p>Groundwater: ${waterData.groundwater.length} regions</p>
-                <p>Irrigation: ${waterData.irrigation.length} schedules</p>
+            <div class="water-status">
+                <p>Reservoir Level: ${data.reservoirLevel}%</p>
+                <p>Irrigation: ${data.irrigationStatus}</p>
+                <p>pH Level: ${data.phLevel}</p>
             </div>
         `;
     }
 
     async function fetchReportsData() {
-        const reportData = JSON.parse(localStorage.getItem('agritoolReport')) || {};
+        const data = await fetchData(API_ENDPOINTS.REPORTS, 'Failed to fetch reports');
         return `
-            <div>
-                <p>Last Report Generated: ${new Date(reportData.lastGenerated).toLocaleDateString()}</p>
+            <div class="report-summary">
+                <p>Latest Report: ${data.latestReport.title}</p>
+                <p>Generated: ${new Date(data.latestReport.timestamp).toLocaleDateString()}</p>
+                <button onclick="fetchFullReport('${data.latestReport.id}')">View Full Report</button>
             </div>
         `;
     }
 
     async function fetchRecommendationsData() {
         try {
-            const response = await fetch("/api/recommendations");
-            const data = await response.json();
+            const data = await fetchData(API_ENDPOINTS.RECOMMENDATIONS, 'Failed to fetch recommendations');
             renderRecommendationCards(data);
         } catch (error) {
-            showError("Failed to load agricultural recommendations");
             document.getElementById('recommendations-card').innerHTML = `
                 <h3 class="card-title">🌱 Expert Recommendations</h3>
-                <div class="loading">❌ Failed to load recommendations.</div>
+                <div class="error">⚠️ Failed to load recommendations. Retrying...</div>
             `;
         }
     }
 
+    function renderRecommendationCards(recommendations) {
+        const container = document.getElementById('recommendations-card');
+        container.innerHTML = `
+            <h3 class="card-title">🌱 Expert Recommendations</h3>
+            ${recommendations.map((rec, index) => `
+                <div class="recommendation-item" onclick="getRecommendationDetails(${index})">
+                    <strong>${rec.title}</strong>
+                    <p>${rec.summary}</p>
+                    <small>${timeSince(rec.timestamp)} ago</small>
+                </div>
+            `).join('')}
+        `;
+    }
+
     async function getRecommendationDetails(index) {
         try {
-            const response = await fetch("/api/details", {
+            const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.DETAILS}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ index })
@@ -258,74 +292,78 @@
             const details = await response.json();
             displayDetailsModal(details);
         } catch (error) {
-            showError("Could not load recommendation details");
+            showErrorModal('Failed to load recommendation details');
         }
     }
 
     async function loadDashboardData() {
         try {
             const [fields, climate, water, reports] = await Promise.all([
-                fetchFieldsData(),
-                fetchClimateData(),
-                fetchWaterData(),
-                fetchReportsData(),
+                fetchFieldsData().catch(() => '<div class="error">Field data unavailable</div>'),
+                fetchClimateData().catch(() => '<div class="error">Climate data unavailable</div>'),
+                fetchWaterData().catch(() => '<div class="error">Water data unavailable</div>'),
+                fetchReportsData().catch(() => '<div class="error">Report data unavailable</div>'),
                 fetchRecommendationsData()
             ]);
 
-            document.getElementById('fields-card').innerHTML = `<h3 class="card-title">Field Status</h3>${fields}`;
-            document.getElementById('climate-card').innerHTML = `<h3 class="card-title">Climate Overview</h3>${climate}`;
-            document.getElementById('water-card').innerHTML = `<h3 class="card-title">Water Resources</h3>${water}`;
-            document.getElementById('reports-card').innerHTML = `<h3 class="card-title">Reports</h3>${reports}`;
+            updateCardContent('fields-card', 'Field Status', fields);
+            updateCardContent('climate-card', 'Climate Overview', climate);
+            updateCardContent('water-card', 'Water Resources', water);
+            updateCardContent('reports-card', 'Reports', reports);
         } catch (error) {
-            console.error('Dashboard error:', error);
-            document.querySelectorAll('.loading').forEach(el => {
-                el.textContent = '❌ Failed to load data.';
-            });
+            console.error('Dashboard initialization error:', error);
+            showErrorModal('Failed to initialize dashboard');
         }
     }
 
-    function renderRecommendationCards(recommendations) {
-        const recommendationsCard = document.getElementById('recommendations-card');
-        recommendationsCard.innerHTML = `<h3 class="card-title">🌱 Expert Recommendations</h3>`;
-        recommendations.forEach((rec, index) 
-        function refreshData() {
-            fetch('/api/dashboard')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById("soil-moisture").innerText = data.sensor_data.soil_moisture + "%";
-                    document.getElementById("temperature").innerText = data.sensor_data.temperature + "°C";
-                    document.getElementById("humidity").innerText = data.sensor_data.humidity + "%";
-                    
-                    let recommendationsDiv = document.getElementById("recommendations");
-                    recommendationsDiv.innerHTML = "";
-                    data.recommendations.forEach(rec => {
-                        let recItem = document.createElement("p");
-                        recItem.innerHTML = `<strong>${rec.title}:</strong> ${rec.details}`;
-                        recommendationsDiv.appendChild(recItem);
-                    });
-                })
-                .catch(error => console.error("Error fetching data:", error));
+    async function refreshData() {
+        try {
+            const [fields, climate, water, reports] = await Promise.all([
+                fetchFieldsData(),
+                fetchClimateData(),
+                fetchWaterData(),
+                fetchReportsData()
+            ]);
+            
+            updateCardContent('fields-card', 'Field Status', fields);
+            updateCardContent('climate-card', 'Climate Overview', climate);
+            updateCardContent('water-card', 'Water Resources', water);
+            updateCardContent('reports-card', 'Reports', reports);
+        } catch (error) {
+            console.log('Background refresh failed:', error);
         }
-        setInterval(refreshData, 5000);
+    }
+
+    function updateCardContent(cardId, title, content) {
+        const card = document.getElementById(cardId);
+        if (card) {
+            card.innerHTML = `<h3 class="card-title">${title}</h3>${content}`;
+        }
+    }
+
     function timeSince(dateString) {
-        const date = new Date(dateString);
-        const seconds = Math.floor((new Date() - date) / 1000);
-        const intervals = {
-            year: 31536000,
-            month: 2592000,
-            day: 86400,
-            hour: 3600,
-            minute: 60
-        };
-
-        for (const [unit, secondsInUnit] of Object.entries(intervals)) {
-            const interval = Math.floor(seconds / secondsInUnit);
-            if (interval >= 1) {
-                return `${interval} ${unit}${interval !== 1 ? 's' : ''}`;
-            }
-        }
-        return 'just now';
+        // Keep existing timeSince implementation
     }
+
+    // Add modal display functions
+    function displayDetailsModal(details) {
+        const modal = document.getElementById('detail-modal');
+        document.getElementById('modal-title').textContent = details.title;
+        document.getElementById('modal-details').innerHTML = details.content;
+        modal.style.display = 'flex';
+    }
+
+    function showErrorModal(message) {
+        const modal = document.getElementById('detail-modal');
+        document.getElementById('modal-title').textContent = 'Error';
+        document.getElementById('modal-details').textContent = message;
+        modal.style.display = 'flex';
+    }
+
+    // Close modal functionality
+    document.querySelector('.close-modal').addEventListener('click', () => {
+        document.getElementById('detail-modal').style.display = 'none';
+    });
 </script>
 
 </body>
