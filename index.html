@@ -137,38 +137,15 @@
         // Login Form Handling
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
             if(email && password) {
-                document.getElementById('loginContainer').style.display = 'none';
-             
-
-            // Add Dashboard navigation button
-            const navButton = document.createElement('button');
-            navButton.textContent = 'Go to Dashboard';
-            navButton.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                padding: 12px 24px;
-                background-color: #2c5f2d;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-size: 16px;
-                cursor: pointer;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                transition: all 0.3s ease;
-                z-index: 1000;
-            `;
-            navButton.addEventListener('click', () => {
+                // Redirect to dashboard upon successful validation
                 window.location.href = 'dashboard.html';
-            });
-            document.body.appendChild(navButton);
-        }
-
+            }
+        });
     </script>
 </body>
 </html>
