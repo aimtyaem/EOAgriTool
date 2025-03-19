@@ -128,13 +128,9 @@
         </form>
     </div>
 
-    <div class="container" id="notificationsContainer" style="display: none;">
-        <h1>Notifications</h1>
-        <div class="alert-divider"></div>
-        <h2 class="section-title">Alerts</h2>
-        <ul class="alert-list">
-            <!-- Alert items will be populated here -->
-        </ul>
+    <div class="container" id="Expert recommendations" style="display: none;">
+        <h1>Welcome to the Smart Farm Monitoring System</h1>
+    <p>Monitor your farm conditions in real-time.</p>            
     </div>
 
     <script>
@@ -147,47 +143,7 @@
 
             if(email && password) {
                 document.getElementById('loginContainer').style.display = 'none';
-                document.getElementById('notificationsContainer').style.display = 'block';
-                initializeNotifications();
-            }
-        });
-
-        function initializeNotifications() {
-            const alerts = [
-                { 
-                    category: "Pest & Disease Outbreaks", 
-                    subtitle: "Diseases",
-                    url: "pest-disease.html"
-                },
-                { 
-                    category: "Weather Alerts", 
-                    subtitle: "Extreme weather warning",
-                    url: "weather-alerts.html"
-                },
-                { 
-                    category: "Equipment Maintenance", 
-                    subtitle: "Tractor service due",
-                    url: "equipment.html"
-                }
-            ];
-
-            const alertList = document.querySelector('.alert-list');
-            
-            // Create alert items with navigation
-            alerts.forEach(alert => {
-                const li = document.createElement('li');
-                li.className = 'alert-item';
-                li.innerHTML = `
-                    <div class="alert-category">${alert.category}</div>
-                    <div class="alert-subtitle">${alert.subtitle}</div>
-                `;
-                
-                li.addEventListener('click', () => {
-                    window.location.href = alert.url;
-                });
-                
-                alertList.appendChild(li);
-            });
+             
 
             // Add Dashboard navigation button
             const navButton = document.createElement('button');
@@ -213,7 +169,6 @@
             document.body.appendChild(navButton);
         }
 
-        // ... (existing style injection remains unchanged) ...
     </script>
 </body>
 </html>
