@@ -130,6 +130,42 @@
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+    /* new styles */
+    .recommendation-item {
+        margin: 10px 0;
+        padding: 12px;
+        border-radius: 8px;
+        background-color: #f5f5f5;
+        transition: background-color 0.2s ease;
+    }
+
+    .recommendation-link {
+        text-decoration: none;
+        color: #333;
+        display: block;
+    }
+
+    .recommendation-link:hover {
+        color: #2c662d;
+    }
+
+    .recommendation-item:hover {
+        background-color: #ebf6eb;
+    }
+
+    .recommendation-link strong {
+        display: block;
+        margin-bottom: 4px;
+        color: #4CAF50;
+    }
+
+    .recommendation-link span {
+        display: block;
+        font-size: 0.9em;
+        line-height: 1.4;
+    }
+
     </style>
 </head>
 <body>
@@ -234,32 +270,68 @@
         `;
     }
 
+    until fetchRecommendationsData)
+
     async function fetchRecommendationsData() {
+        const urls = [
+            "https://www.fao.org/climate-smart-agriculture/en/",
+            "https://www.fao.org/sustainable-agriculture/en/",
+            "https://www.fao.org/soils-portal/soil-management/en/",
+            "https://www.fao.org/water/en/",
+            "https://www.fao.org/digital-agriculture/en/"
+        ];
+        
+        let recommendations = [];
         try {
-            const response = await fetch("/api/recommendations");
-            const data = await response.json();
-            renderRecommendationCards(data);
+            const responses = await Promise.all(urls.map(url => 
+                fetch(url).then(res => res.text()).catch(() => null)
+            ));
+
+            recommendations = responses.map((response, index) => {
+                if (!response) return '';  // Skip failed fetches
+                
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(response, 'text/html');
+                
+                // Try to extract meta description
+                const metaDesc = doc.querySelector('meta[name="description"]')?.content;
+                
+                // Fallback to first meaningful paragraph
+                let summary = metaDesc || Array.from(doc.querySelectorAll('p')).find(p => 
+                    p.textContent.length > 50 && !p.textContent.includes('©')
+                )?.textContent || 'Best practices information not available';
+
+                // Clean and truncate summary
+                summary = summary.replace(/\s+/g, ' ').trim();
+                summary = summary.split('.')[0] + '.';
+                
+                return `
+                    <div class="recommendation-item">
+                        <a href="${urls[index]}" target="_blank" class="recommendation-link">
+                            <strong>${doc.title || `Recommendation ${index + 1}`}:</strong>
+                            <span>${summary}</span>
+                        </a>
+                    </div>
+                `;
+            }).filter(Boolean);  // Remove empty entries
+
+            if (recommendations.length === 0) {
+                recommendations.push('<p>No recommendations available at this time</p>');
+            }
         } catch (error) {
-            showError("Failed to load agricultural recommendations");
-            document.getElementById('recommendations-card').innerHTML = `
-                <h3 class="card-title">🌱 Expert Recommendations</h3>
-                <div class="loading">❌ Failed to load recommendations.</div>
-            `;
+            console.error('Recommendations error:', error);
+            recommendations = ['<div class="loading">❌ Failed to load recommendations. Please try again later.</div>'];
         }
+        
+        renderRecommendationCards(recommendations);
     }
 
-    async function getRecommendationDetails(index) {
-        try {
-            const response = await fetch("/api/details", {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ index })
-            });
-            const details = await response.json();
-            displayDetailsModal(details);
-        } catch (error) {
-            showError("Could not load recommendation details");
-        }
+    function renderRecommendationCards(recommendations) {
+        const recommendationsCard = document.getElementById('recommendations-card');
+        recommendationsCard.innerHTML = `
+            <h3 class="card-title">🌱 Expert Recommendations</h3>
+            ${recommendations.join('')}
+        `;
     }
 
     async function loadDashboardData() {
@@ -287,12 +359,9 @@
     function renderRecommendationCards(recommendations) {
         const recommendationsCard = document.getElementById('recommendations-card');
         recommendationsCard.innerHTML = `<h3 class="card-title">🌱 Expert Recommendations</h3>`;
-        recommendations.forEach((rec, index) => {
+        recommendations.forEach(rec => {
             const recElement = document.createElement('div');
-            recElement.innerHTML = `
-                <p><strong>${rec.title}</strong></p>
-                <p>${rec.details}</p>
-            `;
+            recElement.innerHTML = rec;
             recommendationsCard.appendChild(recElement);
         });
     }
