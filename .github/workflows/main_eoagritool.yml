@@ -78,5 +78,8 @@ jobs:
         with:
           app-name: 'EOAgriTool'
           slot-name: 'Production'
-      - name: Create Github Deployment Status
+      - name: Set Deployment Status
         uses: unacast/actions-github-deployment-status@0.4.0
+        with:
+          github_token: ${{ secrets.PAT_TOKEN }}
+          status: "in_progress"
