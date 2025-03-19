@@ -1,6 +1,9 @@
+!pip install Flask requests beautifulsoup4
+
 from flask import Flask, render_template, jsonify
 import random
 import requests
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
@@ -42,26 +45,63 @@ def generate_expert_recommendations(sensor_data):
 
     return recommendations if recommendations else [{"title": "Optimal Conditions", "details": "No immediate actions required."}]
 
-@app.route("/")
-def home():
-    return render_template("index.html")
+FAO_URLS = [
+    "https://www.fao.org/climate-smart-agriculture/en/",
+    "https://www.fao.org/sustainable-agriculture/en/",
+    "https://www.fao.org/soils-portal/soil-management/en/",
+    "https://www.fao.org/water/en/",
+    "https://www.fao.org/digital-agriculture/en/"
+]
 
-@app.route("/dashboard")
-def dashboard():
-    sensor_data = get_sensor_data()
-    recommendations = generate_expert_recommendations(sensor_data)
+def fetch_real_time_best_practices():
+    best_practices = []
+    headers = {"User-Agent": "Mozilla/5.0"}
 
-    return render_template("dashboard.html", sensor_data=sensor_data, recommendations=recommendations)
+    for url in FAO_URLS:
+        try:
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, "html.parser")
+
+            titles = soup.find_all(["h2", "h3"], limit=5) or []
+            paragraphs = soup.find_all("p", limit=5) or []
+
+            for title, paragraph in zip(titles, paragraphs):
+                best_practices.append({
+                    "title": title.get_text(strip=True),
+                    "details": paragraph.get_text(strip=True),
+                    "source": url
+                })
+
+        except requests.exceptions.RequestException as e:
+            best_practices.append({
+                "title": "Error Fetching Data",
+                "details": str(e),
+                "source": url
+            })
+
+    return best_practices or [{"title": "No Data", "details": "Could not retrieve best practices.", "source": "N/A"}]
 
 @app.route("/api/dashboard")
 def api_dashboard():
     sensor_data = get_sensor_data()
     recommendations = generate_expert_recommendations(sensor_data)
-
+    web_best_practices = fetch_real_time_best_practices()
     return jsonify({
         "sensor_data": sensor_data,
-        "recommendations": recommendations
+        "recommendations": recommendations,
+        "web_best_practices": web_best_practices
     })
+
+@app.route("/")
+def home():
+    sensor_data = get_sensor_data()
+    recommendations = generate_expert_recommendations(sensor_data)
+    web_best_practices = fetch_real_time_best_practices()
+    return render_template("index.html", 
+                         sensor_data=sensor_data,
+                         recommendations=recommendations,
+                         web_best_practices=web_best_practices)
 
 if __name__ == "__main__":
     app.run(host="20.48.204.5", port=8000, debug=True)
