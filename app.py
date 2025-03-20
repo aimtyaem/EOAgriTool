@@ -1,5 +1,3 @@
-!pip install Flask requests beautifulsoup4
-
 from flask import Flask, render_template, jsonify
 import random
 import requests
