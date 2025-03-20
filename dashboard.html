@@ -332,7 +332,7 @@ function timeSince(dateString) {
     return 'just now';
 }
 const endpoint = 'https://aimt1-m8ht17kv-eastus2.cognitiveservices.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview';
-        const apiToken = 'uVCOJapbQ3hu4w1PvQsipJu7nBzHoRJrbDutElH3Qf2SNGVdIppAJQQJ99BCAC5T7U2XJ3w3AAAAACOGw03W';
+        const apiKey = '3Sm8msjmXN65yz0j80sZUYVpKpjujF8pPVmxebqvgtqbLXdsaQAxJQQJ99BCACHYHv6XJ3w3AAAAACOGDnKn';
 
         const chatMessages = document.getElementById('chat-messages');
         const userInput = document.getElementById('user-input');
@@ -363,13 +363,13 @@ const endpoint = 'https://aimt1-m8ht17kv-eastus2.cognitiveservices.azure.com/ope
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiToken}`
+                        'Authorization': `Bearer ${apiKey}`
                     },
                     body: JSON.stringify({
                         messages: [
                             {
                                 role: "system",
-                                content: "You are an expert agricultural assistant. Provide clear, numbered recommendations with brief explanations."
+                                content: "You are an expert agricultural Field management assistant. Provide clear, numbered recommendations with brief explanations."
                             },
                             {
                                 role: 'user',
