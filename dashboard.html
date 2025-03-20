@@ -178,7 +178,12 @@
         <div class="loading">⏳ Loading...</div>
     </div>
 </div>
-
+    <div id="chat-messages"></div>
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Type your message...">
+            <button onclick="handleSend()">Send</button>
+        </div>
+    </div>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     loadDashboardData();
