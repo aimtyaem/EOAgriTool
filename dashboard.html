@@ -6,105 +6,106 @@
     <title>Agricultural Dashboard</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
     <style>
-body {
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f9fafb;
-    color: #333;
-}
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9fafb;
+            color: #333;
+        }
 
-/* Header and Navigation Bar */
-.header {
-    display: flex;
-    align-items: center;
-    background-color: #fff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    padding: 12px 20px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
-}
+        /* Fixed header selector and improved navigation layout */
+        header {
+            display: flex;
+            align-items: center;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 12px 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+        }
 
-.logo {
-    max-height: 50px;
-    margin-right: 20px;
-}
+        .logo {
+            height: 40px; /* Consistent height for better alignment */
+            margin-right: 30px;
+        }
 
-nav {
-    display: flex;
-    align-items: center;
-    flex-grow: 1;
-}
+        nav {
+            display: flex;
+            gap: 10px; /* Better spacing between menu items */
+            align-items: center;
+        }
 
-.menu-item {
-    text-decoration: none;
-    color: #555;
-    font-size: 16px;
-    font-weight: 600;
-    padding: 10px 15px;
-    transition: all 0.3s ease;
-    border-radius: 6px;
-    margin-right: 15px;
-}
+        .menu-item {
+            text-decoration: none;
+            color: #555;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 10px 15px;
+            transition: all 0.3s ease;
+            border-radius: 6px;
+            white-space: nowrap; /* Prevent text wrapping */
+        }
 
-.menu-item:hover,
-.menu-item.active {
-    background-color: #4CAF50;
-    color: white;
-}
+        .menu-item:hover,
+        .menu-item.active {
+            background-color: #4CAF50;
+            color: white;
+        }
 
-/* Dashboard Layout */
-.dashboard-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-top: 70px; /* Adjusted for fixed header */
-    padding: 20px;
-}
+        /* Rest of your existing CSS remains unchanged */
+        .dashboard-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 70px;
+            padding: 20px;
+        }
 
-.card {
-    background: white;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    flex: 1;
-    min-width: 300px;
-    transition: transform 0.2s ease;
-}
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            min-width: 300px;
+            transition: transform 0.2s ease;
+        }
 
-.card:hover {
-    transform: translateY(-5px);
-}
+        .card:hover {
+            transform: translateY(-5px);
+        }
 
-.card-title {
-    margin-top: 0;
-    font-size: 18px;
-    font-weight: bold;
-}
+        .card-title {
+            margin-top: 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
 
-.loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 80px;
-}
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80px;
+        }
     </style>
 </head>
 <body>
 <header>
     <img src="logo.jpg" alt="Logo" class="logo">
-  <nav>
-    <a href="notifications.html" class="menu-item active">🌱 Notifications</a>
-    <a href="climate.html" class="menu-item">🌦️ Climate</a>
-    <a href="fields.html" class="menu-item">🌾 Fields</a>
-    <a href="water.html" class="menu-item">💧 Water</a>
-    <a href="reports.html" class="menu-item">📊 Reports</a>
-    <a href="tutorials.html" class="menu-item">🎓 Tutorials</a>
-  </nav>
+    <nav>
+        <a href="notifications.html" class="menu-item active">🌱 Notifications</a>
+        <a href="climate.html" class="menu-item">🌦️ Climate</a>
+        <a href="fields.html" class="menu-item">🌾 Fields</a>
+        <a href="water.html" class="menu-item">💧 Water</a>
+        <a href="reports.html" class="menu-item">📊 Reports</a>
+        <a href="tutorials.html" class="menu-item">🎓 Tutorials</a>
+    </nav>
 </header>
+
 <div class="dashboard-container">
     <div class="card" id="fields-card">
         <h3 class="card-title">Field Status</h3>
