@@ -280,6 +280,95 @@ function timeSince(dateString) {
     }
     return 'just now';
 }
+const endpoint = 'https://aimt1-m8ht17kv-eastus2.cognitiveservices.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview';
+        const apiToken = 'uVCOJapbQ3hu4w1PvQsipJu7nBzHoRJrbDutElH3Qf2SNGVdIppAJQQJ99BCAC5T7U2XJ3w3AAAAACOGw03W';
+
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}-message`;
+            
+            if (typeof content === 'string') {
+                messageDiv.textContent = content;
+            } else {
+                messageDiv.appendChild(content);
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function handleSend() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessage('user', message);
+            userInput.value = '';
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiToken}`
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            {
+                                role: "system",
+                                content: "You are an expert agricultural assistant. Provide clear, numbered recommendations with brief explanations."
+                            },
+                            {
+                                role: 'user',
+                                content: message
+                            }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 500
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const botResponse = data.choices[0].message.content;
+                displayRecommendations(botResponse);
+
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('bot', 'Sorry, there was an error processing your request.');
+            }
+        }
+
+        function displayRecommendations(recommendations) {
+            const recArray = recommendations.split('\n')
+                .filter(rec => rec.trim().length > 0)
+                .map(rec => rec.replace(/^\d+\.\s*/, '').trim());
+
+            const recContainer = document.createElement('div');
+            recContainer.className = 'recommendations-container';
+
+            recArray.forEach(rec => {
+                const card = document.createElement('div');
+                card.className = 'recommendation-card';
+                card.textContent = rec;
+                recContainer.appendChild(card);
+            });
+
+            addMessage('bot', recContainer);
+        }
+        
+// Handle Enter key press
+       
+userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSend();
+            }
+        });
 </script>
 
 </body>
