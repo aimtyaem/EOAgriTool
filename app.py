@@ -2,6 +2,7 @@ from flask import Flask, render_template, jsonify
 import random
 import requests
 from bs4 import BeautifulSoup
+import concurrent.futures
 
 app = Flask(__name__)
 
@@ -55,7 +56,7 @@ def fetch_real_time_best_practices():
     best_practices = []
     headers = {"User-Agent": "Mozilla/5.0"}
 
-    for url in FAO_URLS:
+    def fetch_data(url):
         try:
             response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
@@ -64,21 +65,24 @@ def fetch_real_time_best_practices():
             titles = soup.find_all(["h2", "h3"], limit=5) or []
             paragraphs = soup.find_all("p", limit=5) or []
 
-            for title, paragraph in zip(titles, paragraphs):
-                best_practices.append({
+            return [
+                {
                     "title": title.get_text(strip=True),
                     "details": paragraph.get_text(strip=True),
                     "source": url
-                })
-
+                }
+                for title, paragraph in zip(titles, paragraphs)
+            ]
         except requests.exceptions.RequestException as e:
-            best_practices.append({
-                "title": "Error Fetching Data",
-                "details": str(e),
-                "source": url
-            })
+            return [{"title": "Error Fetching Data", "details": str(e), "source": url}]
 
-    return best_practices or [{"title": "No Data", "details": "Could not retrieve best practices.", "source": "N/A"}]
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        results = executor.map(fetch_data, FAO_URLS)
+    
+    for result in results:
+        best_practices.extend(result)
+
+    return best_practices if best_practices else [{"title": "No Data", "details": "Could not retrieve best practices.", "source": "N/A"}]
 
 @app.route("/api/dashboard")
 def api_dashboard():
@@ -91,6 +95,10 @@ def api_dashboard():
         "web_best_practices": web_best_practices
     })
 
+@app.route("/api/sensor")
+def api_sensor():
+    return jsonify(get_sensor_data())
+
 @app.route("/")
 def home():
     sensor_data = get_sensor_data()
@@ -102,4 +110,4 @@ def home():
                          web_best_practices=web_best_practices)
 
 if __name__ == "__main__":
-    app.run(host="20.48.204.5", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=True)
