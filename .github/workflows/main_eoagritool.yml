@@ -64,7 +64,12 @@ jobs:
       - name: Unzip artifact for deployment
         run: unzip release.zip
 
-      
+      - name: eonx-com/actions-opsgenie
+        uses: eonx-com/actions-opsgenie@v1.8 
+        with: API_KEY: ${{ secrets.OPSGENIE_PAT_TOKEN }}
+          PRIORITY: 'P1'
+          ALIAS: 'deploy-production-failed'
+          MESSAGE: 'Deployment to production failed. please review Github Actions logs'
       - name: Login to Azure
         uses: azure/login@v2
         with:
