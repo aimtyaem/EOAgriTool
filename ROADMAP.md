@@ -12,7 +12,7 @@
 ✅ Interactive Tutorials  
 ✅ Unified Dashboard Interface  
 ✅ Local Storage Data Management  
-✅ Responsive Mobile-First Design
+✅ AI-powered chatbot
 ```
 
 ## 🚀 Version 1.1 - Enhanced Functionality
