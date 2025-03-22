@@ -1,6 +1,6 @@
 # Python to Linux Web App on Azure
 # Build your Python project and deploy it to Azure as a Linux Web App.
-# Change python version to one thats appropriate for your application.
+# Change python version to one that's appropriate for your application.
 # https://docs.microsoft.com/azure/devops/pipelines/languages/python
 
 trigger:
@@ -38,13 +38,10 @@ stages:
       displayName: 'Use Python $(pythonVersion)'
 
     - script: |
-        python -m venv antenv
-        source antenv/bin/activate
         python -m pip install --upgrade pip
-        pip install setup
         pip install -r requirements.txt
       workingDirectory: $(projectRoot)
-      displayName: "Install requirements"
+      displayName: "Install dependencies"
 
     - task: ArchiveFiles@2
       displayName: 'Archive files'
@@ -54,6 +51,9 @@ stages:
         archiveType: zip
         archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
         replaceExistingArchive: true
+        exclude: |
+          antenv/**  # Excludes virtual environment if created earlier
+          **/__pycache__/**  # Excludes Python cache files
 
     - upload: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
       displayName: 'Upload package'
@@ -72,15 +72,10 @@ stages:
       runOnce:
         deploy:
           steps:
-
-          - task: UsePythonVersion@0
-            inputs:
-              versionSpec: '$(pythonVersion)'
-            displayName: 'Use Python version'
-
-          - task: AzureWebApp@1
+          - task: AzureWebApp@2  # Updated to version 2 for Linux Web Apps
             displayName: 'Deploy Azure Web App : EOAgriTool'
             inputs:
               azureSubscription: $(azureServiceConnectionId)
+              appType: 'webAppLinux'
               appName: $(webAppName)
               package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
