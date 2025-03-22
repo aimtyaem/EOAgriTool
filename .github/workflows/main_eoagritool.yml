@@ -66,7 +66,7 @@ jobs:
 
       - name: eonx-com/actions-opsgenie
         uses: eonx-com/actions-opsgenie@v1.8 
-        with: API_KEY: ${{ secrets.OPSGENIE_PAT_TOKEN }}
+        with: API_KEY: ${{ secrets.OPSGENIE_GITHUB_TOKEN }}
           PRIORITY: 'P1'
           ALIAS: 'deploy-production-failed'
           MESSAGE: 'Deployment to production failed. please review Github Actions logs'
