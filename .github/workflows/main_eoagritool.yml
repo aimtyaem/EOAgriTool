@@ -14,7 +14,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read # This is required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
@@ -28,16 +28,18 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
-      
+
       - name: Install dependencies
         run: pip install -r requirements.txt
-        
+
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r
+
       - name: GitHub Pages action
         uses: peaceiris/actions-gh-pages@v4.0.0
+
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
@@ -53,8 +55,8 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+      id-token: write # This is required for requesting the JWT
+      contents: read  # This is required for actions/checkout
 
     steps:
       - name: Download artifact from build job
@@ -66,11 +68,13 @@ jobs:
         run: unzip release.zip
 
       - name: eonx-com/actions-opsgenie
-        uses: eonx-com/actions-opsgenie@v1.8 
-        with: API_KEY: ${{ secrets.OPSGENIE_GITHUB_TOKEN }}
+        uses: eonx-com/actions-opsgenie@v1.8
+        with:
+          API_KEY: ${{ secrets.OPSGENIE_GITHUB_TOKEN }}
           PRIORITY: 'P1'
           ALIAS: 'deploy-production-failed'
-          MESSAGE: 'Deployment to production failed. please review Github Actions logs'
+          MESSAGE: 'Deployment to production failed. Please review GitHub Actions logs.'
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -78,10 +82,9 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_39535BE70D534ABDB745C9214BE55081 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_BB2D4206F5AC44CDA3289568B63A38F7 }}
 
-      - name: 'Deploy to Azure Web App'
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
           app-name: 'EOAgriTool'
           slot-name: 'Production'
-      
