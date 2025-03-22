@@ -36,7 +36,8 @@ jobs:
 
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r
-
+      - name: GitHub Pages action
+        uses: peaceiris/actions-gh-pages@v4.0.0
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
