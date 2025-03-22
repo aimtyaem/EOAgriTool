@@ -46,8 +46,8 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write # This is required for requesting the JWT
-      contents: read  # This is required for actions/checkout
+      id-token: write # Required for requesting the JWT
+      contents: read  # Required for actions/checkout
 
     steps:
       - name: Download artifact from build job
@@ -58,13 +58,13 @@ jobs:
       - name: Unzip artifact for deployment
         run: unzip release.zip
 
-
       - name: Login to Azure
-        uses: azure/login@v2  # Fixed version
+        uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_B88D3C7A7060491CB674B14E06D42C55 }}  # Choose the correct one
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_78A8FAD52D144DAFB2B36B3D4D01B35C }}  # Choose the correct one
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_BB2D4206F5AC44CDA3289568B63A38F7 }}  # Choose the correct one
+          allow-no-subscriptions: true  # Ensures login works even if no subscriptions are returned
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
@@ -72,3 +72,4 @@ jobs:
         with:
           app-name: 'EOAgriTool'
           slot-name: 'Production'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
