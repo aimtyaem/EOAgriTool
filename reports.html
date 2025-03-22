@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Maps</title>
+    <!-- Required Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        :root {
+            --report-purple: #6a1b9a;
+            --map-green: #2c5f2d;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .report-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .map-container {
+            height: 400px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .map-layers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .layer-item {
+            padding: 10px;
+            border: 2px solid var(--map-green);
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .download-options {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .download-btn {
+            padding: 10px 20px;
+            background: var(--report-purple);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .nav-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: var(--report-purple);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Reports Section -->
+        <div class="report-section">
+            <h1>2023 Season Report</h1>
+            <div class="download-options">
+                <button class="download-btn" id="downloadPdf">Download Full Report (PDF)</button>
+                <button class="download-btn" id="downloadCsv">Yield Forecast (CSV)</button>
+                <button class="download-btn" id="downloadExcel">Health Insights (Excel)</button>
+                <button class="download-btn" id="downloadText">Text Report</button>
+                <button class="download-btn" id="printReport">Print Report</button>
+            </div>
+        </div>
+
+        <!-- Map Section -->
+        <div class="report-section">
+            <h2>Farm Map View</h2>
+            <div class="map-container" id="mapPreview">
+                <!-- Satellite image will be loaded here -->
+                <img id="satelliteImage" alt="Satellite Image" style="width: 100%; height: 100%; border-radius: 10px;">
+                <div class="map-overlay">Satellite View</div>
+            </div>
+
+            <div class="map-layers">
+                <div class="layer-item" data-layer="soil">Soil Moisture</div>
+                <div class="layer-item" data-layer="vegetation">Vegetation Index</div>
+                <div class="layer-item" data-layer="crop">Crop Type</div>
+                <div class="layer-item" data-layer="elevation">Elevation</div>
+                <div class="layer-item" data-layer="rainfall">Rainfall</div>
+            </div>
+        </div>
+        <button class="nav-button" id="dashboardBtn">Go to Dashboard</button>
+    </div>
+
+      <script>
+    // Initialize report data with default values
+    let reportData = {
+      lastGenerated: new Date().toISOString(),
+      downloaded: [],
+      activeLayers: [],
+      mapLocations: ["Flagrden", "Lapa Park", "Oso de", "Highway City", "Biola Junction"],
+      analysis: {
+        soilMoisture: 0.75,
+        vegetationIndex: 0.65,
+        // Add default values for other fields
+        cropType: "Wheat",
+        elevation: 300,
+        rainfall: 50
+      }
+    };
+
+    // Function to populate report data in UI
+    function populateReport() {
+      // Populate analysis results if needed
+      document.getElementById('soilMoisture').textContent = `${(reportData.analysis.soilMoisture * 100).toFixed(0)}%`;
+      document.getElementById('vegetationIndex').textContent = reportData.analysis.vegetationIndex.toFixed(2);
+      // Add similar lines for other fields
+    }
+
+    // Function to load the satellite image
+    function loadSatelliteImage() {
+      const satelliteImageUrl = "https://raw.githubusercontent.com/aimtyaem/EOAgriTool/main/rasterimg.jpg";
+      const imgElement = document.getElementById('satelliteImage');
+      
+      // Check if image is cached
+      const cachedImage = localStorage.getItem('satelliteImage');
+      imgElement.src = cachedImage || satelliteImageUrl;
+
+      imgElement.onload = () => {
+        console.log("Satellite image loaded successfully!");
+        if (!cachedImage) {
+          localStorage.setItem('satelliteImage', satelliteImageUrl);
+        }
+      };
+
+      imgElement.onerror = () => {
+        console.error("Failed to load satellite image.");
+        imgElement.src = "placeholder.jpg";
+      };
+    }
+
+    // Function to initialize download handlers
+    function initializeDownloadHandlers() {
+      // PDF Generation
+      document.getElementById('downloadPdf').addEventListener('click', () => {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+        const img = document.getElementById('satelliteImage');
+
+        // Add image only if loaded
+        if (img.complete && img.naturalWidth !== 0) {
+          pdf.addImage(img, 'JPEG', 10, 10, 50, 50);
+        }
+
+        // Add report content
+        pdf.setFontSize(12);
+        pdf.text(20, 70, `Soil Moisture: ${(reportData.analysis.soilMoisture * 100).toFixed(0)}%`);
+        pdf.text(20, 80, `Vegetation Index: ${reportData.analysis.vegetationIndex.toFixed(2)}`);
+        // Add other fields
+
+        pdf.save('agritool-report.pdf');
+        updateDownloadHistory('pdf');
+      });
+
+      // CSV Generation
+      document.getElementById('downloadCsv').addEventListener('click', () => {
+        const csvContent = [
+          ['Metric', 'Value'],
+          ['Soil Moisture', reportData.analysis.soilMoisture],
+          ['Vegetation Index', reportData.analysis.vegetationIndex],
+          ['Crop Type', reportData.analysis.cropType],
+          ['Elevation', reportData.analysis.elevation],
+          ['Rainfall', reportData.analysis.rainfall]
+        ].map(row => row.join(',')).join('\n');
+
+        new Blob([csvContent], { type: 'text/csv' }).text().then(text => {
+          saveAs(new Blob([text], { type: 'text/csv' }), 'report.csv');
+          updateDownloadHistory('csv');
+        });
+      });
+
+      // Excel Generation
+      document.getElementById('downloadExcel').addEventListener('click', () => {
+        const ws = XLSX.utils.json_to_sheet([reportData.analysis]);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Report");
+        XLSX.writeFile(wb, 'report.xlsx');
+        updateDownloadHistory('excel');
+      });
+
+      // Text File Generation
+      document.getElementById('downloadText').addEventListener('click', () => {
+        const textContent = `AGRITOOL REPORT\n\n
+          Soil Moisture: ${(reportData.analysis.soilMoisture * 100).toFixed(0)}%\n
+          Vegetation Index: ${reportData.analysis.vegetationIndex.toFixed(2)}\n
+          Crop Type: ${reportData.analysis.cropType}\n
+          Elevation: ${reportData.analysis.elevation} meters\n
+          Rainfall: ${reportData.analysis.rainfall} mm`;
+
+        saveAs(new Blob([textContent], { type: 'text/plain' }), 'report.txt');
+        updateDownloadHistory('text');
+      });
+
+      // Print Functionality
+      document.getElementById('printReport').addEventListener('click', () => {
+        window.print();
+        updateDownloadHistory('print');
+      });
+    }
+
+    // Update download history
+    function updateDownloadHistory(type) {
+      reportData.downloaded.push({
+        type: type,
+        date: new Date().toISOString()
+      });
+      localStorage.setItem('agritoolReport', JSON.stringify(reportData));
+    }
+
+    // Initialize map layers
+    function initializeMapLayers() {
+      document.querySelectorAll('.layer-item').forEach(layer => {
+        layer.addEventListener('click', (e) => {
+          const layerName = e.target.dataset.layer;
+          e.target.classList.toggle('active');
+          
+          reportData.activeLayers = reportData.activeLayers.includes(layerName) 
+            ? reportData.activeLayers.filter(l => l !== layerName)
+            : [...reportData.activeLayers, layerName];
+            
+          localStorage.setItem('agritoolReport', JSON.stringify(reportData));
+        });
+      });
+    }
+
+    // Initialize navigation
+    function initializeNavigation() {
+      document.getElementById('dashboardBtn').addEventListener('click', () => {
+        window.location.href = 'dashboard.html';
+      });
+    }
+
+    // Main initialization
+    window.addEventListener('load', () => {
+      // Load saved data
+      const savedData = localStorage.getItem('agritoolReport');
+      if (savedData) {
+        try {
+          reportData = JSON.parse(savedData);
+          // Restore active layers
+          document.querySelectorAll('.layer-item').forEach(layer => {
+            if (reportData.activeLayers.includes(layer.dataset.layer)) {
+              layer.classList.add('active');
+            }
+          });
+        } catch (e) {
+          console.error('Error loading saved data:', e);
+        }
+      }
+      
+      loadSatelliteImage();
+      initializeDownloadHandlers();
+      initializeMapLayers();
+      initializeNavigation();
+      populateReport();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Field Management</title>
+    <style>
+        :root {
+            --field-green: #2c5f2d;
+            --health-good: #7ac142;
+            --health-fair: #ffd700;
+            --health-poor: #ff4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            padding: 20px;
+            background: #f4faf4;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--field-green);
+            margin-bottom: 30px;
+        }
+
+        .fields-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .field-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .field-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .field-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--field-green);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .health-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+        }
+
+        .good { background: var(--health-good); }
+        .fair { background: var(--health-fair); }
+        .poor { background: var(--health-poor); }
+
+        .upload-section {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            margin-top: 30px;
+            border-radius: 10px;
+        }
+
+        .nav-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: var(--field-green);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .media-item {
+            display: inline-block;
+            margin: 10px;
+        }
+
+        .media-item img, .media-item video {
+            max-width: 100px;
+            border-radius: 6px;
+        }
+
+        .field-form {
+            margin-top: 30px;
+            border: 2px solid #ccc;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .field-form input, .field-form select, .field-form button {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .field-form button {
+            background: var(--field-green);
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your Fields</h1>
+        
+        <div class="fields-grid" id="fieldsGrid">
+            <!-- Fields dynamically loaded here -->
+        </div>
+
+        <div class="upload-section">
+            <h3>Upload Field Media</h3>
+            <input type="file" id="mediaUpload" accept="image/*,video/*" multiple>
+            <p>Drag and drop images/videos or click to upload</p>
+            <div id="mediaPreview"></div>
+        </div>
+
+        <div class="field-form">
+            <h3>Register New Field</h3>
+            <input type="text" id="fieldName" placeholder="Field Name" required>
+            <input type="text" id="fieldCrop" placeholder="Crop Type" required>
+            <select id="fieldHealth">
+                <option value="good">Good</option>
+                <option value="fair">Fair</option>
+                <option value="poor">Poor</option>
+            </select>
+            <button id="registerFieldBtn">Register Field</button>
+        </div>
+
+        <button class="nav-button" id="dashboardBtn">Go to Dashboard</button>
+    </div>
+
+    <script>
+        // Load fields from localStorage
+        function loadFields() {
+            const fieldsGrid = document.getElementById('fieldsGrid');
+            fieldsGrid.innerHTML = ''; // Clear existing content
+
+            let fieldData = JSON.parse(localStorage.getItem('fieldData')) || { fields: [] };
+
+            if (fieldData.fields.length === 0) {
+                fieldsGrid.innerHTML = '<p>No fields registered yet.</p>';
+                return;
+            }
+
+            fieldData.fields.forEach(field => {
+                const fieldCard = document.createElement('div');
+                fieldCard.classList.add('field-card');
+                fieldCard.innerHTML = `
+                    <div class="health-indicator ${field.health}"></div>
+                    <div class="field-header">
+                        <div class="field-icon">🌾</div>
+                        <div>
+                            <h3>${field.name}</h3>
+                            <p>Crop: ${field.crop}</p>
+                        </div>
+                    </div>
+                    <div class="field-metrics">
+                        <p>Yield: ${field.yield}</p>
+                        <p>Health: ${field.health.charAt(0).toUpperCase() + field.health.slice(1)}</p>
+                        <p>Last Updated: ${timeSince(field.lastUpdated)} ago</p>
+                    </div>
+                `;
+                fieldsGrid.appendChild(fieldCard);
+            });
+        }
+
+        // Handle media uploads
+        document.getElementById('mediaUpload').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const mediaPreview = document.getElementById('mediaPreview');
+            let fieldData = JSON.parse(localStorage.getItem('fieldData')) || { fields: [] };
+
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const mediaItem = document.createElement('div');
+                    mediaItem.className = 'media-item';
+                    mediaItem.innerHTML = file.type.startsWith('image') ?
+                        `<img src="${e.target.result}" alt="Field media">` :
+                        `<video controls src="${e.target.result}"></video>`;
+
+                    mediaPreview.appendChild(mediaItem);
+
+                    // Store media reference
+                    if (fieldData.fields.length > 0) {
+                        fieldData.fields[0].media.push({
+                            type: file.type.startsWith('image') ? 'image' : 'video',
+                            url: e.target.result,
+                            timestamp: new Date().toISOString()
+                        });
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // Update localStorage
+            localStorage.setItem('fieldData', JSON.stringify(fieldData));
+        });
+
+        // Register new field
+        document.getElementById('registerFieldBtn').addEventListener('click', () => {
+            const fieldName = document.getElementById('fieldName').value;
+            const fieldCrop = document.getElementById('fieldCrop').value;
+            const fieldHealth = document.getElementById('fieldHealth').value;
+
+            if (!fieldName || !fieldCrop) {
+                alert('Please complete all fields.');
+                return;
+            }
+
+            let fieldData = JSON.parse(localStorage.getItem('fieldData')) || { fields: [] };
+            fieldData.fields.push({
+                name: fieldName,
+                crop: fieldCrop,
+                health: fieldHealth,
+                yield: 'N/A',
+                lastUpdated: new Date().toISOString(),
+                media: []
+            });
+
+            localStorage.setItem('fieldData', JSON.stringify(fieldData));
+            loadFields();
+        });
+
+        // Navigation to dashboard
+        document.getElementById('dashboardBtn').addEventListener('click', () => {
+            window.location.href = 'dashboard.html';
+        });
+
+        // Format timestamps
+        function timeSince(dateString) {
+            const date = new Date(dateString);
+            const seconds = Math.floor((new Date() - date) / 1000);
+            const intervals = {
+                year: 31536000,
+                month: 2592000,
+                day: 86400,
+                hour: 3600,
+                minute: 60
+            };
+
+            for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+                const interval = Math.floor(seconds / secondsInUnit);
+                if (interval >= 1) {
+                    return `${interval} ${unit}${interval !== 1 ? 's' : ''}`;
+                }
+            }
+            return 'just now';
+        }
+
+        // Initialize fields on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFields();
+            setInterval(() => {
+                document.querySelectorAll('.field-metrics p:last-child').forEach(el => {
+                    const timestamp = new Date().toISOString(); // Mock last updated time
+                    el.textContent = `Last Updated: ${timeSince(timestamp)} ago`;
+                });
+            }, 60000);
+        });
+    </script>
+</body>
+</html>

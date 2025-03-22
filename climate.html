@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climate Analysis</title>
+    <style>
+        :root {
+            --climate-blue: #1a73e8;
+            --temp-red: #d93025;
+            --precip-blue: #4285f4;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--climate-blue);
+            margin-bottom: 30px;
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .climate-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--climate-blue);
+            border-bottom: 2px solid currentColor;
+            padding-bottom: 8px;
+        }
+
+        .data-item {
+            padding: 10px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .nav-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: var(--climate-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Climate Analysis</h1>
+        
+        <div class="cards-container">
+            <!-- Historical Card -->
+            <div class="climate-card">
+                <div class="card-header">Historical Analysis</div>
+                <div class="data-item">Predictive Models</div>
+                <div class="data-item">Climate Deltas</div>
+                <div class="data-item">Extreme Events</div>
+            </div>
+
+            <!-- Temperature Card -->
+            <div class="climate-card" style="--climate-blue: var(--temp-red)">
+                <div class="card-header">Temperature (°C)</div>
+                <div class="data-item">
+                    <span>2010</span>
+                    <span>23.4°C</span>
+                </div>
+                <!-- Repeat for other years -->
+            </div>
+
+            <!-- Precipitation Card -->
+            <div class="climate-card" style="--climate-blue: var(--precip-blue)">
+                <div class="card-header">Precipitation (mm)</div>
+                <div class="data-item">
+                    <span>2010</span>
+                    <span>450mm</span>
+                </div>
+                <!-- Repeat for other years -->
+            </div>
+        </div>
+
+        <button class="nav-button" id="dashboardBtn">Go to Dashboard</button>
+    </div>
+
+<script>
+    const currentYear = new Date().getFullYear();
+    const climateData = {
+        temperature: {
+            '2010': 23.4,
+            '2012': 23.8,
+            '2014': 24.1,
+            '2016': 24.5,
+            '2018': 24.8,
+            '2020': 25.1,
+            '2022': 25.4,
+            [currentYear]: 25.7
+        },
+        precipitation: {
+            '2010': 450,
+            '2012': 420,
+            '2014': 435,
+            '2016': 410,
+            '2018': 398,
+            '2020': 385,
+            '2022': 375,
+            [currentYear]: 365
+        }
+    };
+
+    // Calculate average temperature
+    function calculateAverageTemp() {
+        const temps = Object.values(climateData.temperature);
+        return temps.reduce((sum, temp) => sum + temp, 0) / temps.length;
+    }
+
+    // Save data before navigation
+    function saveClimateData() {
+        const dashboardData = {
+            avgTemp: calculateAverageTemp().toFixed(1),
+            lastPrecip: climateData.precipitation[currentYear]
+        };
+        localStorage.setItem('climateDashboardData', JSON.stringify(dashboardData));
+    }
+
+    // Navigation functionality with data save
+    document.getElementById('dashboardBtn').addEventListener('click', () => {
+        saveClimateData();
+        window.location.href = 'dashboard.html';
+    });
+
+    // Dynamic data population (unchanged)
+    document.addEventListener('DOMContentLoaded', () => {
+        const tempCard = document.querySelector('[style*="--temp-red"]');
+        const precipCard = document.querySelector('[style*="--precip-blue"]');
+
+        Object.entries(climateData.temperature).forEach(([year, temp]) => {
+            tempCard.innerHTML += `
+                <div class="data-item">
+                    <span>${year}</span>
+                    <span>${temp}°C</span>
+                </div>
+            `;
+        });
+
+        Object.entries(climateData.precipitation).forEach(([year, precip]) => {
+            precipCard.innerHTML += `
+                <div class="data-item">
+                    <span>${year}</span>
+                    <span>${precip}mm</span>
+                </div>
+            `;
+        });
+    });
+</script>
+</body>
+</html>
