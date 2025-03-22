@@ -37,8 +37,11 @@ jobs:
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r
 
-      - name: GitHub Pages action
-        uses: peaceiris/actions-gh-pages@v4.0.0
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.PAT_TOKEN }}
+          publish_dir: .  # Change if your static files are in a different directory
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
@@ -67,7 +70,7 @@ jobs:
       - name: Unzip artifact for deployment
         run: unzip release.zip
 
-      - name: eonx-com/actions-opsgenie
+      - name: Notify OpsGenie on Deployment Failure
         uses: eonx-com/actions-opsgenie@v1.8
         with:
           API_KEY: ${{ secrets.OPSGENIE_GITHUB_TOKEN }}
@@ -78,9 +81,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_4B2AA51C8F3E408F929B19AAB9401302 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_39535BE70D534ABDB745C9214BE55081 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_BB2D4206F5AC44CDA3289568B63A38F7 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
