@@ -39,7 +39,7 @@ jobs:
       - name: Run AWS CodeBuild
         uses: aws-actions/aws-codebuild-run-build@v1
         with:
-          project-name: eoagritool-build
+          project-name: EOAgriTool
           buildspec-override: buildspec.yml
           aws-region: ${{ env.AWS_REGION }}
 
