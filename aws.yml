@@ -5,12 +5,12 @@ on:
     branches: [ "main" ]
 
 env:
-  AWS_REGION: us-east-2  # AWS region
+  AWS_REGION: us-east-2  # AWS region from your EC2 and ECS details
   ECR_REPOSITORY: eoagritool  # Amazon ECR repository name
   ECS_SERVICE: deploy  # Amazon ECS service name
   ECS_CLUSTER: deploy  # Amazon ECS cluster name
-  ECS_TASK_DEFINITION: .aws/task-definition.json  # Path to ECS task definition
-  CONTAINER_NAME: eoagritool  # Container name in ECS task definition
+  ECS_TASK_DEFINITION: .aws/task-definition.json  # Path to ECS task definition file
+  CONTAINER_NAME: eoagritool  # Name of container in ECS task definition
 
 permissions:
   contents: read
@@ -19,7 +19,7 @@ jobs:
   deploy:
     name: Deploy to Amazon ECS
     runs-on: ubuntu-latest
-    environment: production  # Ensure this is correctly formatted
+    environment: production
 
     steps:
       - name: Checkout repository
