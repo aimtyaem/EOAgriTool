@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read # This is required for actions/checkout
+      contents: read  # Required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
@@ -29,8 +29,6 @@ jobs:
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt
-
-      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r
@@ -50,8 +48,8 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write # This is required for requesting the JWT
-      contents: read  # This is required for actions/checkout
+      id-token: write  # Required for requesting the JWT
+      contents: read   # Required for actions/checkout
 
     steps:
       - name: Download artifact from build job
@@ -62,12 +60,25 @@ jobs:
       - name: Unzip artifact for deployment
         run: unzip release.zip
 
+      - name: Select Azure Credentials
+        run: |
+          echo "Using first set of credentials"
+          echo "AZURE_CLIENT_ID=${{ secrets.AZUREAPPSERVICE_CLIENTID_4B2AA51C8F3E408F929B19AAB9401302 }}" >> $GITHUB_ENV
+          echo "AZURE_TENANT_ID=${{ secrets.AZUREAPPSERVICE_TENANTID_39535BE70D534ABDB745C9214BE55081 }}" >> $GITHUB_ENV
+          echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_932529A45BB3430AA83B922DBBC83617 }}" >> $GITHUB_ENV
+
+      - name: Debug Azure Credentials
+        run: |
+          echo "Client ID: $AZURE_CLIENT_ID"
+          echo "Tenant ID: $AZURE_TENANT_ID"
+          echo "Subscription ID: $AZURE_SUBSCRIPTION_ID"
+
       - name: Login to Azure
-        uses: azure/login@v2  # Fixed version
+        uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
@@ -108,4 +119,4 @@ jobs:
         with:
           github_token: ${{ secrets.PAT_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: . # Change if static files are in another directory
+          publish_dir: .  # Change if static files are in another directory
