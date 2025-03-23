@@ -42,6 +42,20 @@ jobs:
           project-name: EOAgriTool
           buildspec-override: buildspec.yml
           aws-region: ${{ env.AWS_REGION }}
+          compute-type: "BUILD_GENERAL1_SMALL"
+          environment-type: "LINUX_CONTAINER"
+          image: "aws/codebuild/ami/amazonlinux-x86_64-base:latest"
+          service-role: "arn:aws:iam::915704192506:role/service-role/codebuild-EOAgriTool-service-role"
+          timeout-in-minutes: 15
+          queued-timeout-in-minutes: 480
+          logs-config:
+            cloudwatch:
+              group-name: "/aws/codebuild/EOAgriTool"
+              enabled: true
+          artifacts:
+            type: "S3"
+            location: "arn:aws:s3:::elasticbeanstalk-us-west-2-915704192506/400c8f25-11ae-40c6-91f4-b5ff8108d6c8/EOAgriTool"
+            encryption-disabled: false
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
