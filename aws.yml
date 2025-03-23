@@ -9,7 +9,7 @@ env:
   ECR_REPOSITORY: eoagritool
   ECS_SERVICE: deploy
   ECS_CLUSTER: deploy
-  ECS_TASK_DEFINITION: aws.yml  # Updated task definition reference
+  ECS_TASK_DEFINITION: aws.yml
   CONTAINER_NAME: eoagritool
 
 permissions:
@@ -36,32 +36,17 @@ jobs:
         run: |
           aws iam attach-user-policy --user-name aimty --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-
-      - name: Update Amazon ECS task definition with new image
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
+      - name: Run AWS CodeBuild
+        uses: aws-actions/aws-codebuild-run-build@v1
         with:
-          task-definition: ${{ env.ECS_TASK_DEFINITION }}
-          container-name: ${{ env.CONTAINER_NAME }}
-          image: ${{ steps.build-image.outputs.image }}
+          project-name: eoagritool-build
+          buildspec-override: buildspec.yml
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          task-definition: ${{ env.ECS_TASK_DEFINITION }}
           service: ${{ env.ECS_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
