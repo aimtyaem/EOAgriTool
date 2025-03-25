@@ -12,7 +12,7 @@ def fetch_processed_data():
     else:
         return {"error": "Failed to fetch data"}
 
-@app.route("rasterimg.json")
+@app.route("labels_counts.json")
 def api_processed_data():
     data = fetch_processed_data()
     return jsonify(data)
