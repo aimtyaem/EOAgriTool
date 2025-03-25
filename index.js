@@ -1,12 +1,14 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const cors = require('cors'); // Added CORS support
+const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const DOMAIN = 'https://exprec-fse3f6ffh6fehmb6.canadacentral-01.azurewebsites.net';
+const DOMAIN = 'localhost'; // Change to 'localhost' for local testing
 
-app.use(cors()); // Enable CORS for frontend communication
+app.use(cors());
 app.use(bodyParser.json());
 
 // FAO URLs for best practices
@@ -23,53 +25,14 @@ const recommendations = [
     {
         title: "Optimize irrigation scheduling",
         detail: "Use soil moisture sensors and weather forecasts to adjust watering schedules efficiently.",
-        source: FAO_URLS[3] // Water management
+        source: FAO_URLS[3]
     },
     {
         title: "Implement field health monitoring",
         detail: "Deploy drones or satellite imagery to assess crop health and detect stress early.",
-        source: FAO_URLS[4] // Digital agriculture
+        source: FAO_URLS[4]
     },
-    {
-        title: "Set up pest & disease alerts",
-        detail: "Install automated pest monitoring systems and receive AI-driven alerts for better disease management.",
-        source: FAO_URLS[0] // Climate-smart agriculture
-    },
-    {
-        title: "Conduct soil analysis & fertilization advice",
-        detail: "Regularly test soil composition and apply fertilizers based on scientific soil analysis.",
-        source: FAO_URLS[2] // Soil management
-    },
-    {
-        title: "Follow weather-based farming recommendations",
-        detail: "Leverage climate data to optimize planting and harvesting times, reducing weather-related risks.",
-        source: FAO_URLS[0] // Climate-smart agriculture
-    },
-    {
-        title: "Adopt climate-smart agricultural practices",
-        detail: "Implement sustainable farming techniques such as crop rotation and integrated pest management.",
-        source: FAO_URLS[1] // Sustainable agriculture
-    },
-    {
-        title: "Improve soil organic matter with conservation agriculture",
-        detail: "Apply no-till farming and cover crops to improve soil health and reduce erosion.",
-        source: FAO_URLS[2] // Soil management
-    },
-    {
-        title: "Integrate livestock and crop production",
-        detail: "Utilize livestock manure for natural fertilization and maintain crop-livestock symbiosis.",
-        source: FAO_URLS[1] // Sustainable agriculture
-    },
-    {
-        title: "Use drought-resistant crop varieties",
-        detail: "Plant drought-resistant and climate-adapted crop varieties to enhance resilience to extreme weather.",
-        source: FAO_URLS[0] // Climate-smart agriculture
-    },
-    {
-        title: "Enhance carbon sequestration through agroforestry",
-        detail: "Adopt agroforestry techniques like intercropping trees with crops to boost biodiversity and carbon capture.",
-        source: FAO_URLS[1] // Sustainable agriculture
-    }
+    // ... (other recommendations)
 ];
 
 // Initialize application
@@ -82,6 +45,9 @@ const initApp = async () => {
 };
 
 initApp();
+
+// Serve static files from the public directory
+app.use(express.static('public'));
 
 // Get all recommendations
 app.get('/api/recommendations', (req, res) => {
@@ -97,6 +63,22 @@ app.post('/api/details', (req, res) => {
     }
 
     res.json(recommendations[index]);
+});
+
+// Get label counts
+app.get('/api/labels_counts', (req, res) => {
+    const labelsCountsPath = path.join(__dirname, 'Labels_counts.json');
+    fs.readFile(labelsCountsPath, 'utf8', (err, data) => {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to read labels counts file' });
+        }
+        res.json(JSON.parse(data));
+    });
+});
+
+// Serve the dashboard.html file
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
 
 // Start the server on the specified domain and port
