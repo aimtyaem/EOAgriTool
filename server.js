@@ -1,39 +1,33 @@
 const { EmailClient } = require("@azure/communication-email");
 
-// Connection string from Azure portal
-const connectionString = "endpoint=https://eoagritool.africa.communication.azure.com/;accesskey=EKcca3DMi2dnF9WCgoAcdaFbg5x1zyXiJwnwQ3hRTSbwJI0njIVdJQQJ99BCACULyCphvvTgAAAAAZCSk3Vm";
-
-// Initialize the email client
-const emailClient = new EmailClient(connectionString);
-
 async function sendEmail() {
+    const connectionString = "endpoint=https://eoagritool.africa.communication.azure.com/;accesskey=EKcca3DMi2dnF9WCgoAcdaFbg5x1zyXiJwnwQ3hRTSbwJI0njIVdJQQJ99BCACULyCphvvTgAAAAAZCSk3Vm";
+    
     try {
-        // Create the email message
+        const emailClient = new EmailClient(connectionString);
+        
         const emailMessage = {
-            senderAddress: "<Verified-Sender-Email>",  // Replace with your verified sender email
+            senderAddress: "verified-email@yourdomain.com", // MUST BE PRE-VERIFIED
             content: {
-                subject: "Welcome to Azure Communication Services Email",
-                plainText: "This is plain text body",
-                html: "<html><body>This is html body</body></html>",
+                subject: "Test Email from ACS",
+                plainText: "This is a test email body",
             },
             recipients: {
-                to: [
-                    {
-                        address: "<recipient-email>",  // Replace with recipient email
-                        displayName: "Customer Name",
-                    },
-                ],
+                to: [{ address: "aimt16@hotmail.com" }],
             },
         };
 
-        // Send the email
         const poller = await emailClient.beginSend(emailMessage);
-        const response = await poller.pollUntilDone();
-
-        console.log("Email sent successfully. Operation ID:", response.id);
+        const result = await poller.pollUntilDone();
+        
+        console.log("Email sent with ID:", result.id);
     } catch (error) {
-        console.error("Error sending email:", error);
+        console.error("Failed to send email:");
+        console.error("- Status code:", error.statusCode);
+        console.error("- Error message:", error.message);
+        if (error.details) console.error("- Details:", error.details);
     }
 }
 
+// Execute the function
 sendEmail();
