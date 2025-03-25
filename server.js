@@ -7,7 +7,7 @@ async function sendEmail() {
         const emailClient = new EmailClient(connectionString);
         
         const emailMessage = {
-            senderAddress: "verified-email@yourdomain.com", // MUST BE PRE-VERIFIED
+            senderAddress: "aimt16@gmail.com", // MUST BE PRE-VERIFIED
             content: {
                 subject: "Test Email from ACS",
                 plainText: "This is a test email body",
