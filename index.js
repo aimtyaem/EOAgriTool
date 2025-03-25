@@ -4,7 +4,7 @@ const cors = require('cors'); // Added CORS support
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const DOMAIN = '20.48.204.5';
+const DOMAIN = 'https://exprec-fse3f6ffh6fehmb6.canadacentral-01.azurewebsites.net';
 
 app.use(cors()); // Enable CORS for frontend communication
 app.use(bodyParser.json());
