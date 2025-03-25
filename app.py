@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 # Fetch processed data from EO repository
 def fetch_processed_data():
-    response = requests.get('processed_data.json')
+    response = requests.get('labels_counts.Json, ')
     if response.status_code == 200:
         return response.json()
     else:
