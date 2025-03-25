@@ -30,4 +30,4 @@ def home():
                          processed_data=processed_data)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    app.run(host="https://eoagritool-cwfzfndaazauawex.canadacentral-01.azurewebsites.net", port=8000, debug=True)
