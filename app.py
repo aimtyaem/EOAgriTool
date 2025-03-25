@@ -6,13 +6,13 @@ app = Flask(__name__)
 
 # Fetch processed data from EO repository
 def fetch_processed_data():
-    response = requests.get('labels_counts.Json, ')
+    response = requests.get('https://eoagritool-cwfzfndaazauawex.canadacentral-01.azurewebsites.net/labels_counts.json')
     if response.status_code == 200:
         return response.json()
     else:
         return {"error": "Failed to fetch data"}
 
-@app.route("labels_counts.json")
+@app.route("/labels_counts.json")
 def api_processed_data():
     data = fetch_processed_data()
     return jsonify(data)
@@ -30,4 +30,4 @@ def home():
                          processed_data=processed_data)
 
 if __name__ == "__main__":
-    app.run(host="https://eoagritool-cwfzfndaazauawex.canadacentral-01.azurewebsites.net", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=True)
