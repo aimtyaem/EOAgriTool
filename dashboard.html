@@ -413,6 +413,95 @@ const endpoint = 'https://aimt1-m8ht17kv-eastus2.cognitiveservices.azure.com/ope
             addMessage('bot', recContainer);
         }
         
+
+// Integrated JSON configuration
+const IMAGE_GEN_CONFIG = {
+  prompt: "Generate a high-quality, detailed satellite image view...",
+  negative_prompt: "cartoon, drawing, illustration...",
+  style_raw: "photorealistic, remote sensing data visualization",
+  aspect_ratio: "16:9",
+  image_description: "This high-quality image depicts..."
+};
+
+// Modified handleSend function with JSON integration
+async function handleSend() {
+    const message = userInput.value.trim();
+    if (!message && !currentImage) return;
+
+    if (message) addMessage('user', message);
+    userInput.value = '';
+    
+    try {
+        const messages = [{
+            role: "system",
+            content: `As an agricultural imaging specialist, analyze inputs using these guidelines:
+            ${IMAGE_GEN_CONFIG.prompt}
+            Avoid: ${IMAGE_GEN_CONFIG.negative_prompt}
+            Style: ${IMAGE_GEN_CONFIG.style_raw}
+            Format: ${IMAGE_GEN_CONFIG.image_description}`
+        }];
+
+        const content = [];
+        if (message) content.push({ type: 'text', text: message });
+        if (currentImage) content.push({ 
+            type: 'image_url',
+            image_url: { url: currentImage, detail: 'high' }
+        });
+
+        messages.push({ role: 'user', content });
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                messages: messages,
+                temperature: 0.7,
+                max_tokens: 1000
+            })
+        });
+
+        if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+
+        const data = await response.json();
+        const botResponse = data.choices[0].message.content;
+        displayEnhancedResponse(botResponse);
+        currentImage = null;
+
+    } catch (error) {
+        console.error('Error:', error);
+        addMessage('bot', `Error: ${error.message}`);
+    }
+}
+
+// Enhanced response display with JSON template
+function displayEnhancedResponse(response) {
+    const container = document.createElement('div');
+    
+    // Merge JSON template with AI response
+    const fullResponse = `
+        ${response}
+        
+        <div class="recommendation-card">
+            <h4>Image Generation Specs</h4>
+            <p>Aspect Ratio: ${IMAGE_GEN_CONFIG.aspect_ratio}</p>
+            <p>Style: ${IMAGE_GEN_CONFIG.style_raw}</p>
+            <p>Negative Guidance: ${IMAGE_GEN_CONFIG.negative_prompt}</p>
+        </div>
+    `;
+
+    const formattedResponse = fullResponse
+        .replace(/##\s(.+?)\n/g, '<h3>$1</h3>')
+        .replace(/- (.+?)\n/g, '<div class="recommendation-card">$1</div>')
+        .replace(/(https?:\/\/[^\s]+)/g, '<a class="fao-link" href="$1" target="_blank">$1</a>');
+
+    container.innerHTML = formattedResponse;
+    addMessage('bot', container);
+}
+
+
 // Handle Enter key press
        
 userInput.addEventListener('keypress', (e) => {
