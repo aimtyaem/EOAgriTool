@@ -58,20 +58,20 @@ Agriculture faces multiple adversities—including unpredictable weather, pest i
 ## 3. Tech Stack
 
 - **Front-End:**  
-  - React.js for responsive and dynamic user interfaces.
-  - Redux for state management.
-  - Tailwind CSS / Material UI for streamlined, modern design.
+  - JavaScript for responsive and dynamic user interfaces.
+  - GIT for version control.
+  - Agentic AI, GPT platform chatbots for CSS / Grok for mockup, modern design.
 
 - **Back-End:**  
   - Node.js with Express.js for building scalable APIs.
-  - Integration with external data providers (EgSA Portal, EgSA APIs).
+  - Integration with external data providers (EO OpenAI, EgSA Portal, & EgSA APIs).
 
 - **Database:**  
   - MongoDB / PostgreSQL for flexible, high-performance data storage.
 
 - **Additional Tools & Libraries:**  
-  - D3.js / Leaflet for interactive maps and data visualizations.
-  - Machine Learning libraries (TensorFlow, Scikit-Learn) for predictive analytics.
+  - Deepseek R1 model / Gemini flash 2.0 experiential thinking for raster data codes and data visualizations.
+  - Machine Learning libraries (Agentic AI, AI studios) for predictive analytics.
 
 ---
 
@@ -91,6 +91,45 @@ Agriculture faces multiple adversities—including unpredictable weather, pest i
    ```
 
 2. **Install Dependencies:**
+   
+# Instructions
+
+## Update System Packages:
+
+```bash
+sudo apt update && sudo apt upgrade -y
+```
+
+## Install Required Dependencies:
+
+# Python:
+```bash
+sudo apt install software-properties-common -y
+```
+
+## Add Python 3.9 Repository:
+
+```bash
+sudo add-apt-repository ppa:deadsnakes/ppa -y
+```
+
+## Install Python 3.9:
+
+```bash
+sudo apt install python3.9 -y
+```
+
+## Verify Installation:
+
+```bash
+python3.9 --version
+```
+
+The output should display `Python 3.9.x` (where `x` is the minor version number).
+
+For further details and advanced configurations, please refer to the [Python Official Documentation](https://docs.python.org/3.9/).
+```
+# Nodejs:
    ```bash
    npm install
    ```
@@ -107,7 +146,7 @@ For further details and advanced configurations, please refer to the [documentat
 
 ## 5. Screenshots / Mockup Images
 
-Screenshots and wireframes demonstrating key aspects of EO AgriTool’s interface are located in the [`AgriTool`](https://aimtyaem.github.io/EOAgriTool/dashboard.html) directory. Here you can view:
+Mockup design demonstrating key aspects of EO AgriTool’s interface are located in the [`AgriTool`](https://aimtyaem.github.io/EOAgriTool/dashboard.html) directory. Here you can view:
 - The interactive dashboard.
 - Custom report generation pages.
 - Dynamic interactive maps with real-time data overlays.
