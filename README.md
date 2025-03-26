@@ -78,6 +78,7 @@ Agriculture faces multiple adversities—including unpredictable weather, pest i
 ## 4. Installation and Setup
 
 ### Prerequisites
+- [Python](https://www.python.org)
 - [Node.js](https://nodejs.org/en/) (v14 or above)
 - [Azure](https://portal.azure.com)
 - [Git](https://git-scm.com/)
