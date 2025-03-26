@@ -100,14 +100,16 @@ Agriculture faces multiple adversities—including unpredictable weather, pest i
 sudo apt update && sudo apt upgrade -y
 ```
 
-## Install Required Dependencies:
+### Python:
 
-# Python:
+**Install Required Dependencies:**
+
+
 ```bash
 sudo apt install software-properties-common -y
 ```
 
-## Add Python 3.9 Repository:
+**Add Python 3.9 Repository:**
 
 ```bash
 sudo add-apt-repository ppa:deadsnakes/ppa -y
@@ -119,7 +121,7 @@ sudo add-apt-repository ppa:deadsnakes/ppa -y
 sudo apt install python3.9 -y
 ```
 
-## Verify Installation:
+**Verify Installation:**
 
 ```bash
 python3.9 --version
@@ -129,7 +131,8 @@ The output should display `Python 3.9.x` (where `x` is the minor version number)
 
 For further details and advanced configurations, please refer to the [Python Official Documentation](https://docs.python.org/3.9/).
 ```
-# Nodejs:
+### Nodejs:
+
    ```bash
    npm install
    ```
