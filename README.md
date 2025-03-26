@@ -140,9 +140,9 @@ python3.9 --version
 
 The output should display `Python 3.9.x` (where `x` is the minor version number).
 
-```
-For further details and advanced configurations, please refer to the [Python Official Documentation](https://docs.python.org/3.9/).
-```
+
+For further details and advanced configurations, please refer to the [Python Official Documentation](https://docs.python.org/3.9). 
+
 
 
 ---
