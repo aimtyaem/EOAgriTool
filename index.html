@@ -5,15 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Farm Management - Login</title>
     <style>
-header {
-      padding: 20px;
-      text-align: center;
-      background-color: #f4f4f4;
-    }
-    header img {
-      max-width: 100%;
-      height: auto;
-    }
+        header {
+            padding: 20px;
+            text-align: center;
+            background-color: #f4f4f4;
+        }
+        header img {
+            max-width: 100%;
+            height: auto;
+        }
 
         /* Shared styles with notifications page */
         * {
@@ -112,12 +112,32 @@ header {
         .hidden {
             display: none;
         }
+
+        /* Added styles for menu items */
+        .menu-item {
+            display: inline-block;
+            margin: 0 10px;
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .menu-item:hover {
+            background-color: #2980b9;
+        }
     </style>
 </head>
 <body>
 <header>
     <img src="logo.jpg" alt="Logo">
-  </header>
+    <nav>
+        <a href="about.html" class="menu-item tab-item">📖 About</a>
+        <a href="contacts.html" class="menu-item tab-item">📞 Contacts</a>
+    </nav>
+</header>
     <!-- Login Page -->
     <div class="container login-container" id="loginContainer">
         <h1 class="login-title">Farm Management Login</h1>
