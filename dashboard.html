@@ -247,6 +247,31 @@ async function fetchRecommendationsData() {
         "https://www.fao.org/digital-agriculture/en/"
     ];
 
+<!-- Dashboard Info Card -->
+<div class="dashboard-card">
+    <h3>🛎️ Expert Recommendations</h3>
+    <div id="recommendations-list"></div>
+    <p class="update-time">Last updated: <span id="update-time"></span></p>
+</div>
+
+// Dashboard update handler
+function updateRecommendationsDisplay() {
+    const data = JSON.parse(localStorage.getItem('expertRecommendations')) || {};
+    const list = document.getElementById('recommendations-list');
+    const timeSpan = document.getElementById('update-time');
+
+    list.innerHTML = data.recommendations?.map(rec => 
+        `<div class="dashboard-item">✅ ${rec}</div>`
+    ).join('') || '<div class="no-data">No current recommendations</div>';
+    
+    timeSpan.textContent = new Date(data.timestamp).toLocaleTimeString();
+}
+
+// Listen for updates
+window.addEventListener('recommendationsUpdated', updateRecommendationsDisplay);
+window.addEventListener('load', updateRecommendationsDisplay);
+
+
     let recommendations = [];
     try {
         const responses = await Promise.all(urls.map(url =>
@@ -414,91 +439,76 @@ const endpoint = 'https://aimt1-m8ht17kv-eastus2.cognitiveservices.azure.com/ope
         }
         
 
-// Integrated JSON configuration
-const IMAGE_GEN_CONFIG = {
-  prompt: "Generate a high-quality, detailed satellite image view...",
-  negative_prompt: "cartoon, drawing, illustration...",
-  style_raw: "photorealistic, remote sensing data visualization",
-  aspect_ratio: "16:9",
-  image_description: "This high-quality image depicts..."
-};
 
-// Modified handleSend function with JSON integration
-async function handleSend() {
-    const message = userInput.value.trim();
-    if (!message && !currentImage) return;
+// Add this function to handle dashboard updates
+function updateDashboard(recommendations) {
+    // Structure data for dashboard
+    const dashboardData = {
+        timestamp: new Date().toISOString(),
+        recommendations: recommendations,
+        priority: recommendations.length > 0 ? 'high' : 'normal'
+    };
 
-    if (message) addMessage('user', message);
-    userInput.value = '';
+    // Store in localStorage (alternatively send via API)
+    localStorage.setItem('expertRecommendations', JSON.stringify(dashboardData));
     
-    try {
-        const messages = [{
-            role: "system",
-            content: `As an agricultural imaging specialist, analyze inputs using these guidelines:
-            ${IMAGE_GEN_CONFIG.prompt}
-            Avoid: ${IMAGE_GEN_CONFIG.negative_prompt}
-            Style: ${IMAGE_GEN_CONFIG.style_raw}
-            Format: ${IMAGE_GEN_CONFIG.image_description}`
-        }];
-
-        const content = [];
-        if (message) content.push({ type: 'text', text: message });
-        if (currentImage) content.push({ 
-            type: 'image_url',
-            image_url: { url: currentImage, detail: 'high' }
-        });
-
-        messages.push({ role: 'user', content });
-
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                messages: messages,
-                temperature: 0.7,
-                max_tokens: 1000
-            })
-        });
-
-        if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
-
-        const data = await response.json();
-        const botResponse = data.choices[0].message.content;
-        displayEnhancedResponse(botResponse);
-        currentImage = null;
-
-    } catch (error) {
-        console.error('Error:', error);
-        addMessage('bot', `Error: ${error.message}`);
-    }
+    // Optional: Trigger dashboard update event
+    window.dispatchEvent(new Event('recommendationsUpdated'));
 }
 
-// Enhanced response display with JSON template
+// Modified displayEnhancedResponse function
 function displayEnhancedResponse(response) {
     const container = document.createElement('div');
-    
-    // Merge JSON template with AI response
-    const fullResponse = `
-        ${response}
-        
-        <div class="recommendation-card">
-            <h4>Image Generation Specs</h4>
-            <p>Aspect Ratio: ${IMAGE_GEN_CONFIG.aspect_ratio}</p>
-            <p>Style: ${IMAGE_GEN_CONFIG.style_raw}</p>
-            <p>Negative Guidance: ${IMAGE_GEN_CONFIG.negative_prompt}</p>
-        </div>
-    `;
+    const recommendations = [];
 
-    const formattedResponse = fullResponse
+    // Extract key points using regex
+    const keyPoints = response.match(/[•\-*]\s*(.+?:)/g) || [];
+    const cleanPoints = keyPoints.map(point => {
+        // Remove markdown and split at first colon
+        const clean = point.replace(/[•\-*]\s*/, '').split(':')[0];
+        recommendations.push(clean); // Add to dashboard list
+        return clean;
+    });
+
+    // Update dashboard
+    updateDashboard(cleanPoints);
+
+    // Create chat display
+    const formattedResponse = response
         .replace(/##\s(.+?)\n/g, '<h3>$1</h3>')
-        .replace(/- (.+?)\n/g, '<div class="recommendation-card">$1</div>')
+        .replace(/[•\-*]\s*(.+?):/g, '<div class="recommendation-card"><strong>$1</strong></div>')
         .replace(/(https?:\/\/[^\s]+)/g, '<a class="fao-link" href="$1" target="_blank">$1</a>');
 
     container.innerHTML = formattedResponse;
     addMessage('bot', container);
+}
+
+// Add this to handleSend() before displaying response
+async function handleSend() {
+    // ... existing code ...
+    
+    const data = await response.json();
+    const botResponse = data.choices[0].message.content;
+    
+    // Extract and send key recommendations
+    const mainPoints = extractMainPoints(botResponse);
+    updateDashboard(mainPoints);
+    
+    displayEnhancedResponse(botResponse);
+    currentImage = null;
+    
+    // ... error handling ...
+}
+
+// Key extraction function
+function extractMainPoints(response) {
+    return response.split('\n')
+        .filter(line => line.match(/^[•\-*]\s*.+?:/))
+        .map(line => {
+            return line.replace(/^[•\-*]\s*/, '')
+                      .split(':')[0]
+                      .trim();
+        });
 }
 
 
