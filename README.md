@@ -91,6 +91,8 @@ Agriculture faces multiple adversities—including unpredictable weather, pest i
    ```
 
 2. **Install Dependencies:**
+
+### Nodejs:
    
 # Instructions
 
@@ -100,6 +102,16 @@ Agriculture faces multiple adversities—including unpredictable weather, pest i
 sudo apt update && sudo apt upgrade -y
 ```
 
+
+   ```bash
+   npm install
+   ```
+
+3. **Run the Application Locally:**
+   ```bash
+   npm start
+   ```
+   The app will be available at `http://localhost:3000` by default.
 ### Python:
 
 **Install Required Dependencies:**
@@ -131,25 +143,14 @@ The output should display `Python 3.9.x` (where `x` is the minor version number)
 
 For further details and advanced configurations, please refer to the [Python Official Documentation](https://docs.python.org/3.9/).
 ```
-### Nodejs:
-
-   ```bash
-   npm install
-   ```
-
-3. **Run the Application Locally:**
-   ```bash
-   npm start
-   ```
-   The app will be available at `http://localhost:3000` by default.
 
 For further details and advanced configurations, please refer to the [documentation](wiki).
 
 ---
 
-## 5. Screenshots / Mockup Images
+## 5. Interactive Mockup
 
-Mockup design demonstrating key aspects of EO AgriTool’s interface are located in the [`AgriTool`](https://aimtyaem.github.io/EOAgriTool/dashboard.html) directory. Here you can view:
+A mockup design demonstrating key aspects of EO AgriTool’s interface is located in the [`EOvAgriTool`](https://aimtyaem.github.io/EOAgriTool/dashboard.html) directory. Here you can view:
 - The interactive dashboard.
 - Custom report generation pages.
 - Dynamic interactive maps with real-time data overlays.
