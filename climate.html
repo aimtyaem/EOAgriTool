@@ -7,8 +7,6 @@
     <style>
         :root {
             --climate-blue: #1a73e8;
-            --temp-red: #d93025;
-            --precip-blue: #4285f4;
         }
 
         body {
@@ -55,6 +53,21 @@
             border-radius: 6px;
             display: flex;
             justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .expanded-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .expanded-list li {
+            padding: 8px 12px;
+            background: #f1f1f1;
+            margin-top: 5px;
+            border-radius: 4px;
         }
 
         .nav-button {
@@ -79,104 +92,91 @@
             <!-- Historical Card -->
             <div class="climate-card">
                 <div class="card-header">Historical Analysis</div>
-                <div class="data-item">Predictive Models</div>
-                <div class="data-item">Climate Deltas</div>
-                <div class="data-item">Extreme Events</div>
-            </div>
-
-            <!-- Temperature Card -->
-            <div class="climate-card" style="--climate-blue: var(--temp-red)">
-                <div class="card-header">Temperature (°C)</div>
-                <div class="data-item">
-                    <span>2010</span>
-                    <span>23.4°C</span>
-                </div>
-                <!-- Repeat for other years -->
-            </div>
-
-            <!-- Precipitation Card -->
-            <div class="climate-card" style="--climate-blue: var(--precip-blue)">
-                <div class="card-header">Precipitation (mm)</div>
-                <div class="data-item">
-                    <span>2010</span>
-                    <span>450mm</span>
-                </div>
-                <!-- Repeat for other years -->
+                <div class="data-item" data-toggle="predictive-models">Predictive Models</div>
+                <ul class="expanded-list" id="predictive-models">
+                    <li>Analysis 1</li>
+                    <li>Analysis 2</li>
+                    <li>Analysis 3</li>
+                </ul>
+                <div class="data-item" data-toggle="climate-deltas">Climate Deltas</div>
+                <ul class="expanded-list" id="climate-deltas">
+                    <li>Analysis 1</li>
+                    <li>Analysis 2</li>
+                    <li>Analysis 3</li>
+                </ul>
+                <div class="data-item" data-toggle="extreme-events">Extreme Events</div>
+                <ul class="expanded-list" id="extreme-events">
+                    <li>Analysis 1</li>
+                    <li>Analysis 2</li>
+                    <li>Analysis 3</li>
+                </ul>
             </div>
         </div>
 
         <button class="nav-button" id="dashboardBtn">Go to Dashboard</button>
     </div>
 
-<script>
-    const currentYear = new Date().getFullYear();
-    const climateData = {
-        temperature: {
-            '2010': 23.4,
-            '2012': 23.8,
-            '2014': 24.1,
-            '2016': 24.5,
-            '2018': 24.8,
-            '2020': 25.1,
-            '2022': 25.4,
-            [currentYear]: 25.7
-        },
-        precipitation: {
-            '2010': 450,
-            '2012': 420,
-            '2014': 435,
-            '2016': 410,
-            '2018': 398,
-            '2020': 385,
-            '2022': 375,
-            [currentYear]: 365
-        }
-    };
-
-    // Calculate average temperature
-    function calculateAverageTemp() {
-        const temps = Object.values(climateData.temperature);
-        return temps.reduce((sum, temp) => sum + temp, 0) / temps.length;
-    }
-
-    // Save data before navigation
-    function saveClimateData() {
-        const dashboardData = {
-            avgTemp: calculateAverageTemp().toFixed(1),
-            lastPrecip: climateData.precipitation[currentYear]
+    <script>
+        const currentYear = new Date().getFullYear();
+        const climateData = {
+            temperature: {
+                '2010': 23.4,
+                '2012': 23.8,
+                '2014': 24.1,
+                '2016': 24.5,
+                '2018': 24.8,
+                '2020': 25.1,
+                '2022': 25.4,
+                [currentYear]: 25.7
+            },
+            precipitation: {
+                '2010': 450,
+                '2012': 420,
+                '2014': 435,
+                '2016': 410,
+                '2018': 398,
+                '2020': 385,
+                '2022': 375,
+                [currentYear]: 365
+            }
         };
-        localStorage.setItem('climateDashboardData', JSON.stringify(dashboardData));
-    }
 
-    // Navigation functionality with data save
-    document.getElementById('dashboardBtn').addEventListener('click', () => {
-        saveClimateData();
-        window.location.href = 'dashboard.html';
-    });
+        // Calculate average temperature
+        function calculateAverageTemp() {
+            const temps = Object.values(climateData.temperature);
+            return temps.reduce((sum, temp) => sum + temp, 0) / temps.length;
+        }
 
-    // Dynamic data population (unchanged)
-    document.addEventListener('DOMContentLoaded', () => {
-        const tempCard = document.querySelector('[style*="--temp-red"]');
-        const precipCard = document.querySelector('[style*="--precip-blue"]');
+        // Save data before navigation
+        function saveClimateData() {
+            const dashboardData = {
+                avgTemp: calculateAverageTemp().toFixed(1),
+                lastPrecip: climateData.precipitation[currentYear]
+            };
+            localStorage.setItem('climateDashboardData', JSON.stringify(dashboardData));
+        }
 
-        Object.entries(climateData.temperature).forEach(([year, temp]) => {
-            tempCard.innerHTML += `
-                <div class="data-item">
-                    <span>${year}</span>
-                    <span>${temp}°C</span>
-                </div>
-            `;
+        // Navigation functionality with data save
+        document.getElementById('dashboardBtn').addEventListener('click', () => {
+            saveClimateData();
+            window.location.href = 'dashboard.html';
         });
 
-        Object.entries(climateData.precipitation).forEach(([year, precip]) => {
-            precipCard.innerHTML += `
-                <div class="data-item">
-                    <span>${year}</span>
-                    <span>${precip}mm</span>
-                </div>
-            `;
+        // Toggle expanded lists
+        document.querySelectorAll('.data-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const targetId = item.getAttribute('data-toggle');
+                const targetList = document.getElementById(targetId);
+                targetList.style.display = targetList.style.display === 'none' ? 'block' : 'none';
+            });
         });
-    });
-</script>
+
+        // Initialize lists as collapsed
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.expanded-list').forEach(list => {
+                list.style.display = 'none';
+            });
+        });
+    </script>
 </body>
 </html>
