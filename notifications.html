@@ -6,6 +6,9 @@
     <title>Farm Alerts</title>
     <style>
         /* Add your styles here */
+        .alert-count {
+            color: red;
+        }
     </style>
 </head>
 <body>
@@ -59,78 +62,17 @@
             alertList.appendChild(li);
         });
 
-        // Function to send notifications to dashboard.html
-        function sendNotificationsToDashboard(notifications) {
-            // Assuming dashboard.html has an element with id 'notifications-container'
-            const dashboardWindow = window.open('dashboard.html', '_blank');
-            dashboardWindow.onload = function() {
-                const notificationsContainer = dashboardWindow.document.getElementById('notifications-container');
-                notificationsContainer.innerHTML = notifications.map(notification => `
-                    <div class="alert">
-                        <p><strong>${notification.title}</strong></p>
-                        <p>${notification.message}</p>
-                        <p>Received: ${timeSince(notification.timestamp)} ago</p>
-                    </div>
-                `).join('');
-            };
-        }
-
-        // Function to call AI chatbot API for recommendations
-        async function getRecommendations() {
-            try {
-                const response = await fetch('https://api.example.com/get-recommendations');
-                if (!response.ok) throw new Error('Failed to fetch recommendations');
-                const recommendations = await response.json();
-                displayRecommendations(recommendations);
-            } catch (error) {
-                console.error('Error fetching recommendations:', error);
-            }
-        }
-
-        // Function to display recommendations on dashboard.html
-        function displayRecommendations(recommendations) {
-            const dashboardWindow = window.open('dashboard.html', '_blank');
-            dashboardWindow.onload = function() {
-                const recommendationsContainer = dashboardWindow.document.getElementById('recommendations-container');
-                recommendationsContainer.innerHTML = recommendations.map(rec => `
-                    <div class="recommendation">
-                        <p><strong>${rec.title}</strong></p>
-                        <p>${rec.message}</p>
-                    </div>
-                `).join('');
-            };
+        // Function to update dashboard alerts count
+        function updateDashboardAlertCount(count) {
+            const dashboardMenuItem = document.querySelector('.menu-item.dashboard');
+            dashboardMenuItem.innerHTML = `Dashboard <span class="alert-count">(${count})</span>`;
         }
 
         // Call functions when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            const notifications = [
-                { title: "Pest & Disease Outbreaks", message: "Diseases detected in your crops.", timestamp: new Date() },
-                { title: "Weather Alerts", message: "Extreme weather warning for your region.", timestamp: new Date() },
-                { title: "Equipment Maintenance", message: "Tractor service due soon.", timestamp: new Date() }
-            ];
-            sendNotificationsToDashboard(notifications);
-            getRecommendations();
+            const alertCount = alerts.length;
+            updateDashboardAlertCount(alertCount);
         });
-
-        function timeSince(dateString) {
-            const date = new Date(dateString);
-            const seconds = Math.floor((new Date() - date) / 1000);
-            const intervals = {
-                year: 31536000,
-                month: 2592000,
-                day: 86400,
-                hour: 3600,
-                minute: 60
-            };
-
-            for (const [unit, secondsInUnit] of Object.entries(intervals)) {
-                const interval = Math.floor(seconds / secondsInUnit);
-                if (interval >= 1) {
-                    return `${interval} ${unit}${interval !== 1 ? 's' : ''}`;
-                }
-            }
-            return 'just now';
-        }
     </script>
 </body>
 </html>
