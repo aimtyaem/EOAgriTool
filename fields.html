@@ -160,6 +160,8 @@
     </div>
 
     <script>
+        let uploadedMedia = [];
+
         // Load fields from localStorage
         function loadFields() {
             const fieldsGrid = document.getElementById('fieldsGrid');
@@ -198,7 +200,6 @@
         document.getElementById('mediaUpload').addEventListener('change', function(e) {
             const files = Array.from(e.target.files);
             const mediaPreview = document.getElementById('mediaPreview');
-            let fieldData = JSON.parse(localStorage.getItem('fieldData')) || { fields: [] };
 
             files.forEach(file => {
                 const reader = new FileReader();
@@ -212,19 +213,14 @@
                     mediaPreview.appendChild(mediaItem);
 
                     // Store media reference
-                    if (fieldData.fields.length > 0) {
-                        fieldData.fields[0].media.push({
-                            type: file.type.startsWith('image') ? 'image' : 'video',
-                            url: e.target.result,
-                            timestamp: new Date().toISOString()
-                        });
-                    }
+                    uploadedMedia.push({
+                        type: file.type.startsWith('image') ? 'image' : 'video',
+                        url: e.target.result,
+                        timestamp: new Date().toISOString()
+                    });
                 };
                 reader.readAsDataURL(file);
             });
-
-            // Update localStorage
-            localStorage.setItem('fieldData', JSON.stringify(fieldData));
         });
 
         // Register new field
@@ -245,7 +241,7 @@
                 health: fieldHealth,
                 yield: 'N/A',
                 lastUpdated: new Date().toISOString(),
-                media: []
+                media: uploadedMedia
             });
 
             localStorage.setItem('fieldData', JSON.stringify(fieldData));
