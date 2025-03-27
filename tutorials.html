@@ -90,6 +90,20 @@
             border-radius: 4px;
             transition: width 0.3s ease;
         }
+
+        .home-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -130,6 +144,8 @@
         </div>
     </div>
 
+    <button class="home-btn" onclick="window.location.href='index.html'">Home</button>
+
     <script>
         // Tutorial state management
         const tutorialState = {
@@ -152,6 +168,14 @@
                 }
                 this.saveState();
                 this.updateDashboard();
+            },
+            updateDashboard() {
+                const totalTutorials = Object.keys(this.progress).length;
+                const completedTutorials = this.completed.length;
+                const menuItem = document.querySelector('.menu-item.tutorials');
+
+                menuItem.textContent = `🎓 Tutorials (${completedTutorials}/${totalTutorials})`;
+                menuItem.style.color = completedTutorials === totalTutorials ? 'green' : 'red';
             }
         };
 
@@ -192,29 +216,8 @@
                     document.querySelectorAll('.progress-fill')[videoId === 'environment' ? 0 : 1].style.width = '100%';
                 }
             });
+            tutorialState.updateDashboard();
         });
-
-        <!-- tutorials.html -->
-    document.addEventListener('DOMContentLoaded', () => {
-        const tutorialsData = {
-            tutorials: [
-                {
-                    title: 'Understanding Environmental Data',
-                    description: 'Learn about the importance of environmental data.',
-                    duration: 15,
-                    completed: false
-                },
-                {
-                    title: 'Using the AgriTool',
-                    description: 'A comprehensive guide to using the AgriTool.',
-                    duration: 20,
-                    completed: false
-                }
-            ]
-        };
-        localStorage.setItem('tutorialsData', JSON.stringify(tutorialsData));
-    });
-
     </script>
 </body>
 </html>
