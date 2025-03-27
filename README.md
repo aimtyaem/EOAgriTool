@@ -58,27 +58,29 @@ Agriculture faces multiple adversities—including unpredictable weather, pest i
 ## 3. Tech Stack
 
 - **Front-End:**  
-  - React.js for responsive and dynamic user interfaces.
-  - Redux for state management.
-  - Tailwind CSS / Material UI for streamlined, modern design.
+  - JavaScript for responsive and dynamic user interfaces.
+  - GIT for version control.
+  - Agentic AI, GPT platform chatbots for CSS / Grok for mockup, modern design.
 
 - **Back-End:**  
   - Node.js with Express.js for building scalable APIs.
-  - Integration with external data providers (EgSA Portal, EgSA APIs).
+  - Integration with external data providers (EO OpenAI, EgSA Portal, & EgSA APIs).
 
 - **Database:**  
   - MongoDB / PostgreSQL for flexible, high-performance data storage.
 
 - **Additional Tools & Libraries:**  
-  - D3.js / Leaflet for interactive maps and data visualizations.
-  - Machine Learning libraries (TensorFlow, Scikit-Learn) for predictive analytics.
+  - Deepseek R1 model / Gemini flash 2.0 experiential thinking for raster data codes and data visualizations.
+  - Machine Learning libraries (Agentic AI, AI studios) for predictive analytics.
 
 ---
 
 ## 4. Installation and Setup
 
 ### Prerequisites
+- [Python](https://www.python.org)
 - [Node.js](https://nodejs.org/en/) (v14 or above)
+- [Azure](https://portal.azure.com)
 - [Git](https://git-scm.com/)
 
 ### Instructions
@@ -89,6 +91,17 @@ Agriculture faces multiple adversities—including unpredictable weather, pest i
    ```
 
 2. **Install Dependencies:**
+
+
+### Instructions
+### Nodejs:
+## Update System Packages:
+
+```bash
+sudo apt update && sudo apt upgrade -y
+```
+
+
    ```bash
    npm install
    ```
@@ -98,14 +111,45 @@ Agriculture faces multiple adversities—including unpredictable weather, pest i
    npm start
    ```
    The app will be available at `http://localhost:3000` by default.
+### Python:
 
-For further details and advanced configurations, please refer to the [documentation](wiki).
+**Install Required Dependencies:**
+
+
+```bash
+sudo apt install software-properties-common -y
+```
+
+**Add Python 3.9 Repository:**
+
+```bash
+sudo add-apt-repository ppa:deadsnakes/ppa -y
+```
+
+## Install Python 3.9:
+
+```bash
+sudo apt install python3.9 -y
+```
+
+**Verify Installation:**
+
+```bash
+python3.9 --version
+```
+
+The output should display `Python 3.9.x` (where `x` is the minor version number).
+
+
+For further details and advanced configurations, please refer to the [Python Official Documentation](https://docs.python.org/3.9). 
+
+
 
 ---
 
-## 5. Screenshots / Mockup Images
+## 5. Interactive Mockup
 
-Screenshots and wireframes demonstrating key aspects of EO AgriTool’s interface are located in the [`AgriTool`](https://aimtyaem.github.io/EOAgriTool/dashboard.html) directory. Here you can view:
+A mockup design demonstrating key aspects of EO AgriTool’s interface is located in the [`EOvAgriTool`](https://aimtyaem.github.io/EOAgriTool/dashboard.html) directory. Here you can view:
 - The interactive dashboard.
 - Custom report generation pages.
 - Dynamic interactive maps with real-time data overlays.
