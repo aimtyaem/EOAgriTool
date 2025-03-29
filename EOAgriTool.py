@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 import random
 import requests
 from bs4 import BeautifulSoup
@@ -109,5 +109,22 @@ def home():
                          recommendations=recommendations,
                          web_best_practices=web_best_practices)
 
+@app.route("/api/delete_extension", methods=["DELETE"])
+def delete_extension():
+    extension_name = request.args.get("extension_name")
+    if not extension_name:
+        return jsonify({"error": "Extension name is required"}), 400
+
+    # Replace with the actual URL and headers for your web app's API
+    api_url = f"https://your-web-app-url/api/extensions/{extension_name}"
+    headers = {"Authorization": "Bearer YOUR_API_TOKEN"}
+
+    try:
+        response = requests.delete(api_url, headers=headers)
+        response.raise_for_status()
+        return jsonify({"message": f"Extension '{extension_name}' deleted successfully"}), 200
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == "__main__":
-    app.run(host="https://eoagritool-cwfzfndaazauawex.canadacentral-01.azurewebsites.net", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=True)
