@@ -93,7 +93,6 @@ Agriculture faces multiple adversities—including unpredictable weather, pest i
 2. **Install Dependencies:**
 
 
-### Instructions
 ### Nodejs:
 ## Update System Packages:
 
@@ -119,6 +118,7 @@ sudo apt update && sudo apt upgrade -y
 ```bash
 sudo apt install software-properties-common -y
 ```
+[![Build and deploy Node.js app to Azure Web App - exprec](https://github.com/aimtyaem/EOAgriTool/actions/workflows/github_exprec.yml/badge.svg)](https://github.com/aimtyaem/EOAgriTool/actions/workflows/github_exprec.yml)
 
 **Add Python 3.9 Repository:**
 
@@ -140,6 +140,7 @@ python3.9 --version
 
 The output should display `Python 3.9.x` (where `x` is the minor version number).
 
+[![Build and deploy Python app to Azure Web App - EOAgriTool](https://github.com/aimtyaem/EOAgriTool/actions/workflows/main_eoagritool.yml/badge.svg)](https://github.com/aimtyaem/EOAgriTool/actions/workflows/main_eoagritool.yml)
 
 For further details and advanced configurations, please refer to the [Python Official Documentation](https://docs.python.org/3.9). 
 
