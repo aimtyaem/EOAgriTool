@@ -110,6 +110,8 @@ sudo apt update && sudo apt upgrade -y
    npm start
    ```
    The app will be available at `http://localhost:3000` by default.
+[![Build and deploy Node.js app to Azure Web App - exprec](https://github.com/aimtyaem/EOAgriTool/actions/workflows/github_exprec.yml/badge.svg)](https://github.com/aimtyaem/EOAgriTool/actions/workflows/github_exprec.yml)
+
 ### Python:
 
 **Install Required Dependencies:**
@@ -118,7 +120,7 @@ sudo apt update && sudo apt upgrade -y
 ```bash
 sudo apt install software-properties-common -y
 ```
-[![Build and deploy Node.js app to Azure Web App - exprec](https://github.com/aimtyaem/EOAgriTool/actions/workflows/github_exprec.yml/badge.svg)](https://github.com/aimtyaem/EOAgriTool/actions/workflows/github_exprec.yml)
+
 
 **Add Python 3.9 Repository:**
 
