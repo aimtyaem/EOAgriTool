@@ -152,7 +152,7 @@ For further details and advanced configurations, please refer to the [Python Off
 
 ## 5. Interactive Mockup
 
-A mockup design demonstrating key aspects of EO AgriTool’s interface is located in the [`EOvAgriTool`](https://aimtyaem.github.io/EOAgriTool/dashboard.html) directory. Here you can view:
+A mockup design demonstrating key aspects of EO AgriTool’s interface is located in the [`EOAgriTool`](https://aimtyaem.github.io/EOAgriTool/dashboard.html) directory. Here you can view:
 - The interactive dashboard.
 - Custom report generation pages.
 - Dynamic interactive maps with real-time data overlays.
