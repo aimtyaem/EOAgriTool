@@ -30,7 +30,7 @@ Thank you for your interest in contributing to EO AgriTool! Your contributions a
    ```bash
    git clone https://github.com/yourusername/EO-AgriTool.git
    cd EO-AgriTool
-```markdown
+   ```
 # Contributing to EO AgriTool
 
 Thank you for your interest in contributing to EO AgriTool! Your contributions are essential to help improve our platform, which empowers farmers by integrating state-of-the-art Earth observation data with sustainable agricultural practices. This guide outlines how you can help us build a better tool for a more sustainable future in agriculture.
