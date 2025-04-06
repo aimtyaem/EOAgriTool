@@ -3,6 +3,7 @@ import random
 import requests
 from bs4 import BeautifulSoup
 import concurrent.futures
+import os  # Import the os module
 
 app = Flask(__name__)
 
@@ -104,7 +105,7 @@ def home():
     sensor_data = get_sensor_data()
     recommendations = generate_expert_recommendations(sensor_data)
     web_best_practices = fetch_real_time_best_practices()
-    return render_template("index.html", 
+    return render_template("dashboard.html",  # Changed to dashboard.html
                          sensor_data=sensor_data,
                          recommendations=recommendations,
                          web_best_practices=web_best_practices)
@@ -127,4 +128,6 @@ def delete_extension():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    # Determine the port to run on (Heroku-friendly)
+    port = int(os.environ.get("PORT", 8000))
+    app.run(host="0.0.0.0", port=port, debug=True)
