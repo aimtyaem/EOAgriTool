@@ -116,8 +116,8 @@ def delete_extension():
         return jsonify({"error": "Extension name is required"}), 400
 
     # Replace with the actual URL and headers for your web app's API
-    api_url = f"https://eoagritool-cwfzfndaazauawex.canadacentral-01.azurewebsites.net/{extension_name}"
-    headers = {"Authorization": "8c8e3f73-c31d-4795-b41d-bd7093ed68cf"}
+    api_url = f"https://eoagritool.z39.web.core.windows.net/{extension_name}"
+    headers = {}
 
     try:
         response = requests.delete(api_url, headers=headers)
