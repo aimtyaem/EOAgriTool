@@ -1,0 +1,24 @@
+{
+  "crop_rotation_plan": {
+    "field_id": "EGY_NileDelta_001",
+    "location": { "latitude": 30.7865, "longitude": 31.0, "governorate": "Dakahlia" },
+    "sequence_years": 3,
+    "soil": { "ph": 8.12, "texture": "Clay Loam", "organic_matter_pct": 1.05, "previous_crop": "Wheat", "hardiness_zone": "9a", "irrigation_capacity_mm_yr": 1000 },
+    "crop_schedule": [
+      { "year": 1, "season": "summer_2024", "crop_common": "Soybean", "crop_scientific": "Glycine max", "role": "N-fixing legume", "est_irrigation_mm": 500, "est_N_fixed_kg_ha": 90, "notes": "Inoculate with locally adapted Bradyrhizobium; monitor Fe chlorosis." },
+      { "year": 1, "season": "winter_2024_25", "crop_common": "Berseem Clover", "crop_scientific": "Trifolium alexandrinum", "role": "N-fixing green manure / SOM builder", "est_irrigation_mm": 350, "est_N_fixed_kg_ha": 125, "notes": "Incorporate full biomass at 50–60 days for soil organic matter recovery." },
+      { "year": 2, "season": "summer_2025", "crop_common": "Maize", "crop_scientific": "Zea mays", "role": "High-yield cereal / N capture", "est_irrigation_mm": 550, "est_N_fixed_kg_ha": 0, "notes": "Use legume N credit; apply 30–40 kg P₂O₅/ha and zinc at planting." },
+      { "year": 2, "season": "winter_2025_26", "crop_common": "Fava Bean", "crop_scientific": "Vicia faba", "role": "N-fixing grain legume / structure repair", "est_irrigation_mm": 380, "est_N_fixed_kg_ha": 65, "notes": "Return residues to soil to retain nitrogen and improve structure." },
+      { "year": 3, "season": "summer_2026", "crop_common": "Sesame", "crop_scientific": "Sesamum indicum", "role": "Low-N, low-water cash crop", "est_irrigation_mm": 400, "est_N_fixed_kg_ha": 0, "notes": "Deep rooting and low nitrogen demand preserve the rebuilt soil pool." },
+      { "year": 3, "season": "winter_2026_27", "crop_common": "Wheat", "crop_scientific": "Triticum aestivum", "role": "Return cereal / restored soil", "est_irrigation_mm": 420, "est_N_fixed_kg_ha": 0, "notes": "Target 50–70% of conventional nitrogen rate; apply zinc at planting." }
+    ],
+    "soil_health_index": { "baseline": 52, "projected_year3": 70, "units": "0–100" },
+    "water_impact_score": { "score": 0.78, "conventional_baseline_mm_per_yr": 1083, "proposed_rotation_mm_per_yr": 867, "water_savings_pct": 19.9, "rice_excluded": true },
+    "risk_mitigation": [
+      { "risk": "Secondary salinization", "severity": "high", "mitigation": "Maintain a leaching fraction of at least 15% and avoid over-irrigation." },
+      { "risk": "Nutrient lockup at pH 8.12", "severity": "high", "mitigation": "Band MAP/DAP with elemental sulfur; use Fe-EDDHA and zinc where indicated." },
+      { "risk": "Organic carbon depletion", "severity": "critical", "mitigation": "Retain residues, incorporate berseem biomass, and reduce tillage." },
+      { "risk": "Soybean nodulation failure", "severity": "moderate", "mitigation": "Inoculate seed and inspect nodulation at V3–V4." }
+    ]
+  }
+}
