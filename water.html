@@ -3,178 +3,1091 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Water Management</title>
+    <title>EOAgriTool — Water Resources</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
     <style>
         :root {
             --water-blue: #1a73e8;
             --surface-blue: #4285f4;
-            --groundwater-teal: #00bcd4;
+            --groundwater-teal: #00897b;
+            --irrigation-green: #1e8e3e;
+            --alert-red: #d93025;
+            --warning-orange: #f9ab00;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #202124;
+            --text-sec: #5f6368;
+            --border: #dadce0;
+            --shadow: 0 2px 6px rgba(0,0,0,0.08);
+            --shadow-hover: 0 6px 18px rgba(0,0,0,0.12);
+            --radius: 10px;
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             padding: 20px;
-            background: #f8f9fa;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1400px; margin: 0 auto; }
 
-        .water-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+        /* ── Header ── */
+        .page-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
         }
+        .page-header h1 { color: var(--water-blue); font-size: 1.7rem; }
+        .model-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: #e3f2fd; color: var(--water-blue);
+            padding: 5px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 500;
+        }
+        .model-badge .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--irrigation-green); animation: pulse 2s infinite;
+        }
+        .model-badge.off .dot { background: var(--warning-orange); animation: none; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
 
+        /* ── Config Bar ── */
+        .config-bar {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            margin-bottom: 20px; padding: 14px 18px;
+            background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+        }
+        .config-bar label { font-size: 0.82rem; font-weight: 600; color: var(--text-sec); }
+        .config-bar select, .config-bar input {
+            padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
+            font-size: 0.88rem; background: var(--bg);
+        }
+        .config-bar input[type="text"] { width: 240px; font-family: monospace; }
+        .run-btn {
+            padding: 7px 20px; background: var(--water-blue); color: #fff;
+            border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
+            transition: background 0.2s;
+        }
+        .run-btn:hover { background: #1557b0; }
+        .run-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        /* ── Tabs ── */
+        .water-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
         .tab-button {
-            padding: 12px 24px;
-            background: #fff;
-            border: 2px solid var(--water-blue);
-            color: var(--water-blue);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            padding: 10px 22px; background: #fff; border: 2px solid var(--water-blue);
+            color: var(--water-blue); border-radius: 8px; cursor: pointer;
+            font-weight: 600; font-size: 0.92rem; transition: all 0.25s ease;
         }
+        .tab-button:hover { background: #e3f2fd; }
+        .tab-button.active { background: var(--water-blue); color: #fff; }
 
-        .tab-button.active {
-            background: var(--water-blue);
-            color: white;
-        }
-
+        /* ── Grid ── */
         .water-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 22px; margin-bottom: 30px;
         }
 
+        /* ── Cards ── */
         .water-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            background: var(--card-bg); border-radius: var(--radius);
+            padding: 22px; box-shadow: var(--shadow); transition: box-shadow 0.3s;
+        }
+        .water-card:hover { box-shadow: var(--shadow-hover); }
+        .card-title {
+            font-weight: 700; font-size: 1.05rem; margin-bottom: 14px;
+            border-bottom: 2px solid var(--water-blue); padding-bottom: 8px;
+            display: flex; align-items: center; gap: 8px;
         }
 
-        .water-list {
-            list-style: none;
-            padding: 0;
+        /* ── Expandable sections ── */
+        .section-header {
+            padding: 10px 14px; margin: 8px 0; background: var(--bg);
+            border-radius: 7px; cursor: pointer; display: flex;
+            justify-content: space-between; align-items: center;
+            user-select: none; border-left: 4px solid transparent; transition: all 0.2s;
+        }
+        .section-header:hover { background: #e3f2fd; }
+        .section-header.open { border-left-color: var(--water-blue); }
+        .section-header .arrow { transition: transform 0.25s; font-size: 0.75rem; color: var(--text-sec); }
+        .section-header.open .arrow { transform: rotate(90deg); }
+
+        .section-body {
+            display: none; padding: 14px; margin: 6px 0;
+            background: #f1f3f4; border-radius: 8px;
+            animation: fadeIn 0.25s ease;
+        }
+        .section-body.visible { display: block; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
+
+        /* ── Metric rows ── */
+        .metric { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .metric:last-child { border-bottom: none; }
+        .metric-label { color: var(--text-sec); }
+        .metric-value { font-weight: 700; }
+        .v-good { color: var(--irrigation-green); }
+        .v-warn { color: var(--warning-orange); }
+        .v-crit { color: var(--alert-red); }
+        .v-info { color: var(--water-blue); }
+
+        /* ── Charts ── */
+        .chart-wrap { position: relative; width: 100%; height: 210px; margin: 10px 0; }
+        .chart-wrap canvas { width: 100% !important; height: 100% !important; }
+
+        /* ── Simulation preview ── */
+        .sim-preview {
+            width: 100%; border-radius: 8px; background: #e3f2fd;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 160px; margin: 10px 0; overflow: hidden; position: relative;
+        }
+        .sim-preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+        .sim-preview .placeholder { text-align: center; color: var(--text-sec); padding: 20px; }
+        .sim-preview .overlay {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.6); color: #fff; padding: 8px 14px;
+            font-size: 0.8rem;
         }
 
-        .water-item {
-            padding: 10px;
-            margin: 8px 0;
-            background: #f8f9fa;
-            border-radius: 6px;
+        /* ── Water body list ── */
+        .wb-item {
+            padding: 10px 14px; margin: 6px 0; background: #fff;
+            border-radius: 7px; border-left: 4px solid var(--surface-blue);
+        }
+        .wb-item.critical { border-left-color: var(--alert-red); }
+        .wb-item.warning  { border-left-color: var(--warning-orange); }
+        .wb-item.good     { border-left-color: var(--irrigation-green); }
+        .wb-name { font-weight: 700; font-size: 0.92rem; }
+        .wb-detail { font-size: 0.82rem; color: var(--text-sec); margin-top: 3px; }
+
+        /* ── Irrigation schedule ── */
+        .irr-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin-top: 8px; }
+        .irr-table th { text-align: left; padding: 5px 7px; background: #e3f2fd; color: var(--water-blue); font-weight: 600; }
+        .irr-table td { padding: 5px 7px; border-bottom: 1px solid #eee; }
+        .irr-table tr:hover td { background: #f8f9fa; }
+
+        .search-box { margin-bottom: 10px; }
+        .search-box input {
+            width: 100%; padding: 8px 12px; border: 1px solid var(--border);
+            border-radius: 6px; font-size: 0.9rem;
         }
 
+        .hidden { display: none; }
+
+        /* ── Nav ── */
         .nav-button {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 12px 24px;
-            background: var(--water-blue);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: fixed; bottom: 20px; right: 20px;
+            padding: 12px 24px; background: var(--water-blue); color: #fff;
+            border: none; border-radius: 8px; cursor: pointer;
+            box-shadow: 0 4px 12px rgba(26,115,232,0.4); font-weight: 600;
+            z-index: 100; transition: transform 0.2s;
         }
+        .nav-button:hover { transform: translateY(-2px); }
 
-        .hidden {
-            display: none;
+        @media (max-width: 500px) {
+            .water-grid { grid-template-columns: 1fr; }
+            .config-bar input[type="text"] { width: 100%; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Water Resources</h1>
-        
-        <div class="water-tabs">
-            <button class="tab-button active" data-tab="surface">Surface Water</button>
-            <button class="tab-button" data-tab="groundwater">Groundwater</button>
-            <button class="tab-button" data-tab="irrigation">Irrigation</button>
+
+<div class="container">
+
+    <!-- ═══ HEADER ═══ -->
+    <div class="page-header">
+        <h1>💧 Water Resources</h1>
+        <div class="model-badge" id="modelBadge">
+            <span class="dot"></span>
+            <span id="modelStatus">LTX-2.5 Water Sim — checking…</span>
         </div>
-
-        <div class="water-grid">
-            <!-- Surface Water Card -->
-            <div class="water-card" data-content="surface">
-                <h3>Surface Water Bodies</h3>
-                <ul class="water-list">
-                    <li class="water-item">Lake Tahoe</li>
-                    <li class="water-item">Lake Mead</li>
-                    <li class="water-item">Salton Sea</li>
-                    <li class="water-item">Mono Lake</li>
-                </ul>
-            </div>
-
-            <!-- Groundwater Card -->
-            <div class="water-card hidden" data-content="groundwater">
-                <h3>Groundwater Levels</h3>
-                <ul class="water-list">
-                    <li class="water-item">Napa Valley</li>
-                    <li class="water-item">San Joaquin Valley</li>
-                    <li class="water-item">Sacramento Valley</li>
-                    <li class="water-item">Central Coast</li>
-                </ul>
-            </div>
-
-            <!-- Irrigation Card -->
-            <div class="water-card hidden" data-content="irrigation">
-                <h3>Irrigation Schedules</h3>
-                <div class="search-box">
-                    <input type="text" placeholder="Search schedules...">
-                </div>
-                <!-- Irrigation data would be populated here -->
-            </div>
-        </div>
-
-        <button class="nav-button" id="dashboardBtn">Go to Dashboard</button>
     </div>
 
-    <script>
-        // Water data model
-        const waterData = {
-            surface: [
-                { name: "Lake Tahoe", level: "85%", status: "Good" },
-                { name: "Lake Mead", level: "42%", status: "Low" },
-                // ... other surface waters
-            ],
-            groundwater: [
-                { name: "Napa Valley", level: "58m", trend: "↓ 0.5m/mo" },
-                { name: "San Joaquin Valley", level: "42m", trend: "↓ 1.2m/mo" },
-                // ... other groundwater
-            ],
-            irrigation: []
+    <!-- ═══ CONFIG ═══ -->
+    <div class="config-bar">
+        <label>HF Token</label>
+        <input type="text" id="hfToken" placeholder="hf_xxx (optional)">
+        <label>Region</label>
+        <select id="regionSel">
+            <option value="nile_delta">Nile Delta (30.8°N, 31.0°E)</option>
+            <option value="california">Central Valley, CA (37.4°N, 120.8°W)</option>
+            <option value="sahel">Sahel (13.5°N, 2.1°E)</option>
+            <option value="punjab">Indus Basin (31.0°N, 72.0°E)</option>
+            <option value="murray">Murray-Darling (34.0°S, 143.0°E)</option>
+        </select>
+        <label>Year</label>
+        <select id="yearSel">
+            <option value="2024">2024</option>
+            <option value="2025" selected>2025</option>
+            <option value="2030">2030 (projected)</option>
+            <option value="2050">2050 (projected)</option>
+        </select>
+        <button class="run-btn" id="runBtn" onclick="runWaterAnalysis()">▶ Analyse</button>
+    </div>
+
+    <!-- ═══ TABS ═══ -->
+    <div class="water-tabs">
+        <button class="tab-button active" data-tab="surface" onclick="switchTab('surface')">🌊 Surface Water</button>
+        <button class="tab-button" data-tab="groundwater" onclick="switchTab('groundwater')">🪨 Groundwater</button>
+        <button class="tab-button" data-tab="irrigation" onclick="switchTab('irrigation')">🌾 Irrigation</button>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!--  TAB 1: SURFACE WATER                                    -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div class="water-grid" id="tab-surface">
+
+        <!-- Water Body Inventory -->
+        <div class="water-card">
+            <div class="card-title">🌊 Surface Water Bodies</div>
+            <div class="section-header" data-target="sw-inventory" onclick="toggleSec(this)">
+                <span>Inventory &amp; Status</span><span class="arrow">▶</span>
+            </div>
+            <div class="section-body" id="sw-inventory"><div id="swInventoryList"></div></div>
+
+            <div class="section-header" data-target="sw-levels" onclick="toggleSec(this)">
+                <span>Water Level Trends</span><span class="arrow">▶</span>
+            </div>
+            <div class="section-body" id="sw-levels">
+                <div class="chart-wrap"><canvas id="swLevelChart"></canvas></div>
+            </div#>
+
+            <div class="section-header" data-target="sw-sim" onclick="toggleSec(this)">
+                <span>LTX-2.5 Water Simulation</span><span class="arrow">▶</span>
+            </div>
+            <div class="section-body" id="sw-sim">
+                <div class="sim-preview" id="swSimPreview">
+                    <div class="placeholder">Run analysis to generate water surface simulation</div>
+                </div>
+                <div id="swSimMeta"></div>
+            </div>
+        </div>
+
+        <!-- Runoff & Discharge -->
+        <div class="water-card">
+            <div class="card-title">📊 Runoff &amp; Discharge</div>
+            <div class="section-header" data-target="sw-runoff" onclick="toggleSec(this)">
+                <span>Monthly Runoff</span><span class="arrow">▶</span>
+            </div>
+            <div class="section-body" id="sw-runoff">
+                <div class="chart-wrap"><canvas id="swRunoffChart"></canvas></div>
+                <div id="swRunoffMetrics"></div>
+            </div>
+
+            <div class="section-header" data-target="sw-discharge" onclick="toggleSec(this)">
+                <span>Stream Discharge</span><span class="arrow">▶</span>
+            </div>
+            <div class="section-body" id="sw-discharge">
+                <div class="chart-wrap"><canvas id="swDischargeChart"></canvas></div>
+                <div id="swDischargeMetrics"></div>
+            </div>
+        </div>
+
+        <!-- Quality -->
+        <div class="water-card">
+            <div class="card-title">🧪 Water Quality</div>
+            <div class="section-header" data-target="sw-quality" onclick="toggleSec(this)">
+                <span>Quality Index &amp; Parameters</span><span class="arrow">▶</span>
+            </div>
+            <div class="section-body" id="sw-quality">
+                <div class="chart-wrap"><canvas id="swQualityChart"></canvas></div>
+                <div id="swQualityMetrics"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!--  TAB 2: GROUNDWATER                                       -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div class="water-grid hidden" id="tab-groundwater">
+
+        <div class="water-card">
+            <div class="card-title">🪨 Aquifer Levels</div>
+            <div class="section-header" data-target="gw-levels" onclick="toggleSec(this)">
+                <span>Water Table Depth</span><span class="arrow">▶</span>
+            </div>
+            <div class="section-body" id="gw-levels">
+                <div class="chart-wrap"><canvas id="gwLevelChart"></canvas></div>
+                <div id="gwLevelMetrics"></div>
+            </div>
+
+            <div class="section-header" data-target="gw-recharge" onclick="toggleSec(this)">
+                <span>Recharge Rate</span><span class="arrow">▶</span>
+            </div>
+            <div class="section-body" id="gw-recharge">
+                <div class="chart-wrap"><canvas id="gwRechargeChart"></canvas></div>
+                <div id="gwRechargeMetrics"></div>
+            </div>
+        </div>
+
+        <div class="water-card">
+            <div class="card-title">📉 Depletion Analysis</div>
+            <div class="section-header" data-target="gw-depletion" onclick="toggleSec(this)">
+                <span>Storage Change &amp; Over-extraction</span><span class="arrow">▶</span>
+            </div>
+            <div class="section-body" id="gw-depletion">
+                <div class="chart-wrap"><canvas id="gwDepletionChart"></canvas></div>
+                <div id="gwDepletionMetrics"></div>
+            </div>
+        </div>
+
+        <div class="water-card">
+            <div class="card-title">🔮 Groundwater Simulation</div>
+            <div class="section-header" data-target="gw-sim" onclick="toggleSec(this)">
+                <span>LTX-2.5 Subsurface Flow Simulation</span><span class="arrow">▶</span>
+            </div>
+            <div class="section-body" id="gw-sim">
+                <div class="sim-preview" id="gwSimPreview">
+                    <div class="placeholder">Run analysis to generate subsurface simulation</div>
+                </div>
+                <div id="gwSimMeta"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!--  TAB 3: IRRIGATION                                        -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div class="water-grid hidden" id="tab-irrigation">
+
+        <div class="water-card">
+            <div class="card-title">🌾 Irrigation Demand</div>
+            <div class="section-header" data-target="ir-demand" onclick="toggleSec(this)">
+                <span>Crop Water Requirements</span><span class="arrow">▶</span>
+            </div>
+            <div class="section-body" id="ir-demand">
+                <div class="chart-wrap"><canvas id="irDemandChart"></canvas></div>
+                <div id="irDemandMetrics"></div>
+            </div>
+        </div>
+
+        <div class="water-card">
+            <div class="card-title">⏰ Scheduling</div>
+            <div class%20class="section-header" data-target="ir-schedule" onclick="toggleSec(this)">
+                <span>Weekly Irrigation Schedule</span><span class="arrow">▶</span>
+            </div>
+            <div class="section-body" id="ir-schedule">
+                <div class="search-box"><input type="text" id="irrSearch" placeholder="Search crops..." oninput="filterIrrTable()"></div>
+                <table class="irr-table" id="irrTable">
+                    <thead><tr><th>Crop</th><th>ETc (mm/wk)</th><th>Irrig (mm/wk)</th><th>Method</th><th>Efficiency</th></tr></thead>
+                    <tbody id="irrTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="water-card">
+            <div class="card-title">💧 Efficiency &amp; Simulation</div>
+            <div class="section-header" data-target="ir-efficiency" onclick="toggleSec(this)">
+                <span>Application Efficiency by Method</span><span class="arrow">▶</span>
+            </div>
+            <div class="section-body" id="ir-efficiency">
+                <div class="chart-wrap"><canvas id="irEffChart"></canvas></div>
+                <div id="irEffMetrics"></div>
+            </div>
+
+            <div class="section-header" data-target="ir-sim" onclick="toggleSec(this)">
+                <span>LTX-2.5 Irrigation Flow Simulation</span><span class="arrow">▶</span>
+            </div>
+            <div class="section-body" id="ir-sim">
+                <div class="sim-preview" id="irSimPreview">
+                    <div class="placeholder">Run analysis to generate irrigation simulation</div>
+                </div>
+                <div id="irSimMeta"></div>
+            </div>
+        </div>
+    </div>
+
+    <button class="nav-button" id="dashboardBtn">📊 Dashboard</button>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  CONSTANTS & CONFIG
+// ════════════════════════════════════════════════════════════════
+
+const HF_MODEL   = 'Lightricks/LTX-2.5-22b-IC-LoRA-Water-Simulation';
+const HF_API_URL = `https://api-inference.huggingface.co/models/${HF_MODEL}`;
+
+const charts = {};
+const MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+const REGIONS = {
+    nile_delta:  { lat:30.79, lon:31.00,  name:'Nile Delta',      precip:365,  et0:5.2, crops:['wheat','maize','rice','berseem','cotton','soybean'] },
+    california:  { lat:37.40, lon:-120.80, name:'Central Valley',  precip:320,  et0:5.8, crops:['almond','tomato','cotton','alfalfa','grape','lettuce'] },
+    sahel:       { lat:13.50, lon:2.10,   name:'Sahel',           precip:420,  et0:6.5, crops:['millet','sorghum','cowpea','groundnut','maize','rice'] },
+    punjab:      { lat:31.00, lon:72.00,  name:'Indus Basin',     precip:500,  et0:5.5, crops:['wheat','rice','cotton','sugarcane','maize','lentil'] },
+    murray:      { lat:-34.0, lon:143.00, name:'Murray-Darling',  precip:450,  et0:5.0, crops:['cotton','rice','wheat','barley','canola','alfalfa'] },
+};
+
+const CROP_KC = {
+    wheat:0.85, maize:1.05, rice:1.20, berseem:0.85, cotton:1.15, soybean:0.95,
+    almond:0.90, tomato:1.05, alfalfa:0.95, grape:0.80, lettuce:0.70,
+    millet:0.80, sorghum:0.90, cowpea:0.75, groundnut:0.80,
+    sugarcane:1.25, lentil:0.75, barley:0.85, canola:0.85,
+};
+
+const IRR_METHODS = {
+    flood:   { eff:0.50, label:'Flood' },
+    furrow:  { eff:0.65, label:'Furrow' },
+    sprinkler:{ eff:0.75, label:'Sprinkler' },
+    drip:    { eff:0.90, label:'Drip' },
+    pivot:   { eff:0.80, label:'Centre Pivot' },
+};
+
+const SURFACE_BODIES = {
+    nile_delta: [
+        { name:'Nile River (Rosetta Branch)', type:'river', capacity_m3s:1200, current_pct:0.72 },
+        { name:'Lake Nasser', type:'reservoir', capacity_Mm3:132000, current_pct:0.58 },
+        { name:'Lake Burullus', type:'lake', area_km2:462, current_pct:0.65 },
+        { name:'Lake Manzala', type:'lake', area_km2:1500, current_pct:0.48 },
+    ],
+    california: [
+        { name:'Sacramento River', type:'river', capacity_m3s:850, current_pct:0.38 },
+        { name:'Lake Shasta', type:'reservoir', capacity_Mm3:4552, current_pct:0.42 },
+        { name:'San Joaquin River', type:'river', capacity_m3s:420, current_pct:0.31 },
+        { name:'Lake Oroville', type:'reservoir', capacity_Mm3:3453, current_pct:0.35 },
+    ],
+    sahel: [
+        { name:'Niger River (Niamey)', type:'river', capacity_m3s:2100, current_pct:0.60 },
+        { name:'Lake Chad', type:'lake', area_km2:1500, current_pct:0.12 },
+        { name:'Senegal River', type:'river', capacity_m3s:680, current_pct:0.55 },
+    ],
+    punjab: [
+        { name:'Indus River', type:'river', capacity_m3s:5500, current_pct:0.65 },
+        { name:'Chenab River', type:'river', capacity_m3s:2200, current_pct:0.70 },
+        { name:'Tarbela Reservoir', type:'reservoir', capacity_Mm3:13690, current_pct:0.55 },
+    ],
+    murray: [
+        { name:'Murray River', type:'river', capacity_m3s:380, current_pct:0.28 },
+        { name:'Darling River', type:'river', capacity_m3s:120, current_pct:0.15 },
+        { name:'Hume Reservoir', type:'reservoir', capacity_Mm3:3038, current_pct:0.40 },
+    ],
+};
+
+const GW_AQUIFERS = {
+    nile_delta:  [{ name:'Nile Delta Quaternary', depth_m:25,  yield_m3d:2000,  decline_m_yr:0.15, recharge_mm_yr:45 }],
+    california:  [{ name:'Central Valley Aquifer', depth_m:120, yield_m3d:5000,  decline_m_yr:1.20, recharge_mm_yr:15 }],
+    sahel:       [{ name:'Chad Basin Aquifer',     depth_m:80,  yield_m3d:800,   decline_m_yr:0.30, recharge_mm_yr:8 }],
+    punjab:      [{ name:'Indus Alluvial Aquifer', depth_m:150, yield_m3d:4000,  decline_m_yr:0.90, recharge_mm_yr:20 }],
+    murray:      [{ name:'Great Artesian Basin',   depth_m:200, yield_m3d:1500,  decline_m_yr:0.25, recharge_mm_yr:5 }],
+};
+
+// ════════════════════════════════════════════════════════════════
+//  UTILITY
+// ════════════════════════════════════════════════════════════════
+
+function mean(a){ return a.reduce((s,v)=>s+v,0)/a.length; }
+function stdDev(a){ const m=mean(a); return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/a.length); }
+function rand(mu,sig){ return mu+sig*Math.sqrt(-2*Math.log(Math.random()))*Math.cos(2*Math.PI*Math.random()); }
+function destroyChart(id){ if(charts[id]){charts[id].destroy();delete charts[id];} }
+function mRow(l,v,cls=''){ return `<div class="metric"><span class="metric-label">${l}</span><span class="metric-value ${cls}">${v}</span></div>`; }
+function statusCls(pct){ return pct>=0.7?'good':pct>=0.4?'warning':'critical'; }
+function statusLabel(pct){ return pct>=0.7?'Good':pct>=0.4?'Moderate':'Critical'; }
+
+function toggleSec(el){
+    const tid=el.getAttribute('data-target');
+    const body=document.getElementById(tid);
+    const open=body.classList.contains('visible');
+    body.classList.toggle('visible',!open);
+    el.classList.toggle('open',!open);
+}
+
+function switchTab(tab){
+    document.querySelectorAll('.tab-button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+    ['surface','groundwater','irrigation'].forEach(t=>{
+        document.getElementById('tab-'+t).classList.toggle('hidden',t!==tab);
+    });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  HUGGINGFACE — LTX-2.5 WATER SIMULATION
+// ════════════════════════════════════════════════════════════════
+
+async function queryLTXWaterSim(prompt, token, params={}){
+    /**
+     * Call LTX-2.5-22b-IC-LoRA-Water-Simulation via HF Inference API.
+     *
+     * LTX-2.5 is a video/image generation model fine-tuned with a
+     * LoRA adapter for realistic water flow simulation. It accepts
+     * text prompts describing water scenarios and returns generated
+     * images/video of water surface dynamics, subsurface flow, or
+     * irrigation patterns.
+     *
+     * Parameters
+     * ----------
+     * prompt : str — Text description of the water scenario
+     * token  : str — HF API token
+     * params : dict — Optional generation parameters
+     *   (width, height, num_frames, fps, guidance_scale, seed)
+     */
+    const body = {
+        inputs: prompt,
+        parameters: {
+            width:  params.width  || 512,
+            height: params.height || 288,
+            num_frames: params.num_frames || 1,
+            guidance_scale: params.guidance_scale || 7.5,
+            ...(params.seed != null && { seed: params.seed }),
+        }
+    };
+
+    const resp = await fetch(HF_API_URL, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'x-wait-for-model': 'true',
+        },
+        body: JSON.stringify(body),
+    });
+
+    if(!resp.ok){
+        // Try as binary (image response)
+        if(resp.headers.get('content-type')?.startsWith('image/')){
+            const blob = await resp.blob();
+            return URL.createObjectURL(blob);
+        }
+        const err = await resp.text();
+        throw new Error(`LTX-2.5 API ${resp.status}: ${err}`);
+    }
+
+    const ct = resp.headers.get('content-type')||'';
+    if(ct.startsWith('image/')){
+        const blob = await resp.blob();
+        return URL.createObjectURL(blob);
+    }
+
+    // JSON response (may contain base64 or URL)
+    const data = await resp.json();
+    if(data.image) return data.image; // base64 or URL
+    if(data.url)   return data.url;
+    if(Array.isArray(data) && data[0]?.image) return data[0].image;
+
+    throw new Error('Unexpected LTX-2.5 response format');
+}
+
+async function generateWaterSim(token, regionKey, simType){
+    /**
+     * Generate a water simulation image via LTX-2.5.
+     *
+     * simType: 'surface' | 'groundwater' | 'irrigation'
+     */
+    const region = REGIONS[regionKey];
+    const bodies = SURFACE_BODIES[regionKey] || [];
+    const aquifers = GW_AQUIFERS[regionKey] || [];
+
+    let prompt;
+    switch(simType){
+        case 'surface':
+            prompt = `Aerial view of ${region.name} water surface: ${bodies.slice(0,2).map(b=>b.name).join(', ')}. ` +
+                     `Realistic water flow patterns, current water levels at ${Math.round(bodies[0]?.current_pct*100||50)}% capacity, ` +
+                     `photorealistic satellite perspective, water reflection, moderate wind ripples, 4K quality`;
+            break;
+        case 'groundwater':
+            prompt = `Cross-section visualization of ${region.name} subsurface: ${aquifers[0]?.name||'main aquifer'}. ` +
+                     `Water table at ${(aquifers[0]?.depth_m||50)*0.6}m depth, saturated zone shown in blue gradient, ` +
+                     `geological layers, realistic hydrogeology diagram, scientific illustration style, high detail`;
+            break;
+        case 'irrigation':
+            prompt = `Aerial view of ${region.name} agricultural irrigation: crop fields with ${region.crops.slice(0,3).join(', ')}. ` +
+                     `Drip and flood irrigation patterns visible, water channels, green crop rows, ` +
+                     `photorealistic drone perspective, midday lighting, 4K quality`;
+            break;
+    }
+
+    return await queryLTXWaterSim(prompt, token, {
+        width: 512, height: 288,
+        num_frames: 1,
+        guidance_scale: 7.5,
+    });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  COMPUTATION ENGINES
+// ════════════════════════════════════════════════════════════════
+
+function computeSurfaceWater(regionKey, year){
+    const region = REGIONS[regionKey];
+    const bodies = SURFACE_BODIES[regionKey] || [];
+
+    // Project levels based on year
+    const yearDelta = (year - 2025);
+    const projectedBodies = bodies.map(b => {
+        const decline = b.type === 'reservoir' ? 0.02 : b.type === 'lake' ? 0.015 : 0.005;
+        const proj5    = Math.max(0.05, b.current_pct - decline * yearDelta);
+        return { ...b, projected_pct: proj5 };
+    });
+
+    // Monthly runoff (mm) — regional model
+    const precip = region.precip;
+    const runoffCoeffEoEFF = 0.25 + 0.05 * yearDelta; // increasing runoff efficiency with heavier events
+    const monthlyRunoff = MO.map((_, i) => {
+        const precipDist = [0.08,0.07,0.06,0.04,0.03,0.02,0.02,0.02,0.03,0.06,0.08,0.09];
+        const base = precip * precipDist[i] * runoffCoeff;
+        return Math.max(0, base + rand(0, base * 0.15));
+    });
+
+    // Stream discharge (m³/s) — derived from runoff
+    const drainageArea_km2 = regionKey === 'nile_delta' ? 3000 : region=5000;
+    const monthlyDischarge = monthlyRunoff.map(r => {
+        const q = r / 1000 * drainageArea_km2 * 1e6 / (30 * 86400);
+        return q + rand(0, q * 0.1);
+    });
+
+    // Water quality index (0-100)
+    const qualityParams = {
+        pH: 7.2 + rand(0, 0.3) - yearDelta * 0.01,
+        DO: 7.5 + rand(0, !0.5) - yearDelta * 0.02,
+        BOD: 3.0 + rand(0, @0.5) + yearDelta * 0.05,
+        TDS: 350 + rand(0, 50) + yearDelta * 5,
+        turbidity: 15 + rand(0, 5) + yearDelta * 0.5,
+    };
+    // WQI = weighted composite
+    const wqi = Math.max(0, Math.min(100,
+        100 - (qualityParams.BOD - 3) * 5 - (qualityParams.TDS - 300) / 20 - qualityParams.turbidity / 2
+    ));
+
+    return { bodies: projectedBodies, monthlyRunoff, monthlyDischarge, qualityParams, wqi, drainageArea_km2 };
+}
+
+
+function computeGroundwater(regionKey, year){
+    const aquifers = GW_AQUIFERS[regionKey] || [];
+    const yearDelta = year - 2025;
+
+    // Water table depth time series (monthly, 24 months)
+    const months = [];
+    const depths = [];
+    const recharges = [];
+    const storages = [];
+
+    for(let m = 0; m < 24; m++){
+        const date = new Date(2024, m, 1);
+        months.push(date.toLocaleDateString('en',{year:'numeric',month:'short'}));
+
+        const aquifer = aquifers[0] || { depth_m:50, decline_m_yr:0.3, recharge_mm_yr:20 };
+        // Seasonal cycle: recharge peaks in wet months
+        const seasonCycle = Math.cos((m - 1) * 2 * Math.PI / 12); // peak in Jan
+        const seasonalRecharge = aquifer.recharge_mm_yr * (1 + 0.6 * seasonCycle) / 12;
+
+        const depth = aquifer.depth_m + aquifer.decline_m_yr * (yearDelta + m/12)
+                      - 0.5 * seasonCycle + rand(0, 0.2);
+        const recharge = Math.max(0, seasonalRecharge + rand(0, 2));
+        const extraction = aquifer.recharge_mm_yr / 12 * 1.8 + rand(0, 1); // over-extraction
+        const storageDelta = recharge - extraction;
+
+        depths.push(depth);
+        recharges.push(recharge);
+        storages.push(storageDelta);
+    }
+
+    // Cumulative storage change
+    let cumStorage = 0;
+    const cumStorages = storages.map(s => { cumStorage += s; return cumStorage; });
+
+    return { aquifers, months, depths, recharges, storages, cumStorages, yearDelta };
+}
+
+
+function computeIrrigation(regionKey, year){
+    const region = REGIONS[regionKey];
+    const yearDelta = year - 2025;
+
+    // Crop water requirements
+    const crops = region.crops.map(crop => {
+        const kc = CROP_KC[crop] || 0.85;
+        const etc_mm_wk = kc * region.et0 * 7; // weekly ETc
+        const rainfall_mm_wk = region.precip / 52;
+        const irr_need_mm_wk = Math.max(0, etc_mm_wk - rainfall_mm_wk * 0.7); // 70% effective rainfall
+
+        // Assign best irrigation method based on water availability
+        const pct = region.precip / (region.precip + yearDelta * 5);
+        let method;
+        if(pct > 0.85) method = 'flood';
+        else if(pct > 0.65) method = 'furrow';
+        else if(pct > 0.45) method = 'sprinkler';
+        else method = 'drip';
+
+        const eff = IRR_METHODS[method].eff;
+        const irr_applied = irr_need_mm_wk / eff;
+
+        return {
+            name: crop, kc, etc_mm_wk: etc_mm_wk.toFixed(1),
+            irr_need_mm_wk: irr_need_mm_wk.toFixed(1),
+            irr_applied_mm_wk: irr_applied.toFixed(1),
+            method: IRR_METHODS[method].label, methodKey: method,
+            efficiency: (eff * 100).toFixed(0) + '%',
         };
+    });
 
-        // Tab functionality
-        document.querySelectorAll('.tab-button').forEach(button => {
-            button.addEventListener('click', () => {
-                // Activate tab
-                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-                button.classList.add('active');
-                
-                // Show content
-                const tab = button.dataset.tab;
-                document.querySelectorAll('.water-card').forEach(card => {
-                    card.classList.toggle('hidden', card.dataset.content !== tab);
-                });
-            });
-        });
+    // Monthly irrigation demand
+    const monthlyDemand = MO.map((_, i) => {
+        const cropFactors = [0.6,0.65,0.8,0.9,1.0,1.1,1.15,1.1,1.0,0.85,0.7,0.6]; // seasonal
+        const totalEtc = crops.reduce((s,c) => s + parseFloat(c.etc_mm_wk), 0);
+        return totalEtc * cropFactors[i] / 4 * 0.8 + rand(0, 5);
+    });
 
-        // Save data to localStorage
-        localStorage.setItem('waterData', JSON.stringify(waterData));
+    // Monthly supply
+    const monthlySupply = monthlyDemand.map((d, i) => {
+        const avail = region.precip / 12 * 0.3 + d * (0.85 + rand(0, 0.1));
+        return Math.min(avail, d * 1.1); // can't supply more than 110% of demand
+    });
 
-        // Navigation to dashboard
-        document.getElementById('dashboardBtn').addEventListener('click', () => {
-            window.location.href = 'dashboard.html';
-        });
+    // Efficiency by method
+    const methodStats = Object.entries(IRR_METHODS).map(([k,v]) => ({
+        method: v.label, efficiency: v.eff,
+        area_pct: k==='drip'?0.25:k==='sprinkler'?0.30:k==='furrow'?0.25:k==='flood'?0.15:0.05,
+    }));
 
-        // Initialize data
-        document.addEventListener('DOMContentLoaded', () => {
-            // Populate dynamic data here
-        });
-    </script>
+    return { crops, monthlyDemand, monthlySupply, methodStats, yearDelta };
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RENDERING
+// ════════════════════════════════════════════════════════════════
+
+function renderSurfaceWater(data){
+    // Inventory
+    let html = '';
+    data.bodies.forEach(b => {
+        const pct = b.projected_pct;
+        const cls = statusCls(pct);
+        const lbl = statusLabel(pct);
+        let detail = `${b.type} — ${(pct*100).toFixed(0)}% capacity (${lbl})`;
+        if(b.capacity_m3s) detail += ` | ${b.capacity_m3s} m³/s`;
+        if(b.capacity_Mm3) detail += ` | ${(b.capacity_Mm3/1000).toFixed(0)} km³`;
+        if(b.area_km2) detail += ` | ${b.area_km2} km²`;
+        html += `<div class="wb-item ${cls}"><div class="wb-name">${b.name}</div><div class="wb-detail">${detail}</div></div>`;
+    });
+    document.getElementById('swInventoryList').innerHTML = html;
+
+    // Level chart
+    destroyChart('swLevelChart');
+    const ctx1 = document.getElementById('swLevelChart').getContext('2d');
+    charts.swLevelChart = new Chart(ctx1, {
+        type:'bar',
+        data:{
+            labels: data.bodies.map(b=>b.name.split('(')[0].trim().substring(0,20)),
+            datasets:[{
+                label:'Current %',
+                data: data.bodies.map(b=>b.current_pct*100),
+                backgroundColor: data.bodies.map(b=> b.current_pct>=0.7?'rgba(30,142,62,0.7)':b.current_pct>=0.4?'rgba(249,171,0,0.7)':'rgba(217,48,37,0.7)'),
+            },{
+                label:'Projected %',
+                data: data.bodies.map(b=>b.projected_pct*100),
+                backgroundColor: data.bodies.map(b=> b.projected_pct>=0.7?'rgba(30,142,62,0.4)':b.projected_pct>=0.4?'rgba(249,171,0,0.4)':'rgba(217,48,37,0.4)'),
+                borderColor: data.bodies.map(b=> b.projected_pct>=0.7?'#1e8e3e':b.projected_pct>=0.4?'#f9ab00':'#d93025'),
+                borderWidth:2, borderDash:[5,3],
+            }],
+        },
+        options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{title:{display:true,text:'% Capacity'},max:100} } },
+    });
+
+    // Runoff chart
+    destroyChart('swRunoffChart');
+    const ctx2 = document.getElementById('swRunoffChart').getContext('2d');
+    charts.swRunoffChart = new Chart(ctx2, {
+        type:'bar',
+        data:{ labels:MO, datasets:[{label:'Monthly Runoff (mm)',data:data.monthlyRunoff,backgroundColor:'rgba(26,115,232,0.7)'}] },
+        options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{title:{display:true,text:'mm'}} } },
+    });
+    document.getElementById('swRunoffMetrics').innerHTML =
+        mRow('Annual Runoff',`${data.monthlyRunoff.reduce((s,v)=>s+v,0).toFixed(0)} mm`,'v-info') +
+        mRow('Peak Month',`${MO[data.monthlyRunoff.indexOf(Math.max(...data.monthlyRunoff))]}`) +
+        mRow('Runoff Coefficient',`${(data.monthlyRunoff.reduce((s,v)=>s+v,0)/REGIONS[document.getElementById('regionSel').value].precip*100).toFixed(1)}%`);
+
+    // Discharge chart
+    destroyChart('swDischargeChart');
+    const ctx3 = document.getElementById('swDischargeChart').getContext('2d');
+    charts.swDischargeChart = new Chart(ctx3, {
+        type:'line',
+        data:{ labels:MO, datasets:[{label:'Discharge (m³/s)',data:data.monthlyDischarge,borderColor:'#1a73e8',backgroundColor:'rgba(26,115,232,0.1)',fill:true,tension:0.3}] },
+        options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{title:{display:true,text:'m³/s'}} } },
+    });
+    document.getElementById('swDischargeMetrics').innerHTML =
+        mRow('Mean Discharge',`${mean(data.monthlyDischarge).toFixed(0)} m³/s`,'v-info') +
+        mRow('Drainage Area',`${data.drainageArea_km2.toLocaleString()} km²`) +
+        mRow('Specific Discharge',`${(mean(data.monthlyDischarge)/data.drainageArea_km2*1000).toFixed(2)} L/s/km²`);
+
+    // Quality chart
+    destroyChart('swQualityChart');
+    const ctx4 = document.getElementById('swQualityChart').getContext('2d');
+    const qp = data.qualityParams;
+    charts.swQualityChart = new Chart(ctx4, {
+        type:'radar',
+        data:{
+            labels:['WQI','pH (norm)','DO (norm)','BOD (inv)','TDS (inv)','Turbidity (inv)'],
+            datasets:[{
+                label:'Water Quality',
+                data:[
+                    data.wqi,
+                    Math.max(0,100-Math.abs(qp.pH-7)*20),
+                    Math.min(100,qp.DO*10),
+                    Math.max(0,100-qp.BOD*10),
+                    Math.max(0,100-qp.TDS/10),
+                    Math.max(0,100-qp.turbidity*2),
+                ],
+                backgroundColor:'rgba(0,137,123,0.2)',borderColor:'#00897b',pointBackgroundColor:'#00897b',
+            }],
+        },
+        options:{ responsive:true, maintainAspectRatio:false, scales:{ r:{min:0,max:100} } },
+    });
+    const wqiCls = data.wqi>=70?'v-good':data.wqi>=50?'v-warn':'v-crit';
+    document.getElementById('swQualityMetrics').innerHTML =
+        mRow('Water Quality Index',`${data.wqi.toFixed(1)}/100`,wqiCls) +
+        mRow('pH',qp.pH.toFixed(2)) + mRow('Dissolved O₂',`${qp.DO.toFixed(1)} mg/L`) +
+        mRow('BOD',`${qp.BOD.toFixed(1)} mg/L`) + mRow('TDS',`${qp.TDS.toFixed(0)} mg/L`) +
+        mRow('Turbidity',`${qp.turbidity.toFixed(1)} NTU`);
+}
+
+
+function renderGroundwater(data){
+    // Levels chart
+    destroyChart('gwLevelChart');
+    const ctx1 = document.getElementById('gwLevelChart').getContext('2d');
+    charts.gwLevelChart = new Chart(ctx1, {
+        type:'line',
+        data:{
+            labels:data.months,
+            datasets:[{
+                label:'Water Table Depth (m)',
+                data:data.depths,
+                borderColor:'#00897b', backgroundColor:'rgba(0,137,123,0.1)',
+                fill:true, tension:0.3,
+            }],
+        },
+        options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{title:{display:true,text:'Depth (m)'},reverse:true} } },
+    });
+    const aq = data.aquifers[0]||{};
+    document.getElementById('gwLevelMetrics').innerHTML =
+        mRow('Aquifer',aq.name||'N/A') +
+        mRow('Initial Depth',`${aq.depth_m} m`) +
+        mRow('Current Depth',`${data.depths[data.depths.length-1].toFixed(1)} m`,'v-warn') +
+        mRow('Decline Rate',`${aq.decline_m_yr} m/yr`,aq.decline_m_yr>0.5?'v-crit':'v-warn');
+
+    // Recharge chart
+    destroyChart('gwRechargeChart');
+    const ctx2 = document.getElementById('gwRechargeChart').getContext('2d');
+    charts.gwRechargeChart = new Chart(ctx2, {
+        type:'bar',
+        data:{
+            labels:data.months,
+            datasets:[{label:'Monthly Recharge (mm)',data:data.recharges,backgroundColor:'rgba(0,137,123,0.6)'}],
+        },
+        options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{title:{display:true,text:'mm'}} } },
+    });
+    document.getElementById('gwRechargeMetrics').innerHTML =
+        mRow('Annual Recharge',`${data.recharges.reduce((s,v)=>s+v,0).toFixed(0)} mm`,'v-info') +
+        mRow('Recharge Rate',`${aq.recharge_mm_yr} mm/yr`) +
+        mRow('Peak Recharge',`${MO[data.recharges.indexOf(Math.max(...data.recharges))%12]}`);
+
+    // Depletion chart
+    destroyChart('gwDepletionChart');
+    const ctx3 = document.getElementById('gwDepletionChart').getContext('2d');
+    charts.gwDepletionChart = new Chart(ctx3, {
+        type:'line',
+        data:{
+            labels:data.months,
+            datasets:[
+                {label:'Monthly ΔStorage (mm)',data:data.storages,borderColor:'#d93025',backgroundColor:'rgba(217,48,37,0.1)',fill:true,tension:0.3},
+                {label:'Cumulative ΔStorage (mm)',data:data.cumStorages,borderColor:'#7b1fa2',borderDash:[5,3],tension:0.3,yAxisID:'y1'},
+            ],
+        },
+        options:{
+            responsive:true, maintainAspectRatio:false,
+            scales:{
+                y:{title:{display:true,text:'mm/month'}},
+                y1:{position:'right',title:{display:true,text:'mm (cumulative)'},grid:{drawOnChartArea:false}},
+            },
+        },
+    });
+    const cumFinal = data.cumStorages[data.cumStorages.length-1];
+    const cls = cumFinal<-50?'v-crit':cumFinal<-20?'v-warn':'v-good';
+    document.getElementById('gwDepletionMetrics').innerHTML =
+        mRow('Cumulative Storage Change',`${cumFinal.toFixed(1)} mm`,cls) +
+        mRow('Status', cumFinal<-50?'Severe Over-extraction':cumFinal<-20?'Moderate Depletion':'Near Balance',cls) +
+        mRow('Months in Deficit',`${data.storages.filter(s=>s<0).length} of ${data.storages.length}`);
+}
+
+
+function renderIrrigation(data){
+    // Demand chart
+    destroyChart('irDemandChart');
+    const ctx1 = document.getElementById('irDemandChart').getContext('2d');
+    charts.irDemandChart = new Chart(ctx1, {
+        type:'line',
+        data:{
+            labels:MO,
+            datasets:[
+                {label:'Irrigation Demand (mm)',data:data.monthlyDemand,borderColor:'#1e8e3e',backgroundColor:'rgba(30,142,62,0.1)',fill:true,tension:0.3},
+                {label:'Available Supply (mm)',data:data.monthlySupply,borderColor:'#1a73e8',borderDash:[5,3],tension:0.3},
+            ],
+        },
+        options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{title:{display:true,text:'mm'}} } },
+    });
+    const totalDemand = data.monthlyDemand.reduce((s,v)=>s+v,0);
+    const totalSupply = data.monthlySupply.reduce((s,v)=>s+v,0);
+    const deficit = totalDemand - totalSupply;
+    document.getElementById('irDemandMetrics').innerHTML =
+        mRow('Annual Demand',`${totalDemand.toFixed(0)} mm`,'v-info') +
+        mRow('Annual Supply',`${totalSupply.toFixed(0)} mm`) +
+        mRow('Deficit/Surplus',`${deficit>=0?'+':''}${deficit.toFixed(0)} mm`,deficit>0?'v-crit':'v-good') +
+        mRow('Supply/Demand Ratio',`${(totalSupply/totalDemand*100).toFixed(1)}%`,totalSupply/totalDemand>=0.9?'v-good':'v-warn');
+
+    // Schedule table
+    const tbody = document.getElementById('irrTableBody');
+    tbody.innerHTML = data.crops.map(c => `<tr data-crop="${c.name}">
+        <td>${c.name}</td><td>${c.etc_mm_wk}</td><td>${c.irr_applied_mm_wk}</td>
+        <td>${c.method}</td><td>${c.efficiency}</td>
+    </tr>`).join('');
+
+    // Efficiency chart
+    destroyChart('irEffChart');
+    const ctx2 = document.getElementById('irEffChart,Chart').getContext('2d');
+    charts.irEffChart = new Chart(ctx2, {
+        type:'doughnut',
+        data:{
+            labels: data.methodStats.map(m=>`${m.method} (${(m.area_pct*100).toFixed(0)}%)`),
+            datasets:[{
+                data: data.methodStats.map(m=>m.area_pct*100),
+                backgroundColor:['#1e8e3e','#1a73e8','#f9ab00','#d93025','#7b1fa2'],
+            }],
+        },
+        options:{ responsive:true, maintainAspectRatio:false },
+    });
+    const avgEff = data.methodStats.reduce((s,m)=>s+m.efficiency*m.area_pct,0);
+    document.getElementById('irEffMetrics').innerHTML =
+        mRow('Average Application Efficiency',`${(avgEff*100).toFixed(1)}%`,avgEff>=0.8?'v-good':avgEff>=0.65?'v-warn':'v-crit') +
+        mRow('Potential Water Savings',`${((1-avgEff/0.90)*100).toFixed(1)}% if all → drip`) +
+        data.methodStats.map(m=>mRow(`${m.method} Area`,`${(m.area_pct*100).toFixed(0)}% (eff ${(m.efficiency*100).toFixed(0)}%)`)).join('');
+}
+
+function filterIrrTable(){
+    const q = document.getElementById('irrSearch').value.toLowerCase();
+    document.querySelectorAll('#irrTableBody tr').forEach(tr => {
+        tr.style.display = tr.dataset.crop.toLowerCase().includes(q) ? '' : 'none';
+    });
+}
+
+function renderSimResult(containerId, metaId, imageUrl, simType, usedAPI){
+    const container = document.getElementById(containerId);
+    if(imageUrl){
+        container.innerHTML = `<img src="${imageUrl}" alt="${simType} simulation"><div class="overlay">LTX-2.5 Water Simulation — ${simType}</div>`;
+    } else {
+        container.innerHTML = `<div class="placeholder">Simulation unavailable${usedAPI?' — API error':''}. ${usedAPI?'':'Using computed data only.'}</div>`;
+    }
+    document.getElementById(metaId).innerHTML =
+        mRow('Model','LTX-2.5-22b-IC-LoRA-Water-Simulation') +
+        mRow('Source', usedAPI ? 'HF Inference API (live)' : 'Local computation only') +
+        mRow('Simulation Type', simType);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  MAIN RUNNER
+// ════════════════════════════════════════════════════════════════
+
+async function runWaterAnalysis(){
+    const token    = document.getElementById('hfToken').value.trim();
+    const regionKey = document.getElementById('regionSel').value;
+    const year     = parseInt(document.getElementById('yearSel').value);
+
+    const btn = document.getElementById('runBtn');
+    btn.disabled = true; btn.textContent = '⏳ Running…';
+
+    const badge = document.getElementById('modelBadge');
+    const status = document.getElementById('modelStatus');
+    status.textContent = 'LTX-2.5 — running…';
+
+    let simUsedAPI = false;
+
+    try {
+        // ── Compute all three tabs ──
+        const swData = computeSurfaceWater(regionKey, year);
+        const gwData = computeGroundwater(regionKey, year);
+        const irData = computeIrrigation(regionKey, year);
+
+        // ── Render ──
+        renderSurfaceWater(swData);
+        renderGroundwater(gwData);
+        renderIrrigation(irData);
+
+        // ── LTX-2.5 Simulations (if token available) ──
+        if(token){
+            for(const [type, containerId, metaId] of [
+                ['surface','swSimPreview','swSimMeta'],
+                ['groundwater','gwSimPreview','gwSimMeta'],
+                ['irrigation','irSimPreview','irSimMeta'],
+            ]){
+                try {
+                    const imgUrl = await generateWaterSim(token, regionKey, type);
+                    renderSimResult(containerId, metaId, imgUrl, type, true);
+                    simUsedAPI = true;
+                } catch(e){
+                    console.warn(`LTX-2.5 ${type} sim failed:`, e);
+                    renderSimResult(containerId, metaId, null, type, true);
+                }
+            }
+        } else {
+            renderSimResult('swSimPreview','swSimMeta',null,'surface',false);
+            renderSimResult('gwSimPreview','gwSimMeta',null,'groundwater',false);
+            renderSimResult('irSimPreview','irSimMeta',null,'irrigation',false);
+        }
+
+        // ── Badge ──
+        if(simUsedAPI){
+            badge.classList.remove('off');
+            status.textContent = 'LTX-2.;5 Water Sim — live';
+        } else {
+            badge.classList.add('off');
+            status.textContent = token ? 'LTX-2.5 — API error (using computed data)' : 'Computed data (no HF token)';
+        }
+
+        // ── Persist ──
+        const persistData = {
+            timestamp: new Date().toISOString(),
+            region: REGIONS[regionKey].name,
+            year,
+            surface: { wqi: swData.wqi, bodies: swData.bodies.map(b=>({name:b.name,pct:b.projected_pct})) },
+            groundwater: { cumStorage: gwData.cumStorages[gwData.cumStorages.length-1] },
+            irrigation: {
+                totalDemand: irData.monthlyDemand.reduce((s,v)=>s+v,0),
+                totalSupply: irData.monthlySupply.reduce((s,v)=>s+v,0),
+            },
+        };
+        localStorage.setItem('waterData', JSON.stringify(persistData));
+        console.log('Water data saved to localStorage');
+
+    } catch(err){
+        console.error('Analysis failed:', err);
+        status.textContent = 'Error — see console';
+        badge.classList.add('off');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '▶ Analyse';
+    }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  NAVIGATION & INIT
+// ════════════════════════════════════════════════════════════════
+
+document.getElementById('dashboardBtn').addEventListener('click', () => {
+    window.location.href = 'dashboard.html';
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('hf_token');
+    if(saved) document.getElementById('hfToken').value = saved;
+    document.getElementById('hfToken').addEventListener('change', e => {
+        localStorage.setItem('hf_token', e.target.value.trim());
+    });
+
+    // Auto-run
+    runWaterAnalysis();
+});
+</script>
 </body>
 </html>
