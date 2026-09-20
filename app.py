@@ -1,33 +1,29 @@
-from flask import Flask, render_template, jsonify
-import requests
-import json
+"""
+EOAgriTool — Application Entry Point
 
-app = Flask(__name__)
+Usage:
+    python -m app          # development
+    gunicorn app:app       # production (ASGI via uvicorn worker)
+"""
 
-# Fetch processed data from EO repository
-def fetch_processed_data():
-    response = requests.get('https://eoagritool-cwfzfndaazauawex.canadacentral-01.azurewebsites.net/labels_counts.json')
-    if response.status_code == 200:
-        return response.json()
-    else:
-        return {"error": "Failed to fetch data"}
+import os
+import sys
+import logging
 
-@app.route("/labels_counts.json")
-def api_processed_data():
-    data = fetch_processed_data()
-    return jsonify(data)
+from backend.routes import create_app
 
-@app.route("/")
-def home():
-    sensor_data = get_sensor_data()
-    recommendations = generate_expert_recommendations(sensor_data)
-    web_best_practices = fetch_real_time_best_practices()
-    processed_data = fetch_processed_data()
-    return render_template("dashboard.html",
-                         sensor_data=sensor_data,
-                         recommendations=recommendations,
-                         web_best_practices=web_best_practices,
-                         processed_data=processed_data)
+# --- Logging (before app creation) ---
+log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=getattr(logging, log_level, logging.INFO),
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger("eoagritool")
+
+app = create_app()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    port = int(os.environ.get("PORT", "8000"))
+    debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
+    logger.info("Starting EOAgriTool on port %d (debug=%s)", port, debug)
+    app.run(host="0.0.0.0", port=port, debug=debug)
