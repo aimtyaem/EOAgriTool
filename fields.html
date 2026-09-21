@@ -1,1 +1,194 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EOAgriTool — Fields</title><link rel="stylesheet" href="assets/styles.css"></head><body><main class="page"><section class="panel"><h1>Fields</h1><p class="muted">Register fields locally and reuse them in reports and recommendations.</p><form id="fieldForm" class="form-grid"><input id="name" required placeholder="Field name"><input id="crop" required placeholder="Crop"><select id="health"><option>good</option><option>fair</option><option>poor</option></select><button class="button">Register field</button></form></section><section class="panel" style="margin-top:20px"><h2>Registered fields</h2><div class="table-wrap"><table class="data-table"><thead><tr><th>Name</th><th>Crop</th><th>Health</th><th></th></tr></thead><tbody id="rows"></tbody></table></div></section></main><script src="assets/app.js"></script><script>function render(){const rows=document.getElementById('rows'),fields=EOAgri.fields();rows.innerHTML=fields.length?fields.map((f,i)=>`<tr><td>${f.name}</td><td>${f.crop}</td><td>${f.health}</td><td><button class="button secondary" data-remove="${i}">Remove</button></td></tr>`).join(''):'<tr><td colspan="4" class="empty">No fields yet.</td></tr>';rows.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{const f=EOAgri.fields();f.splice(+b.dataset.remove,1);EOAgri.saveFields(f);render()})}document.getElementById('fieldForm').onsubmit=e=>{e.preventDefault();const f=EOAgri.fields();f.push({name:name.value,crop:crop.value,health:health.value,lastUpdated:new Date().toISOString()});EOAgri.saveFields(f);e.target.reset();render();EOAgri.toast('Field registered')};render();</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fields | EOAgriTool</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <script src="assets/app.js"></script>
+  <main class="page">
+    <section class="panel" style="padding:22px 24px; margin-top:8px;">
+      <div class="section-head">
+        <div>
+          <h2 style="margin:0">Field operations</h2>
+          <div class="muted">Track crop status, field conditions and uploaded media</div>
+        </div>
+        <button class="button secondary" type="button" onclick="location.href='dashboard.html'">Back to dashboard</button>
+      </div>
+    </section>
+
+    <section class="metric-grid" style="margin-top:20px;">
+      <article class="panel metric-card">
+        <span class="metric-icon">🌾</span>
+        <small>Active fields</small>
+        <strong id="activeFieldsCount">0</strong>
+        <span class="trend">↗ 1 this month</span>
+      </article>
+      <article class="panel metric-card">
+        <span class="metric-icon">💧</span>
+        <small>Avg. irrigation</small>
+        <strong>420 mm</strong>
+        <span class="trend">↗ 8% efficient</span>
+      </article>
+      <article class="panel metric-card">
+        <span class="metric-icon">🧪</span>
+        <small>Soil health</small>
+        <strong>70/100</strong>
+        <span class="trend">↗ +18 pts</span>
+      </article>
+      <article class="panel metric-card">
+        <span class="metric-icon">📸</span>
+        <small>Uploads</small>
+        <strong id="mediaCount">0</strong>
+        <span class="trend">↗ new scans</span>
+      </article>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel section-card">
+        <div class="section-head">
+          <div><h3>Field list</h3></div>
+          <button class="button" type="button" id="refreshBtn">Refresh</button>
+        </div>
+        <div id="fieldsGrid" class="grid"></div>
+      </article>
+
+      <article class="panel section-card">
+        <div class="section-head">
+          <div><h3>Add field</h3></div>
+        </div>
+        <div class="form-grid">
+          <input id="fieldName" type="text" placeholder="Field name">
+          <input id="fieldCrop" type="text" placeholder="Crop type">
+          <select id="fieldHealth">
+            <option value="good">Good health</option>
+            <option value="fair">Fair health</option>
+            <option value="poor">Poor health</option>
+          </select>
+          <input id="fieldYield" type="text" placeholder="Expected yield (t/ha)">
+          <input id="mediaUpload" type="file" multiple accept="image/*,video/*">
+          <div id="mediaPreview" class="grid" style="gap:8px"></div>
+          <button class="button" type="button" id="saveFieldBtn">Save field</button>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const fieldsGrid = document.getElementById('fieldsGrid');
+    const mediaPreview = document.getElementById('mediaPreview');
+    let uploadedMedia = [];
+
+    function defaultFields() {
+      return [
+        {name:'North Plot 01', crop:'Wheat', health:'good', yield:'6.4 t/ha', lastUpdated: new Date().toISOString(), media:[]},
+        {name:'South Plot 02', crop:'Maize', health:'fair', yield:'5.2 t/ha', lastUpdated: new Date(Date.now() - 3600000).toISOString(), media:[]},
+        {name:'Irrigation Basin', crop:'Clover', health:'good', yield:'4.8 t/ha', lastUpdated: new Date(Date.now() - 86400000).toISOString(), media:[]}
+      ];
+    }
+
+    function getFields() {
+      try {
+        const stored = JSON.parse(localStorage.getItem('fieldData') || 'null');
+        if (stored && Array.isArray(stored.fields) && stored.fields.length) return stored.fields;
+      } catch (e) {}
+      const fallback = { fields: defaultFields() };
+      localStorage.setItem('fieldData', JSON.stringify(fallback));
+      return fallback.fields;
+    }
+
+    function saveFields(fields) {
+      localStorage.setItem('fieldData', JSON.stringify({ fields }));
+    }
+
+    function timeAgo(dateString) {
+      const diff = Math.max(1, Math.floor((Date.now() - new Date(dateString).getTime()) / 60000));
+      if (diff < 60) return `${diff} min ago`;
+      if (diff < 1440) return `${Math.floor(diff / 60)} hr ago`;
+      return `${Math.floor(diff / 1440)} day ago`;
+    }
+
+    function renderFields() {
+      const fields = getFields();
+      document.getElementById('activeFieldsCount').textContent = fields.length;
+      document.getElementById('mediaCount').textContent = fields.reduce((count, field) => count + (field.media || []).length, 0);
+
+      if (!fields.length) {
+        fieldsGrid.innerHTML = '<div class="empty">No fields yet. Add your first field.</div>';
+        return;
+      }
+
+      fieldsGrid.innerHTML = fields.map(field => `
+        <article class="panel" style="padding:16px; min-height:200px; position:relative;">
+          <div class="risk-dot ${field.health === 'poor' ? 'critical' : ''}" style="position:absolute; right:16px; top:16px; background:${field.health === 'good' ? '#1a9f65' : field.health === 'fair' ? '#f4b942' : '#d95846'};"></div>
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+            <div style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#126b4a,#33a96d);color:#fff;">🌾</div>
+            <div>
+              <strong style="display:block;color:var(--navy)">${field.name}</strong>
+              <span class="muted">${field.crop}</span>
+            </div>
+          </div>
+          <div style="display:grid;gap:6px; margin-top:16px; font-size:.9rem; color:var(--muted);">
+            <div>Yield: <strong style="color:var(--navy)">${field.yield || 'N/A'}</strong></div>
+            <div>Health: <strong style="color:var(--navy)">${field.health}</strong></div>
+            <div>Updated: <strong style="color:var(--navy)">${timeAgo(field.lastUpdated)}</strong></div>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    document.getElementById('saveFieldBtn').addEventListener('click', function () {
+      const name = document.getElementById('fieldName').value.trim();
+      const crop = document.getElementById('fieldCrop').value.trim();
+      const health = document.getElementById('fieldHealth').value;
+      const yieldValue = document.getElementById('fieldYield').value.trim() || 'N/A';
+
+      if (!name || !crop) {
+        alert('Please complete the field name and crop type.');
+        return;
+      }
+
+      const fields = getFields();
+      fields.push({
+        name,
+        crop,
+        health,
+        yield: yieldValue,
+        lastUpdated: new Date().toISOString(),
+        media: uploadedMedia
+      });
+      saveFields(fields);
+      uploadedMedia = [];
+      mediaPreview.innerHTML = '';
+      document.getElementById('fieldName').value = '';
+      document.getElementById('fieldCrop').value = '';
+      document.getElementById('fieldYield').value = '';
+      renderFields();
+    });
+
+    document.getElementById('mediaUpload').addEventListener('change', function (event) {
+      const files = Array.from(event.target.files || []);
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function (readerEvent) {
+          const item = document.createElement('div');
+          item.style.border = '1px solid var(--line)';
+          item.style.borderRadius = '12px';
+          item.style.padding = '8px';
+          item.innerHTML = file.type.startsWith('image/')
+            ? '<img src="' + readerEvent.target.result + '" style="width:100%;height:90px;object-fit:cover;border-radius:10px">'
+            : '<video src="' + readerEvent.target.result + '" controls style="width:100%;height:90px;object-fit:cover;border-radius:10px"></video>';
+          mediaPreview.appendChild(item);
+          uploadedMedia.push({ type: file.type, url: readerEvent.target.result });
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    document.getElementById('refreshBtn').addEventListener('click', renderFields);
+    renderFields();
+  </script>
+</body>
+</html>

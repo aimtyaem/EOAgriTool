@@ -1,1 +1,106 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EOAgriTool — Alerts</title><link rel="stylesheet" href="assets/styles.css"></head><body><main class="page"><section class="panel"><h1>Alerts</h1><div class="grid"><article class="card"><h2>Water stress</h2><p class="muted">Review irrigation scheduling before peak ET periods.</p><a class="button secondary" href="water.html">Open Water</a></article><article class="card"><h2>Soil health</h2><p class="muted">Organic matter is below the sustainable target.</p><a class="button secondary" href="fields.html">Open Fields</a></article><article class="card"><h2>Climate</h2><p class="muted">Monitor heat stress and rainfall deficit.</p><a class="button secondary" href="climate.html">Open Climate</a></article></div></section></main><script src="assets/app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Water | EOAgriTool</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    .tab-row{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}.tab-btn{padding:10px 16px;border:1px solid var(--line);background:#fff;border-radius:12px;color:var(--muted);font-weight:700;cursor:pointer}.tab-btn.active{background:var(--mint);color:var(--green);border-color:transparent}.water-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:18px}.water-card{padding:18px} .chart-box{height:220px;margin-top:12px}
+  </style>
+</head>
+<body>
+  <script src="assets/app.js"></script>
+  <main class="page">
+    <section class="panel" style="padding:22px 24px;">
+      <div class="section-head">
+        <div>
+          <h2 style="margin:0; font-size:2rem;">Water resources</h2>
+          <div class="muted">Surface water, groundwater and irrigation planning</div>
+        </div>
+        <span class="live-dot">LTX-2.5</span>
+      </div>
+    </section>
+
+    <div class="tab-row">
+      <button class="tab-btn active" data-tab="surface">Surface water</button>
+      <button class="tab-btn" data-tab="groundwater">Groundwater</button>
+      <button class="tab-btn" data-tab="irrigation">Irrigation</button>
+    </div>
+
+    <section id="tab-surface" class="water-grid">
+      <article class="panel water-card"><div class="section-head"><h3>Reservoirs</h3></div><div class="chart-box"><canvas id="surfaceChart"></canvas></div></article>
+      <article class="panel water-card"><div class="section-head"><h3>Runoff</h3></div><div class="chart-box"><canvas id="runoffChart"></canvas></div></article>
+      <article class="panel water-card"><div class="section-head"><h3>Quality</h3></div><div class="chart-box"><canvas id="qualityChart"></canvas></div></article>
+    </section>
+
+    <section id="tab-groundwater" class="water-grid" style="display:none;">
+      <article class="panel water-card"><div class="section-head"><h3>Water table depth</h3></div><div class="chart-box"><canvas id="groundwaterChart"></canvas></div></article>
+      <article class="panel water-card"><div class="section-head"><h3>Recharge</h3></div><div class="chart-box"><canvas id="rechargeChart"></canvas></div></article>
+      <article class="panel water-card"><div class="section-head"><h3>Storage</h3></div><div class="chart-box"><canvas id="storageChart"></canvas></div></article>
+    </section>
+
+    <section id="tab-irrigation" class="water-grid" style="display:none;">
+      <article class="panel water-card"><div class="section-head"><h3>Irrigation demand</h3></div><div class="chart-box"><canvas id="irrigationChart"></canvas></div></article>
+      <article class="panel water-card"><div class="section-head"><h3>Method efficiency</h3></div><div class="chart-box"><canvas id="methodChart"></canvas></div></article>
+      <article class="panel water-card"><div class="section-head"><h3>Schedule</h3></div><div class="risk-list"><div class="risk-item"><i class="risk-dot"></i><div><strong>Maize (Week 2)</strong><span>Drip irrigation at 68 mm/week</span></div></div><div class="risk-item"><i class="risk-dot"></i><div><strong>Wheat (Week 3)</strong><span>Sprinkler cycle at 61 mm/week</span></div></div><div class="risk-item"><i class="risk-dot"></i><div><strong>Clover (Week 4)</strong><span>Flood irrigation reduced due to soil moisture</span></div></div></div></article>
+    </section>
+  </main>
+
+  <script>
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+        const show = btn.dataset.tab;
+        document.getElementById('tab-surface').style.display = show === 'surface' ? 'grid' : 'none';
+        document.getElementById('tab-groundwater').style.display = show === 'groundwater' ? 'grid' : 'none';
+        document.getElementById('tab-irrigation').style.display = show === 'irrigation' ? 'grid' : 'none';
+      });
+    });
+
+    new Chart(document.getElementById('surfaceChart'), {
+      type: 'bar',
+      data: { labels: ['Nile R.', 'Lake Nasser', 'Burullus', 'Manzala'], datasets: [{ label: 'Capacity %', data: [72, 58, 65, 48], backgroundColor: ['#126b4a','#33a96d','#2f7eea','#f4b942'] }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+    });
+    new Chart(document.getElementById('runoffChart'), {
+      type: 'line',
+      data: { labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], datasets: [{ label: 'Runoff (mm)', data: [32,38,41,45,58,62,66,58,47,41,35,30], borderColor: '#2f7eea', backgroundColor: 'rgba(47,126,234,.1)', fill: true, tension: .3 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+    new Chart(document.getElementById('qualityChart'), {
+      type: 'radar',
+      data: { labels: ['pH', 'DO', 'TDS', 'BOD', 'Turbidity'], datasets: [{ label: 'Water quality', data: [90, 84, 76, 70, 82], backgroundColor: 'rgba(18,107,74,.12)', borderColor: '#126b4a' }] },
+      options: { responsive: true, maintainAspectRatio: false, scales: { r: { min: 0, max: 100 } } }
+    });
+
+    new Chart(document.getElementById('groundwaterChart'), {
+      type: 'line',
+      data: { labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'], datasets: [{ label: 'Depth (m)', data: [23.2,23.5,23.8,24.1,24.4,24.7,25.0,25.3], borderColor: '#126b4a', backgroundColor: 'rgba(18,107,74,.08)', fill: true, tension: .35 }] },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+    new Chart(document.getElementById('rechargeChart'), {
+      type: 'bar',
+      data: { labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'], datasets: [{ label: 'Recharge (mm)', data: [48,52,60,64,70,66,58,50], backgroundColor: '#2f7eea' }] },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+    new Chart(document.getElementById('storageChart'), {
+      type: 'line',
+      data: { labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'], datasets: [{ label: 'Storage delta', data: [4,2,5,1,-2,-4,-3,-1], borderColor: '#f4b942', backgroundColor: 'rgba(244,185,66,.08)', fill: true, tension: .35 }] },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    new Chart(document.getElementById('irrigationChart'), {
+      type: 'line',
+      data: { labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'], datasets: [{ label: 'Demand', data: [120,130,145,160,172,166,150,138], borderColor: '#126b4a', tension: .35 }, { label: 'Supply', data: [110,118,128,142,155,150,140,134], borderColor: '#2f7eea', borderDash: [5,5], tension: .35 }] },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+    new Chart(document.getElementById('methodChart'), {
+      type: 'doughnut',
+      data: { labels: ['Drip', 'Sprinkler', 'Furrow', 'Flood'], datasets: [{ data: [48,30,18,4], backgroundColor: ['#126b4a','#2f7eea','#f4b942','#d95846'] }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+  </script>
+</body>
+</html>
