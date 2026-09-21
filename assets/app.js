@@ -1,1 +1,100 @@
-:root{--green:#126b4a;--green-2:#33a96d;--mint:#eaf7ef;--navy:#132b3d;--ink:#1d2f38;--muted:#687f8d;--bg:#f4f8f6;--surface:#fff;--surface-soft:#f7faf9;--line:#e1ebe6;--blue:#2f7eea;--amber:#f4b942;--red:#d95846;--shadow:0 18px 48px rgba(19,43,61,.08);--shadow-hover:0 22px 60px rgba(19,43,61,.15);--radius:22px}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 8% 0,rgba(51,169,109,.12),transparent 28%),linear-gradient(135deg,#f7faf8 0%,#edf8f1 100%);color:var(--ink);font:15px Inter,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}main{display:block}.site-header{position:sticky;top:14px;z-index:30;max-width:1440px;margin:14px auto 0;padding:12px 18px;display:flex;align-items:center;gap:18px;background:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.85);border-radius:18px;box-shadow:var(--shadow);backdrop-filter:blur(16px);animation:slideDown .55s ease both}.brand{display:flex;align-items:center;gap:10px;font-weight:850;font-size:1.05rem;color:var(--navy);white-space:nowrap}.brand-mark{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--green),var(--green-2));color:#fff;box-shadow:0 8px 18px rgba(18,107,74,.2)}.site-nav{display:flex;gap:4px;align-items:center;flex:1;flex-wrap:wrap}.site-nav a{padding:9px 11px;border-radius:10px;color:var(--muted);font-weight:700;transition:.2s}.site-nav a:hover,.site-nav a.active{background:var(--mint);color:var(--green);transform:translateY(-1px)}.header-actions{display:flex;align-items:center;gap:10px}.live-dot{display:inline-flex;align-items:center;gap:8px;color:var(--green);font-size:.76rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.live-dot::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 6px rgba(18,107,74,.12)}.menu-toggle{display:none;border:0;background:transparent;font-size:1.6rem;color:var(--navy);cursor:pointer}.page,.shell{max-width:1440px;margin:0 auto;padding:28px 22px 70px}.panel,.card{background:rgba(255,255,255,.88);border:1px solid rgba(225,235,230,.9);border-radius:var(--radius);box-shadow:var(--shadow);transition:transform .25s ease,box-shadow .25s ease}.panel:hover,.card:hover{box-shadow:var(--shadow-hover)}.panel{padding:24px}.button{border:0;border-radius:12px;padding:11px 17px;background:linear-gradient(135deg,var(--green),var(--green-2));color:#fff;font-weight:800;cursor:pointer;box-shadow:0 10px 20px rgba(18,107,74,.18);transition:transform .2s,box-shadow .2s}.button:hover{transform:translateY(-2px);box-shadow:0 13px 24px rgba(18,107,74,.25)}.button.secondary{background:var(--mint);color:var(--green);box-shadow:none}.button.ghost{background:transparent;border:1px solid var(--line);color:var(--navy)}.button:disabled{opacity:.6;cursor:wait;transform:none}.muted{color:var(--muted)}h1,h2,h3{color:var(--navy);line-height:1.15}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}.stat strong{display:block;font-size:1.8rem;color:var(--navy)}.stat small{color:var(--muted);text-transform:uppercase;font-size:.72rem;letter-spacing:.08em}.toast{position:fixed;right:22px;bottom:22px;padding:14px 18px;border-radius:12px;background:var(--navy);color:#fff;box-shadow:var(--shadow);z-index:50;animation:toastIn .3s ease both}.form-grid{display:grid;gap:12px;max-width:520px}.form-grid input,.form-grid select,.form-grid textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#fff}.table-wrap{overflow:auto}.data-table{width:100%;border-collapse:collapse}.data-table th,.data-table td{text-align:left;padding:11px;border-bottom:1px solid var(--line)}.empty{padding:20px;text-align:center;color:var(--muted)}.dashboard-hero{display:grid;grid-template-columns:1.25fr .75fr;gap:20px;margin-top:24px}.hero-copy{padding:32px;position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(232,249,239,.82))}.hero-copy:after{content:"";position:absolute;width:340px;height:340px;right:-130px;bottom:-180px;border-radius:50%;background:radial-gradient(circle,rgba(51,169,109,.22),transparent 65%);animation:float 7s ease-in-out infinite}.eyebrow{display:inline-flex;padding:7px 12px;border-radius:999px;background:var(--mint);color:var(--green);font-size:.72rem;font-weight:850;letter-spacing:.12em;text-transform:uppercase}.hero-copy h1{font-size:clamp(2.3rem,5vw,4.8rem);letter-spacing:-.075em;margin:18px 0 0;max-width:700px}.hero-copy p{max-width:650px;color:var(--muted);font-size:1.02rem}.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}.cover-card{padding:24px;background:linear-gradient(160deg,#153c32,#207751);color:#fff;overflow:hidden;position:relative}.cover-card h2,.cover-card p{color:#fff}.cover-card:before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.1),transparent 65%);transform:translateX(-100%);animation:shine 5s infinite}.cover-chart{height:150px;display:flex;align-items:end;gap:10px;margin:20px 0 10px}.cover-bar{flex:1;border-radius:8px 8px 2px 2px;background:linear-gradient(180deg,#8be0ae,#38a96e);animation:grow .8s cubic-bezier(.2,.8,.2,1) both;transform-origin:bottom}.cover-legend{display:flex;justify-content:space-between;color:rgba(255,255,255,.7);font-size:.78rem}.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px}.metric-card{padding:18px}.metric-card .metric-icon{float:right;font-size:1.3rem}.metric-card strong{display:block;font-size:1.8rem;letter-spacing:-.05em;color:var(--navy);margin-top:10px}.metric-card small{color:var(--muted);font-weight:700}.trend{font-size:.78rem;color:var(--green);font-weight:800}.content-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:20px;margin-top:20px}.section-card{padding:22px}.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.section-head h2,.section-head h3{margin:0}.chart-wrap{height:270px;position:relative}.risk-list{display:grid;gap:12px}.risk-item{display:grid;grid-template-columns:12px 1fr;gap:11px;padding:13px 0;border-bottom:1px solid var(--line)}.risk-item:last-child{border-bottom:0}.risk-dot{width:10px;height:10px;border-radius:50%;background:var(--amber);margin-top:7px}.risk-dot.critical{background:var(--red);box-shadow:0 0 0 5px rgba(217,88,70,.12)}.risk-item strong{display:block;color:var(--navy)}.risk-item span{font-size:.82rem;color:var(--muted)}.insight-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}.insight{padding:17px;border-radius:16px;background:linear-gradient(135deg,#f8fcfa,#edf8f1);border:1px solid var(--line)}.insight b{display:block;color:var(--navy);margin-bottom:4px}.insight span{font-size:.82rem;color:var(--muted)}.chat{margin-top:20px}.chat-messages{min-height:80px;display:grid;gap:10px}.message{max-width:78%;padding:11px 14px;border-radius:15px;background:#f2f8f4}.message.user{margin-left:auto;background:var(--mint)}.chat-form{display:flex;gap:10px;margin-top:14px}.chat-form input{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px}.reveal{animation:reveal .55s ease both}.delay-1{animation-delay:.08s}.delay-2{animation-delay:.16s}.delay-3{animation-delay:.24s}@keyframes reveal{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}@keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}@keyframes grow{from{height:0}}@keyframes float{50%{transform:translate(-18px,-12px)}}@keyframes shine{50%,100%{transform:translateX(100%)}}@keyframes toastIn{from{opacity:0;transform:translateY(12px)}}@media(max-width:1000px){.dashboard-hero,.content-grid{grid-template-columns:1fr}.metric-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:850px){.site-header{margin:8px 10px 0;flex-wrap:wrap}.menu-toggle{display:block;margin-left:auto}.site-nav{display:none;order:4;width:100%;flex-direction:column;align-items:stretch}.site-nav.open{display:flex}.header-actions{margin-left:auto}.page,.shell{padding:22px 14px 55px}}@media(max-width:520px){.header-actions .button{display:none}.metric-grid,.insight-strip{grid-template-columns:1fr 1fr}.hero-copy{padding:24px}.hero-copy h1{font-size:2.5rem}.chat-form{display:grid}.message{max-width:94%}}
+/* EOAgriTool shared navigation and interaction runtime. */
+(() => {
+  const pages = [
+    ['dashboard.html', 'Dashboard', '⌂'],
+    ['fields.html', 'Fields', '▦'],
+    ['climate.html', 'Climate', '☼'],
+    ['water.html', 'Water', '◌'],
+    ['reports.html', 'Reports', '▤'],
+    ['notifications.html', 'Alerts', '⚠'],
+    ['about.html', 'About', '?'],
+    ['contacts.html', 'Contact', '@']
+  ];
+
+  const current = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  const isLogin = current === 'index.html' || current === '';
+
+  function headerMarkup() {
+    const links = pages.map(([href, label, icon]) => `
+      <a href="${href}" class="${current === href ? 'active' : ''}" aria-current="${current === href ? 'page' : 'false'}">
+        <span aria-hidden="true">${icon}</span><span>${label}</span>
+      </a>`).join('');
+
+    return `<header class="site-header" data-app-header>
+      <a class="brand" href="dashboard.html" aria-label="EOAgriTool dashboard">
+        <span class="brand-mark" aria-hidden="true">🌾</span><span>EOAgriTool</span>
+      </a>
+      <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
+      <nav class="site-nav" aria-label="Primary navigation">${links}</nav>
+      <div class="header-actions">
+        <span class="live-dot">Live</span>
+        <button class="button secondary" type="button" data-action="logout">Sign out</button>
+      </div>
+    </header>`;
+  }
+
+  function installHeader() {
+    if (isLogin || document.querySelector('[data-app-header]')) return;
+    document.body.insertAdjacentHTML('afterbegin', headerMarkup());
+    const toggle = document.querySelector('.menu-toggle');
+    const nav = document.querySelector('.site-nav');
+    toggle?.addEventListener('click', () => {
+      const open = nav.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.textContent = open ? '×' : '☰';
+    });
+    document.querySelectorAll('.site-nav a').forEach(link => link.addEventListener('click', () => {
+      nav.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.textContent = '☰';
+    }));
+    document.querySelector('[data-action="logout"]')?.addEventListener('click', () => {
+      localStorage.removeItem('eoagri-auth');
+      location.href = 'index.html';
+    });
+  }
+
+  function fields() {
+    try { return JSON.parse(localStorage.getItem('fieldData') || '{"fields":[]}').fields || []; }
+    catch { return []; }
+  }
+
+  function saveFields(value) {
+    localStorage.setItem('fieldData', JSON.stringify({ fields: value }));
+    window.dispatchEvent(new CustomEvent('eoagri:fields', { detail: value }));
+  }
+
+  async function recommendations(analysis, context = {}) {
+    try {
+      const response = await fetch('recommendations', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ analysis, context })
+      });
+      if (!response.ok) throw new Error('Recommendation API unavailable');
+      return (await response.json()).recommendations || [];
+    } catch {
+      return [{
+        id: 'local', category: 'general', priority: 'info',
+        title: 'Local advisory mode',
+        description: 'Live recommendations are unavailable; the page is using local guidance.',
+        action: 'Start the Quart backend for live recommendations.'
+      }];
+    }
+  }
+
+  function toast(message) {
+    const element = document.createElement('div');
+    element.className = 'toast'; element.setAttribute('role', 'status'); element.textContent = message;
+    document.body.appendChild(element);
+    setTimeout(() => element.remove(), 2800);
+  }
+
+  function download(name, content, type = 'text/plain') {
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([content], { type }));
+    link.download = name; link.click(); URL.revokeObjectURL(link.href);
+  }
+
+  window.EOAgri = { pages, fields, saveFields, recommendations, toast, download };
+  document.addEventListener('DOMContentLoaded', installHeader);
+})();
