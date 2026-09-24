@@ -5,6 +5,12 @@
 
 trigger:
 - gh-pages
+  # Exclude specific paths (e.g., an idle models repo) from triggering the pipeline.
+  # This prevents the pipeline from running when only files in these paths change.
+  paths:
+    exclude:
+    - 'idle-models-repo/**'
+    - 'another-idle-repo/**'
 
 variables:
   # Azure Resource Manager connection created during pipeline creation
@@ -24,6 +30,13 @@ variables:
 
   pythonVersion: '3.9'
 
+  # Azure OpenAI configuration
+  # It is recommended to use a variable group or Azure Key Vault for these secrets.
+  AZURE_OPENAI_ENDPOINT: 'https://your-resource-name.openai.azure.com/'
+  AZURE_OPENAI_API_KEY: '$(AzureOpenAIKey)' # Reference to a secret variable
+  AZURE_OPENAI_DEPLOYMENT_NAME: 'your-model-deployment-name'
+  AZURE_OPENAI_API_VERSION: '2024-02-01'
+
 stages:
 - stage: Build
   displayName: Build stage
@@ -40,8 +53,24 @@ stages:
     - script: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        # Install the Azure OpenAI SDK for Python
+        pip install openai azure-identity
       workingDirectory: $(projectRoot)
       displayName: "Install dependencies"
+
+    # Example step to run a Python script that uses Azure OpenAI
+    - task: PythonScript@0
+      displayName: 'Run AI Code Analysis'
+      inputs:
+        scriptSource: 'filePath'
+        scriptPath: '$(projectRoot)/scripts/azure_openai_task.py' # Your Python script
+        arguments: '--endpoint $(AZURE_OPENAI_ENDPOINT) --api-key $(AZURE_OPENAI_API_KEY) --deployment $(AZURE_OPENAI_DEPLOYMENT_NAME) --api-version $(AZURE_OPENAI_API_VERSION)'
+      env:
+        # Pass secrets as environment variables for security
+        AZURE_OPENAI_ENDPOINT: $(AZURE_OPENAI_ENDPOINT)
+        AZURE_OPENAI_API_KEY: $(AZURE_OPENAI_API_KEY)
+        AZURE_OPENAI_DEPLOYMENT_NAME: $(AZURE_OPENAI_DEPLOYMENT_NAME)
+        AZURE_OPENAI_API_VERSION: $(AZURE_OPENAI_API_VERSION)
 
     - task: ArchiveFiles@2
       displayName: 'Archive files'
@@ -54,6 +83,9 @@ stages:
         exclude: |
           antenv/**  # Excludes virtual environment if created earlier
           **/__pycache__/**  # Excludes Python cache files
+          # Exclude the idle repos from the build artifact as well
+          idle-models-repo/**
+          another-idle-repo/**
 
     - upload: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
       displayName: 'Upload package'
