@@ -1,113 +1,107 @@
 # Python to Linux Web App on Azure
-# Build your Python project and deploy it to Azure as a Linux Web App.
-# Change python version to one that's appropriate for your application.
-# https://docs.microsoft.com/azure/devops/pipelines/languages/python
+# Builds and deploys the Quart application to Azure App Service.
 
 trigger:
-- gh-pages
-  # Exclude specific paths (e.g., an idle models repo) from triggering the pipeline.
-  # This prevents the pipeline from running when only files in these paths change.
+  branches:
+    include:
+      - gh-pages
   paths:
     exclude:
-    - 'idle-models-repo/**'
-    - 'another-idle-repo/**'
+      - "idle-models-repo/**"
+      - "another-idle-repo/**"
 
 variables:
-  # Azure Resource Manager connection created during pipeline creation
-  azureServiceConnectionId: '7e9c32cf-a856-4c63-8168-ee2d580b91bd'
+  azureServiceConnectionId: "7e9c32cf-a856-4c63-8168-ee2d580b91bd"
+  webAppName: "EOAgriTool"
+  vmImageName: "ubuntu-latest"
+  environmentName: "EOAgriTool"
+  projectRoot: "$(System.DefaultWorkingDirectory)"
+  pythonVersion: "3.12"
 
-  # Web app name
-  webAppName: 'EOAgriTool'
-
-  # Agent VM image name
-  vmImageName: 'ubuntu-latest'
-
-  # Environment name
-  environmentName: 'EOAgriTool'
-
-  # Project root folder. Point to the folder containing manage.py file.
-  projectRoot: $(System.DefaultWorkingDirectory)
-
-  pythonVersion: '3.9'
-
-  # Azure OpenAI configuration
-  # It is recommended to use a variable group or Azure Key Vault for these secrets.
-  AZURE_OPENAI_ENDPOINT: 'https://your-resource-name.openai.azure.com/'
-  AZURE_OPENAI_API_KEY: '$(AzureOpenAIKey)' # Reference to a secret variable
-  AZURE_OPENAI_DEPLOYMENT_NAME: 'your-model-deployment-name'
-  AZURE_OPENAI_API_VERSION: '2024-02-01'
+  # Configure AzureOpenAIKey and CosmosDbAccountKey as secret pipeline variables
+  # or, preferably, load them from an Azure DevOps variable group / Key Vault.
+  azureOpenAIEndpoint: "$(AZURE_OPENAI_ENDPOINT)"
+  azureOpenAIKey: "$(AzureOpenAIKey)"
+  azureOpenAIModel: "$(AZURE_OPENAI_MODEL)"
+  cosmosAccount: "$(AZURE_COSMOSDB_ACCOUNT)"
+  cosmosAccountKey: "$(CosmosDbAccountKey)"
 
 stages:
-- stage: Build
-  displayName: Build stage
-  jobs:
-  - job: BuildJob
-    pool:
-      vmImage: $(vmImageName)
-    steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '$(pythonVersion)'
-      displayName: 'Use Python $(pythonVersion)'
-
-    - script: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        # Install the Azure OpenAI SDK for Python
-        pip install openai azure-identity
-      workingDirectory: $(projectRoot)
-      displayName: "Install dependencies"
-
-    # Example step to run a Python script that uses Azure OpenAI
-    - task: PythonScript@0
-      displayName: 'Run AI Code Analysis'
-      inputs:
-        scriptSource: 'filePath'
-        scriptPath: '$(projectRoot)/scripts/azure_openai_task.py' # Your Python script
-        arguments: '--endpoint $(AZURE_OPENAI_ENDPOINT) --api-key $(AZURE_OPENAI_API_KEY) --deployment $(AZURE_OPENAI_DEPLOYMENT_NAME) --api-version $(AZURE_OPENAI_API_VERSION)'
-      env:
-        # Pass secrets as environment variables for security
-        AZURE_OPENAI_ENDPOINT: $(AZURE_OPENAI_ENDPOINT)
-        AZURE_OPENAI_API_KEY: $(AZURE_OPENAI_API_KEY)
-        AZURE_OPENAI_DEPLOYMENT_NAME: $(AZURE_OPENAI_DEPLOYMENT_NAME)
-        AZURE_OPENAI_API_VERSION: $(AZURE_OPENAI_API_VERSION)
-
-    - task: ArchiveFiles@2
-      displayName: 'Archive files'
-      inputs:
-        rootFolderOrFile: '$(projectRoot)'
-        includeRootFolder: false
-        archiveType: zip
-        archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
-        replaceExistingArchive: true
-        exclude: |
-          antenv/**  # Excludes virtual environment if created earlier
-          **/__pycache__/**  # Excludes Python cache files
-          # Exclude the idle repos from the build artifact as well
-          idle-models-repo/**
-          another-idle-repo/**
-
-    - upload: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
-      displayName: 'Upload package'
-      artifact: drop
-
-- stage: Deploy
-  displayName: 'Deploy Web App'
-  dependsOn: Build
-  condition: succeeded()
-  jobs:
-  - deployment: DeploymentJob
-    pool:
-      vmImage: $(vmImageName)
-    environment: $(environmentName)
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: AzureWebApp@2  # Updated to version 2 for Linux Web Apps
-            displayName: 'Deploy Azure Web App : EOAgriTool'
+  - stage: Build
+    displayName: Build stage
+    jobs:
+      - job: BuildJob
+        pool:
+          vmImage: $(vmImageName)
+        steps:
+          - task: UsePythonVersion@0
             inputs:
-              azureSubscription: $(azureServiceConnectionId)
-              appType: 'webAppLinux'
-              appName: $(webAppName)
-              package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
+              versionSpec: "$(pythonVersion)"
+            displayName: "Use Python $(pythonVersion)"
+
+          - script: |
+              python -m pip install --upgrade pip
+              pip install --requirement requirements.txt
+              python -m compileall -q app.py backend
+            workingDirectory: $(projectRoot)
+            displayName: "Install dependencies and validate Python"
+
+          - task: ArchiveFiles@2
+            displayName: Archive application
+            inputs:
+              rootFolderOrFile: "$(projectRoot)"
+              includeRootFolder: false
+              archiveType: zip
+              archiveFile: "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"
+              replaceExistingArchive: true
+              exclude: |
+                .git/**
+                .venv/**
+                venv/**
+                **/__pycache__/**
+                **/*.pyc
+                idle-models-repo/**
+                another-idle-repo/**
+
+          - upload: "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"
+            displayName: Upload package
+            artifact: drop
+
+  - stage: Deploy
+    displayName: Deploy Web App
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - deployment: DeploymentJob
+        pool:
+          vmImage: $(vmImageName)
+        environment: $(environmentName)
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureWebApp@2
+                  displayName: Deploy EOAgriTool to Azure App Service
+                  inputs:
+                    azureSubscription: $(azureServiceConnectionId)
+                    appType: webAppLinux
+                    appName: $(webAppName)
+                    package: "$(Pipeline.Workspace)/drop/$(Build.BuildId).zip"
+                    startUpCommand: "hypercorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+                    appSettings: >-
+                      -SCM_DO_BUILD_DURING_DEPLOYMENT true
+                      -PORT 8000
+                      -LOG_LEVEL INFO
+                      -FLASK_DEBUG false
+                      -AZURE_OPENAI_ENDPOINT "$(azureOpenAIEndpoint)"
+                      -AZURE_OPENAI_KEY "$(azureOpenAIKey)"
+                      -AZURE_OPENAI_MODEL "$(azureOpenAIModel)"
+                      -AZURE_OPENAI_PREVIEW_API_VERSION 2024-06-01
+                      -AZURE_COSMOSDB_ACCOUNT "$(cosmosAccount)"
+                      -AZURE_COSMOSDB_ACCOUNT_KEY "$(cosmosAccountKey)"
+                      -AZURE_COSMOSDB_DATABASE eoagritool
+                      -AZURE_COSMOSDB_CONVERSATIONS_CONTAINER conversations
+                      -COSMOS_INIT_TIMEOUT_SECONDS 30
+                      -MAX_CONVERSATION_MESSAGES_FOR_TITLE 10
+                      -MS_DEFENDER_ENABLED false
+                      -APP_USER_AGENT EOAgriTool/AsyncAzureOpenAI/2.0.0
