@@ -1,6 +1,10 @@
 # EO AgriTool
-![EOAgriTool](https://private-us-east-1.manuscdn.com/sessionFile/qfJDFqGHdjdXzq2Z5lzZsw/device-attachments/trmNMD0qgFzi1iaDnYjG9L-a5-img-b39772db96aa08c1/ref-1.gif?Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvcWZKREZxR0hkamRYenEyWjVselpzdy9kZXZpY2UtYXR0YWNobWVudHMvdHJtTk1EMHFnRnppMWlhRG5Zakc5TC1hNS1pbWctYjM5NzcyZGI5NmFhMDhjMS9yZWYtMS5naWYiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3OTYwODMyMDB9fX1dfQ__&Key-Pair-Id=K2QY5QTL8JSY6C&Signature=MEUCIQD~QW5KRIPdTwQvVPUD-LydDSi73KWz2FmKzyfDJMEvowIgfvGM3dQOutgsOwAsOfM9v13cuY-UH1TJTPZGCnLhpWQ_)
-EO AgriTool is a cutting-edge web application designed to empower Egyptian farmers and agricultural businesses to overcome environmental challenges. By leveraging high-resolution Earth observation data and embracing regenerative agriculture practices, the app provides actionable insights for sustainable farming. Whether you're confronting unpredictable weather, pest outbreaks, or water management issues, EO AgriTool helps you monitor, analyze, and optimize your agricultural practices in real time.
+![EOAgriTool](EOAgriTool.gif)
+EO AgriTool is a cutting-edge web application designed to empower Egyptian farmers and agricultural businesses to overcome environmental challenges. By leveraging high-resolution Earth observation data and embracing regenerative agriculture practices, the app provides actionable insights for sustainable farming.
+
+## Presentation
+
+Download the project presentation here: [EOAgriTool Presentation (.pptx)](https://github.com/aimtyaem/EOAgriTool/raw/9e8e9bbfe0ff0eef161a98a858f13c1110658477/Documents/EOAgriTool.pptx)
 
 ---
 
@@ -16,7 +20,7 @@ EO AgriTool aims to address critical agricultural challenges by integrating data
 Egyptian farmers and agricultural stakeholders seeking to enhance sustainability, improve crop yields, and ultimately reduce their environmental footprint.
 
 **Problem Addressed:**  
-Agriculture faces multiple adversities—including unpredictable weather, pest infestations, water scarcity, and soil degradation—that directly impact productivity and profitability. EO AgriTool confronts these issues by using data-driven insights and promoting regenerative agriculture methods to restore and maintain soil health, conserve water, and manage resources efficiently.
+Agriculture faces multiple adversities—including unpredictable weather, pest infestations, water scarcity, and soil degradation—that directly impact productivity and profitability. EO AgriTool[...]
 
 ---
 
@@ -110,7 +114,7 @@ sudo apt update && sudo apt upgrade -y
    npm start
    ```
    The app will be available at `http://localhost:3000` by default.
-[![Build and deploy Node.js app to Azure Web App - exprec](https://github.com/aimtyaem/EOAgriTool/actions/workflows/github_exprec.yml/badge.svg)](https://github.com/aimtyaem/EOAgriTool/actions/workflows/github_exprec.yml)
+   [![Build and deploy Node.js app to Azure Web App - exprec](https://github.com/aimtyaem/EOAgriTool/actions/workflows/github_exprec.yml/badge.svg)](https://github.com/aimtyaem/EOAgriTool/actions/workflows/github_exprec.yml)
 
 ### Python:
 
@@ -180,14 +184,13 @@ For any questions, feedback, or collaboration inquiries, please contact us:
 
 ---
 
-By integrating Earth observation data with principles of regenerative agriculture, EO AgriTool not only empowers farmers with actionable insights but also paves the way for a more sustainable and resilient future in agriculture.
+By integrating Earth observation data with principles of regenerative agriculture, EO AgriTool not only empowers farmers with actionable insights but also paves the way for a more sustainable and[...]
 
 Feel free to explore the repository and get involved!
 
 ---
 
 This informative `README.md` file ensures developers, contributors, and end-users have all the necessary information to understand, install, and contribute to EO AgriTool.
-
 
 ## Live data & refresh
 
@@ -200,3 +203,4 @@ The climate, water, and fields views use the Quart backend's live-data endpoints
 The server keeps a five-minute in-process cache keyed by region and forecast type. A refresh control is available on climate and water pages, and those pages also refresh when their selectors change. Fields refresh their live irrigation metric independently while preserving the complete `localStorage` record under `fieldData`, including uploaded media and each field's `lastUpdated` value. `field.lastUpdated` is the time a user changed a field; `data.fetched_at` is the time external data was retrieved. These values must not be merged.
 
 If Open-Meteo fails after a successful request, the endpoint returns HTTP 200 with `stale: true`, `source: "cache"`, and the last-good data. If no successful data exists, the endpoint returns a stale fallback with `data: null`; the frontend shows an error state and does not replace an existing chart or local field records. Loading controls expose a spinner and `aria-busy` state, while stale and error banners explain what the user is seeing.
+
