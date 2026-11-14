@@ -1,6 +1,10 @@
 # EO AgriTool
 ![EOAgriTool](EOAgriTool.gif)
-EO AgriTool is a cutting-edge web application designed to empower Egyptian farmers and agricultural businesses to overcome environmental challenges. By leveraging high-resolution Earth observation data and embracing regenerative agriculture practices, the app provides actionable insights for sustainable farming. Whether you're confronting unpredictable weather, pest outbreaks, or water management issues, EO AgriTool helps you monitor, analyze, and optimize your agricultural practices in real time.
+EO AgriTool is a cutting-edge web application designed to empower Egyptian farmers and agricultural businesses to overcome environmental challenges. By leveraging high-resolution Earth observation data and embracing regenerative agriculture practices, the app provides actionable insights for sustainable farming.
+
+## Presentation
+
+Download the project presentation here: [EOAgriTool Presentation (.pptx)](https://github.com/aimtyaem/EOAgriTool/raw/9e8e9bbfe0ff0eef161a98a858f13c1110658477/Documents/EOAgriTool.pptx)
 
 ---
 
@@ -16,7 +20,7 @@ EO AgriTool aims to address critical agricultural challenges by integrating data
 Egyptian farmers and agricultural stakeholders seeking to enhance sustainability, improve crop yields, and ultimately reduce their environmental footprint.
 
 **Problem Addressed:**  
-Agriculture faces multiple adversities—including unpredictable weather, pest infestations, water scarcity, and soil degradation—that directly impact productivity and profitability. EO AgriTool confronts these issues by using data-driven insights and promoting regenerative agriculture methods to restore and maintain soil health, conserve water, and manage resources efficiently.
+Agriculture faces multiple adversities—including unpredictable weather, pest infestations, water scarcity, and soil degradation—that directly impact productivity and profitability. EO AgriTool[...]
 
 ---
 
@@ -110,7 +114,7 @@ sudo apt update && sudo apt upgrade -y
    npm start
    ```
    The app will be available at `http://localhost:3000` by default.
-[![Build and deploy Node.js app to Azure Web App - exprec](https://github.com/aimtyaem/EOAgriTool/actions/workflows/github_exprec.yml/badge.svg)](https://github.com/aimtyaem/EOAgriTool/actions/workflows/github_exprec.yml)
+   [![Build and deploy Node.js app to Azure Web App - exprec](https://github.com/aimtyaem/EOAgriTool/actions/workflows/github_exprec.yml/badge.svg)](https://github.com/aimtyaem/EOAgriTool/actions/workflows/github_exprec.yml)
 
 ### Python:
 
@@ -180,7 +184,7 @@ For any questions, feedback, or collaboration inquiries, please contact us:
 
 ---
 
-By integrating Earth observation data with principles of regenerative agriculture, EO AgriTool not only empowers farmers with actionable insights but also paves the way for a more sustainable and resilient future in agriculture.
+By integrating Earth observation data with principles of regenerative agriculture, EO AgriTool not only empowers farmers with actionable insights but also paves the way for a more sustainable and[...]
 
 Feel free to explore the repository and get involved!
 
