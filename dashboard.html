@@ -1,1 +1,117 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EOAgriTool | Dashboard</title><link rel="stylesheet" href="assets/styles.css"><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script><script src="assets/app.js" defer></script></head><body><main class="page"><section class="dashboard-hero"><article class="panel" style="padding:32px;background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(232,249,239,.82))"><span class="eyebrow">Earth observation farm intelligence</span><h1>Grow resilient rotations with evidence.</h1><p class="muted">Start with your fields, inspect climate and water pressure, then compare rotation actions against your priorities.</p><div class="hero-actions" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:22px"><button class="button" id="planBtn">Generate rotation plan</button><a class="button secondary" href="fields.html">Add field</a><a class="button secondary" href="notifications.html">View alerts</a></div></article><aside class="panel" style="padding:24px;background:linear-gradient(160deg,#153c32,#207751);color:#fff"><span style="opacity:.7">CURRENT FARM SIGNAL</span><h2 style="color:#fff;font-size:2.3rem;margin:10px 0">Moderate resilience risk</h2><p style="color:rgba(255,255,255,.8)">Prioritise organic matter recovery and reduce irrigation pressure in the next rotation.</p><a class="button" style="background:#fff;color:var(--green);box-shadow:none" href="climate.html">Inspect conditions →</a></aside></section><section id="stats" class="metric-grid"></section><section class="content-grid"><article class="panel section-card"><div class="section-head"><div><h2>Rotation evidence</h2><span class="muted">A combined view of soil, water and crop signals</span></div><a class="button secondary" href="reports.html">Open report</a></div><div style="height:270px"><canvas id="resourceChart"></canvas></div><div id="planOutput" class="insight-strip"></div></article><article class="panel section-card"><div class="section-head"><div><h2>Next actions</h2><span class="muted">Follow the connected workflow</span></div></div><div id="risks" class="risk-list"></div></article></section><section class="panel section-card" style="margin-top:20px"><div class="section-head"><div><h2>Farm advisor</h2><span class="muted">Ask about soil, water, climate or rotation</span></div></div><div id="messages"><p class="muted">Try: “Which crop should follow wheat?”</p></div><form id="chat" class="chat-form"><input id="question" required placeholder="Ask a question…"><button class="button">Send</button></form></section></main><script>const stats=document.getElementById('stats');const risks=document.getElementById('risks');const output=document.getElementById('planOutput');function renderStats(){const f=EOAgri.fields();stats.innerHTML=[['Fields',f.length,'registered locally'],['Water use','867 mm','19.9% saved'],['Soil health','70 / 100','+18 projected'],['Rotation','3 years','rice excluded']].map(x=>`<article class="panel metric-card"><small>${x[0]}</small><strong>${x[1]}</strong><span class="trend">${x[2]}</span></article>`).join('')}function renderRisks(rs){risks.innerHTML=rs.map(r=>`<div class="risk-item"><i class="risk-dot ${r.priority==='critical'?'critical':''}"></i><div><strong>${r.title}</strong><span>${r.description||r.action||''}</span></div><a class="button secondary" href="${r.category==='water'?'water.html':r.category==='soil'?'fields.html':r.category==='rotation'?'reports.html':'climate.html'}">Open</a></div>`).join('')}async function makePlan(){const b=document.getElementById('planBtn');b.disabled=true;b.textContent='Building plan…';const rs=await EOAgri.recommendations({usage_kwh:900,irrigation_mm:867,pH:8.12,organic_matter_pct:1.05},{previous_crop:'wheat',farmer_priority:'soil health and water conservation'});renderRisks(rs);output.innerHTML='<div class="insight"><b>Recommended sequence</b><span>Wheat → Berseem → Maize → Fava bean</span></div><div class="insight"><b>Reason</b><span>Legumes rebuild nitrogen and organic matter.</span></div><div class="insight"><b>Explore</b><span>Use Water and Climate before exporting.</span></div>';b.disabled=false;b.textContent='Refresh rotation plan';EOAgri.toast('Rotation plan connected to your farm signals')}new Chart(document.getElementById('resourceChart'),{type:'line',data:{labels:['Soil','Water','Climate','Rotation'],datasets:[{label:'Current readiness',data:[52,68,61,74],borderColor:'#126b4a',backgroundColor:'rgba(18,107,74,.1)',fill:true,tension:.35},{label:'With recommended rotation',data:[70,82,72,88],borderColor:'#2f7eea',borderDash:[6,4],tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{min:0,max:100,ticks:{callback:v=>v+'%'}}}}});document.getElementById('planBtn').onclick=makePlan;document.getElementById('chat').onsubmit=e=>{e.preventDefault();const q=document.getElementById('question');const text=q.value.trim();document.getElementById('messages').insertAdjacentHTML('beforeend',`<p><b>You:</b> ${text}</p><p class="muted"><b>Advisor:</b> Link the answer to your field record, climate outlook and irrigation plan. Start with the relevant module below.</p>`);q.value=''}renderStats();makePlan();</script></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>EOAgriTool | Dashboard</title>
+    <link rel="stylesheet" href="assets/styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="assets/app.js" defer></script>
+  </head>
+  <body>
+    <main class="page">
+      <section class="dashboard-hero">
+        <article
+          class="panel"
+          style="
+            padding: 32px;
+            background: linear-gradient(
+              135deg,
+              rgba(255, 255, 255, 0.95),
+              rgba(232, 249, 239, 0.82)
+            );
+          "
+        >
+          <span class="eyebrow">Earth observation farm intelligence</span>
+          <h1>Grow resilient rotations with evidence.</h1>
+          <p class="muted">
+            Start with your fields, inspect climate and water pressure, then
+            compare rotation actions against your priorities.
+          </p>
+          <div
+            class="hero-actions"
+            style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px"
+          >
+            <button class="button" id="planBtn">Generate rotation plan</button
+            ><a class="button secondary" href="/fields">Add field</a
+            ><a class="button secondary" href="/notifications"
+              >View alerts</a
+            >
+          </div>
+        </article>
+        <aside
+          class="panel"
+          style="
+            padding: 24px;
+            background: linear-gradient(160deg, #153c32, #207751);
+            color: #fff;
+          "
+        >
+          <span style="opacity: 0.7">CURRENT FARM SIGNAL</span>
+          <h2 style="color: #fff; font-size: 2.3rem; margin: 10px 0">
+            Moderate resilience risk
+          </h2>
+          <p style="color: rgba(255, 255, 255, 0.8)">
+            Prioritise organic matter recovery and reduce irrigation pressure in
+            the next rotation.
+          </p>
+          <a
+            class="button"
+            style="background: #fff; color: var(--green); box-shadow: none"
+            href="/climate"
+            >Inspect conditions →</a
+          >
+        </aside>
+      </section>
+      <section id="stats" class="metric-grid"></section>
+      <section class="content-grid">
+        <article class="panel section-card">
+          <div class="section-head">
+            <div>
+              <h2>Rotation evidence</h2>
+              <span class="muted"
+                >A combined view of soil, water and crop signals</span
+              >
+            </div>
+            <a class="button secondary" href="/reports">Open report</a>
+          </div>
+          <div style="height: 270px"><canvas id="resourceChart"></canvas></div>
+          <div id="planOutput" class="insight-strip"></div>
+        </article>
+        <article class="panel section-card">
+          <div class="section-head">
+            <div>
+              <h2>Next actions</h2>
+              <span class="muted">Follow the connected workflow</span>
+            </div>
+          </div>
+          <div id="risks" class="risk-list"></div>
+        </article>
+      </section>
+      <section class="panel section-card" style="margin-top: 20px">
+        <div class="section-head">
+          <div>
+            <h2>Farm advisor</h2>
+            <span class="muted"
+              >Ask about soil, water, climate or rotation</span
+            >
+          </div>
+        </div>
+        <div id="messages">
+          <p class="muted">Try: “Which crop should follow wheat?”</p>
+        </div>
+        <form id="chat" class="chat-form">
+          <input id="question" required placeholder="Ask a question…" /><button
+            class="button"
+          >
+            Send
+          </button>
+        </form>
+      </section>
+    </main>
+    <script>
+      const stats=document.getElementById('stats');const risks=document.getElementById('risks');const output=document.getElementById('planOutput');function renderStats(){const f=EOAgri.fields();stats.innerHTML=[['Fields',f.length,'registered locally'],['Water use','867 mm','19.9% saved'],['Soil health','70 / 100','+18 projected'],['Rotation','3 years','rice excluded']].map(x=>`<article class="panel metric-card"><small>${x[0]}</small><strong>${x[1]}</strong><span class="trend">${x[2]}</span></article>`).join('')}function renderRisks(rs){risks.innerHTML=rs.map(r=>`<div class="risk-item"><i class="risk-dot ${r.priority==='critical'?'critical':''}"></i><div><strong>${r.title}</strong><span>${r.description||r.action||''}</span></div><a class="button secondary" href="${r.category==='water'?'/water':r.category==='soil'?'/fields':r.category==='rotation'?'/reports':'/climate'}">Open</a></div>`).join('')}async function makePlan(){const b=document.getElementById('planBtn');b.disabled=true;b.textContent='Building plan…';const rs=await EOAgri.recommendations({usage_kwh:900,irrigation_mm:867,pH:8.12,organic_matter_pct:1.05},{previous_crop:'wheat',farmer_priority:'soil health and water conservation'});renderRisks(rs);output.innerHTML='<div class="insight"><b>Recommended sequence</b><span>Wheat → Berseem → Maize → Fava bean</span></div><div class="insight"><b>Reason</b><span>Legumes rebuild nitrogen and organic matter.</span></div><div class="insight"><b>Explore</b><span>Use Water and Climate before exporting.</span></div>';b.disabled=false;b.textContent='Refresh rotation plan';EOAgri.toast('Rotation plan connected to your farm signals')}new Chart(document.getElementById('resourceChart'),{type:'line',data:{labels:['Soil','Water','Climate','Rotation'],datasets:[{label:'Current readiness',data:[52,68,61,74],borderColor:'#126b4a',backgroundColor:'rgba(18,107,74,.1)',fill:true,tension:.35},{label:'With recommended rotation',data:[70,82,72,88],borderColor:'#2f7eea',borderDash:[6,4],tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{min:0,max:100,ticks:{callback:v=>v+'%'}}}}});document.getElementById('planBtn').onclick=makePlan;document.getElementById('chat').onsubmit=e=>{e.preventDefault();const q=document.getElementById('question');const text=q.value.trim();document.getElementById('messages').insertAdjacentHTML('beforeend',`<p><b>You:</b> ${text}</p><p class="muted"><b>Advisor:</b> Link the answer to your field record, climate outlook and irrigation plan. Start with the relevant module below.</p>`);q.value=''}renderStats();makePlan();
+    </script>
+  </body>
+</html>
+

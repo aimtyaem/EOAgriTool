@@ -191,3 +191,16 @@ Feel free to explore the repository and get involved!
 ---
 
 This informative `README.md` file ensures developers, contributors, and end-users have all the necessary information to understand, install, and contribute to EO AgriTool.
+
+## Live data & refresh
+
+The climate, water, and fields views use the Quart backend's live-data endpoints. The backend retrieves forecast data from [Open-Meteo](https://open-meteo.com/) without an API key and attributes the provider in each response.
+
+- `GET /climate_data?region=nile_delta&horizon=72h` returns hourly temperature, rainfall, wind, timestamps, and current values. Supported regions are `nile_delta`, `sahel`, `mediterranean`, and `southeast_asia`; supported horizons are `72h`, `7d`, and `30d`.
+- `GET /water_data?region=nile_delta` returns average soil moisture, total reference evapotranspiration (`et0_total_mm`), rainfall, irrigation deficit, and hourly series.
+- Responses include `fetched_at`, `source`, `region`, and `stale`. The frontend displays the refresh age separately from user-edit timestamps.
+
+The server keeps a five-minute in-process cache keyed by region and forecast type. A refresh control is available on climate and water pages, and those pages also refresh when their selectors change. Fields refresh their live irrigation metric independently while preserving the complete `localStorage` record under `fieldData`, including uploaded media and each field's `lastUpdated` value. `field.lastUpdated` is the time a user changed a field; `data.fetched_at` is the time external data was retrieved. These values must not be merged.
+
+If Open-Meteo fails after a successful request, the endpoint returns HTTP 200 with `stale: true`, `source: "cache"`, and the last-good data. If no successful data exists, the endpoint returns a stale fallback with `data: null`; the frontend shows an error state and does not replace an existing chart or local field records. Loading controls expose a spinner and `aria-busy` state, while stale and error banners explain what the user is seeing.
+

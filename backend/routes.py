@@ -7,6 +7,7 @@ This module provides:
   - Azure Functions tool calling (remote function calls)
   - CosmosDB conversation history CRUD
   - EOAgriTool domain endpoints (sustainability, energy, recommendations, vtracker)
+  - Live climate/water data via Open-Meteo
   - Health check and frontend settings
 """
 
@@ -15,9 +16,12 @@ from __future__ import annotations
 import copy
 import json
 import os
+import pathlib
 import logging
+import time
 import uuid
 import asyncio
+from datetime import datetime, timezone
 from typing import Any
 
 import httpx
@@ -28,7 +32,6 @@ from quart import (
     make_response,
     request,
     send_from_directory,
-    render_template,
     current_app,
 )
 from quart_cors import cors
@@ -53,6 +56,10 @@ from backend.utils import (
 from backend.recommend.engine import generate_recommendations, parse_energy_bill
 
 logger = logging.getLogger("eoagritool.routes")
+
+# Repo root (parent of backend/). Used by page + asset serving routes so they
+# resolve correctly regardless of the process working directory.
+_PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 # ────────────────────────────────────────────────────────────
 # Blueprint
@@ -86,6 +93,30 @@ VTRACKER_API_URL = os.environ.get(
     "VTRACKER_API_URL",
     "https://eoagritool-cwfzfndaazauawex.canadacentral-01.azurewebsites.net/vtracker_data.json",
 )
+
+# ────────────────────────────────────────────────────────────
+# Live climate / water data (Open-Meteo: free, no key, no expiry)
+# ────────────────────────────────────────────────────────────
+
+OPEN_METEO_FORECAST_URL = os.environ.get(
+    "OPEN_METEO_FORECAST_URL", "https://api.open-meteo.com/v1/forecast"
+)
+OPEN_METEO_TIMEOUT_SECONDS = float(os.environ.get("OPEN_METEO_TIMEOUT_SECONDS", "10"))
+OPEN_METEO_CACHE_TTL_SECONDS = int(os.environ.get("OPEN_METEO_CACHE_TTL_SECONDS", "300"))
+
+# Region → (latitude, longitude). Keys match the four regions in climate.html.
+CLIMATE_REGIONS: dict[str, tuple[float, float]] = {
+    "nile_delta":     (30.90, 31.20),
+    "sahel":          (14.50,  0.00),
+    "mediterranean":  (35.00, 18.00),
+    "southeast_asia": (10.00, 105.00),
+}
+
+# horizon → hours of forecast to return
+CLIMATE_HORIZONS: dict[str, int] = {"72h": 72, "7d": 168, "30d": 720}
+
+# {(region, horizon): (expires_at_epoch, payload)}
+_climate_cache: dict[tuple[str, str], tuple[float, dict]] = {}
 
 # ────────────────────────────────────────────────────────────
 # Application factory
@@ -138,7 +169,14 @@ async def _init_azure_credential(app: Quart) -> None:
     """Initialise DefaultAzureCredential if no API key is configured."""
     if not app_settings.azure_openai.key:
         logger.info("No AZURE_OPENAI_KEY — using Azure Entra ID auth")
-        app.azure_credential = DefaultAzureCredential()
+        try:
+            app.azure_credential = DefaultAzureCredential()
+        except Exception:
+            # Azure is optional for local development and for the public
+            # climate/water endpoints. Do not prevent the Quart app from
+            # starting when an optional identity transport is unavailable.
+            logger.warning("Azure credential unavailable; continuing without Azure auth", exc_info=True)
+            app.azure_credential = None
     else:
         app.azure_credential = None
 
@@ -146,7 +184,6 @@ async def _init_azure_credential(app: Quart) -> None:
 async def _init_openai_client(app: Quart) -> None:
     """Create a single AsyncAzureOpenAI client for the app lifetime."""
     try:
-        # --- API version check ---
         if (
             app_settings.azure_openai.preview_api_version
             < MINIMUM_SUPPORTED_AZURE_OPENAI_PREVIEW_API_VERSION
@@ -156,7 +193,6 @@ async def _init_openai_client(app: Quart) -> None:
                 f"'{MINIMUM_SUPPORTED_AZURE_OPENAI_PREVIEW_API_VERSION}'"
             )
 
-        # --- Endpoint ---
         if not app_settings.azure_openai.endpoint and not app_settings.azure_openai.resource:
             raise ValueError("AZURE_OPENAI_ENDPOINT or AZURE_OPENAI_RESOURCE is required")
 
@@ -164,7 +200,6 @@ async def _init_openai_client(app: Quart) -> None:
             f"https://{app_settings.azure_openai.resource}.openai.azure.com/"
         )
 
-        # --- Auth ---
         aoai_api_key = app_settings.azure_openai.key
         ad_token_provider = None
         if not aoai_api_key and app.azure_credential:
@@ -173,16 +208,13 @@ async def _init_openai_client(app: Quart) -> None:
                 "https://cognitiveservices.azure.com/.default",
             )
 
-        # --- Deployment ---
         deployment = app_settings.azure_openai.model
         if not deployment:
             raise ValueError("AZURE_OPENAI_MODEL is required")
 
-        # --- Remote function-call tools ---
         if app_settings.azure_openai.function_call_azure_functions_enabled:
             await _fetch_azure_function_tools(app)
 
-        # --- Client ---
         app.azure_openai_client = AsyncAzureOpenAI(
             api_version=app_settings.azure_openai.preview_api_version,
             api_key=aoai_api_key,
@@ -195,7 +227,6 @@ async def _init_openai_client(app: Quart) -> None:
     except Exception:
         logger.exception("Failed to initialise Azure OpenAI client")
         app.azure_openai_client = None
-        # Non-fatal: the app can still serve static assets and non-LLM routes
 
 
 async def _fetch_azure_function_tools(app: Quart) -> None:
@@ -251,7 +282,6 @@ async def _init_cosmosdb_client(app: Quart) -> None:
         app.cosmos_conversation_client = None
 
     finally:
-        # ALWAYS set the event so awaiting routes don't deadlock
         app.cosmos_db_ready.set()
 
 
@@ -289,11 +319,8 @@ def _compute_frontend_settings() -> dict:
 
 @bp.route("/")
 async def index():
-    return await render_template(
-        "index.html",
-        title=app_settings.ui.title,
-        favicon=app_settings.ui.favicon,
-    )
+    """Serve the repository-root login page independently of the CWD."""
+    return await send_from_directory(str(_PROJECT_ROOT), "index.html")
 
 
 @bp.route("/favicon.ico")
@@ -301,9 +328,23 @@ async def favicon():
     return await bp.send_static_file("favicon.ico")
 
 
+# ────────────────────────────────────────────────────────────
+# HTML page serving (repo root) + assets/ folder
+# ────────────────────────────────────────────────────────────
+
+@bp.route(
+    "/<any(climate, water, fields, dashboard, reports, "
+    "notifications, about, contacts, tutorials):page>"
+)
+async def serve_page(page: str):
+    """Serve a top-level HTML page from the repo root."""
+    return await send_from_directory(str(_PROJECT_ROOT), f"{page}.html")
+
+
 @bp.route("/assets/<path:path>")
 async def assets(path: str):
-    return await send_from_directory("static/assets", path)
+    """Serve static assets from the repo-root assets/ directory."""
+    return await send_from_directory(str(_PROJECT_ROOT / "assets"), path)
 
 
 # ────────────────────────────────────────────────────────────
@@ -341,20 +382,10 @@ async def get_frontend_settings():
 # ────────────────────────────────────────────────────────────
 
 def _prepare_model_args(request_body: dict, request_headers: dict) -> dict:
-    """
-    Build the keyword arguments dict for ``azure_openai_client.chat.completions.create``.
-
-    Includes:
-      - System message injection
-      - Message formatting (user / assistant / function / tool)
-      - MS Defender user JSON (if enabled)
-      - Data-source payload (if configured)
-      - Secret redaction for logging
-    """
+    """Build keyword arguments for azure_openai_client.chat.completions.create."""
     request_messages = request_body.get("messages", [])
     messages: list[dict] = []
 
-    # System message when no data-source (data-source injects its own system prompt)
     if not app_settings.datasource:
         messages.append({
             "role": "system",
@@ -387,7 +418,6 @@ def _prepare_model_args(request_body: dict, request_headers: dict) -> dict:
             case _:
                 logger.warning("Dropping message with unrecognised role: %s", role)
 
-    # MS Defender user JSON
     user_json = None
     if MS_DEFENDER_ENABLED:
         try:
@@ -410,7 +440,6 @@ def _prepare_model_args(request_body: dict, request_headers: dict) -> dict:
         "user": user_json,
     }
 
-    # Attach tools / data-sources only when the last message is from the user
     if messages and messages[-1]["role"] == "user":
         if (
             app_settings.azure_openai.function_call_azure_functions_enabled
@@ -425,9 +454,7 @@ def _prepare_model_args(request_body: dict, request_headers: dict) -> dict:
                 ]
             }
 
-    # Redact secrets for debug logging
     _log_model_args(model_args)
-
     return model_args
 
 
@@ -485,16 +512,7 @@ async def _openai_remote_azure_function_call(function_name: str, function_args: 
 # ────────────────────────────────────────────────────────────
 
 async def _send_chat_request(request_body: dict, request_headers: dict):
-    """
-    Send a chat completion request to Azure OpenAI.
-
-    Returns
-    -------
-    tuple(response, apim_request_id)
-    """
-    # Filter out orphaned tool messages (tool messages whose tool_call_id
-    # doesn't match any assistant tool_call in the conversation).
-    # This prevents "tool message without preceding tool_call" API errors.
+    """Send a chat completion request to Azure OpenAI."""
     filtered = _filter_orphaned_tool_messages(request_body.get("messages", []))
     request_body["messages"] = filtered
 
@@ -515,13 +533,7 @@ async def _send_chat_request(request_body: dict, request_headers: dict):
 
 
 def _filter_orphaned_tool_messages(messages: list[dict]) -> list[dict]:
-    """
-    Remove tool-role messages that have no matching assistant tool_call.
-
-    Previous code removed ALL tool messages, which broke multi-turn
-    function calling. This version only removes orphans.
-    """
-    # Collect all tool_call_ids from assistant messages
+    """Remove tool-role messages that have no matching assistant tool_call."""
     valid_tool_call_ids: set[str] = set()
     for msg in messages:
         if msg.get("role") == "assistant" and msg.get("tool_calls"):
@@ -592,7 +604,6 @@ async def _complete_chat_request(request_body: dict, request_headers: dict) -> d
     history_metadata = request_body.get("history_metadata", {})
     result = format_non_streaming_response(response, history_metadata, apim_request_id)
 
-    # Handle function calls
     if app_settings.azure_openai.function_call_azure_functions_enabled:
         function_response = await _process_function_call(response)
         if function_response:
@@ -617,18 +628,11 @@ class _FunctionCallStreamState:
         self.tool_arguments_stream: str = ""
         self.current_tool_call: dict | None = None
         self.function_messages: list[dict] = []
-        self.streaming_state: str = "INITIAL"  # INITIAL | STREAMING | COMPLETED
+        self.streaming_state: str = "INITIAL"
 
 
-async def _process_function_call_stream(
-    chunk,
-    state: _FunctionCallStreamState,
-) -> str:
-    """
-    Process a single streaming chunk for function calls.
-
-    Returns the current streaming_state.
-    """
+async def _process_function_call_stream(chunk, state: _FunctionCallStreamState) -> str:
+    """Process a single streaming chunk for function calls."""
     if not hasattr(chunk, "choices") or not chunk.choices:
         return state.streaming_state
 
@@ -638,7 +642,6 @@ async def _process_function_call_stream(
         state.streaming_state = "STREAMING"
         for tc_chunk in delta.tool_calls:
             if tc_chunk.id:
-                # Flush the previous tool call
                 if state.current_tool_call:
                     state.tool_arguments_stream += tc_chunk.function.arguments or ""
                     state.current_tool_call["tool_arguments"] = state.tool_arguments_stream
@@ -658,7 +661,6 @@ async def _process_function_call_stream(
                 state.tool_arguments_stream += tc_chunk.function.arguments or ""
 
     elif delta.tool_calls is None and state.streaming_state == "STREAMING":
-        # Stream completed — flush and execute
         if state.current_tool_call:
             state.current_tool_call["tool_arguments"] = state.tool_arguments_stream
             state.tool_calls.append(state.current_tool_call)
@@ -698,11 +700,9 @@ async def _stream_chat_request(request_body: dict, request_headers: dict):
             async for chunk in response:
                 stream_state = await _process_function_call_stream(chunk, state)
 
-                # No function call — assistant text response
                 if stream_state == "INITIAL":
                     yield format_stream_response(chunk, history_metadata, apim_request_id)
 
-                # Function call completed — send final answer
                 if stream_state == "COMPLETED":
                     request_body["messages"].extend(state.function_messages)
                     fn_response, fn_apim_id = await _send_chat_request(
@@ -731,8 +731,6 @@ async def _promptflow_request(request_body: dict) -> dict:
         timeout = float(app_settings.promptflow.response_timeout)
         if timeout <= 0:
             raise ValueError(f"Invalid PromptFlow timeout: {timeout}")
-
-        logger.debug("PromptFlow timeout: %.1fs", timeout)
 
         async with httpx.AsyncClient(timeout=timeout) as client:
             pf_obj = convert_to_pf_format(
@@ -787,11 +785,7 @@ async def _conversation_internal(request_body: dict, request_headers: dict):
 
 @bp.route("/conversation", methods=["POST"])
 async def conversation():
-    """
-    Chat completions endpoint.
-
-    Accepts the same JSON body as the OpenAI ``chat/completions`` API.
-    """
+    """Chat completions endpoint."""
     if not request.is_json:
         return jsonify({"error": "Request must be JSON", "code": "INVALID_CONTENT_TYPE"}), 415
 
@@ -805,12 +799,7 @@ async def conversation():
 
 @bp.route("/sustainability_goal", methods=["POST"])
 async def set_sustainability_goal():
-    """
-    Set the user's sustainability goal.
-
-    Request JSON:  { "choice": "reduce_carbon_footprint" }
-    Response JSON: { "message": "...", "goal": "..." }
-    """
+    """Set the user's sustainability goal."""
     try:
         request_json = await request.get_json()
         if not request_json:
@@ -826,7 +815,6 @@ async def set_sustainability_goal():
                 "code": "INVALID_GOAL",
             }), 400
 
-        # Persist to CosmosDB if available
         await current_app.cosmos_db_ready.wait()
         if current_app.cosmos_conversation_client:
             try:
@@ -850,12 +838,7 @@ async def set_sustainability_goal():
 
 @bp.route("/energy_bill", methods=["POST"])
 async def process_energy_bill():
-    """
-    Parse an uploaded energy bill (base64-encoded file or raw text).
-
-    Request JSON:  { "file_content": "<base64 or text>", "format": "pdf|text|image" }
-    Response JSON: { "message": "...", "data": { total, usage_kwh, period, ... } }
-    """
+    """Parse an uploaded energy bill (base64-encoded file or raw text)."""
     try:
         request_json = await request.get_json()
         if not request_json:
@@ -877,12 +860,7 @@ async def process_energy_bill():
 
 @bp.route("/recommendations", methods=["POST"])
 async def get_recommendations():
-    """
-    Generate agronomic / sustainability recommendations from analysis data.
-
-    Request JSON:  { "analysis": { ... }, "context": { ... } }
-    Response JSON: { "recommendations": [...], "count": N }
-    """
+    """Generate agronomic / sustainability recommendations from analysis data."""
     try:
         request_json = await request.get_json()
         if not request_json:
@@ -904,11 +882,7 @@ async def get_recommendations():
 
 @bp.route("/vtracker_data", methods=["GET"])
 async def fetch_vtracker_data():
-    """
-    Fetch vehicle tracker data from the external API.
-
-    Response JSON: { ...vtracker payload... }
-    """
+    """Fetch vehicle tracker data from the external API."""
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             resp = await client.get(VTRACKER_API_URL)
@@ -919,11 +893,182 @@ async def fetch_vtracker_data():
         return jsonify({"error": f"Upstream vTracker API error: {exc.response.status_code}", "code": "UPSTREAM_ERROR"}), 502
     except Exception:
         logger.exception("Error in /vtracker_data")
-        # Fallback data so the frontend doesn't break
         return jsonify({
             "vehicle_id": "UNAVAILABLE",
             "status": "offline",
             "source": "fallback",
+        }), 200
+
+
+@bp.route("/climate_data", methods=["GET"])
+async def get_climate_data():
+    """
+    Live climate forecast for a region via Open-Meteo.
+
+    Query params: region (default nile_delta), horizon (72h|7d|30d, default 72h)
+
+    Response: { data, fetched_at, source, region, horizon, stale }
+    On upstream failure: 200 with source='fallback', stale=True, last-good data.
+    """
+    region = (request.args.get("region") or "nile_delta").lower()
+    horizon = (request.args.get("horizon") or "72h").lower()
+
+    if region not in CLIMATE_REGIONS:
+        return jsonify({
+            "error": f"Unknown region '{region}'",
+            "code": "INVALID_REGION",
+            "allowed": sorted(CLIMATE_REGIONS),
+        }), 400
+    if horizon not in CLIMATE_HORIZONS:
+        return jsonify({
+            "error": f"Unknown horizon '{horizon}'",
+            "code": "INVALID_HORIZON",
+            "allowed": sorted(CLIMATE_HORIZONS),
+        }), 400
+
+    cache_key = (region, horizon)
+    now = time.time()
+    cached = _climate_cache.get(cache_key)
+    if cached and cached[0] > now:
+        return jsonify(cached[1]), 200
+
+    lat, lon = CLIMATE_REGIONS[region]
+    forecast_hours = CLIMATE_HORIZONS[horizon]
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "hourly": "temperature_2m,precipitation,wind_speed_10m",
+        "forecast_days": min(16, max(3, forecast_hours // 24 + 1)),
+        "timezone": "auto",
+    }
+
+    fetched_at = datetime.now(timezone.utc).isoformat()
+    try:
+        async with httpx.AsyncClient(timeout=OPEN_METEO_TIMEOUT_SECONDS) as client:
+            resp = await client.get(OPEN_METEO_FORECAST_URL, params=params)
+            resp.raise_for_status()
+            raw = resp.json()
+
+        hourly = raw.get("hourly", {})
+        times = hourly.get("time", [])[:forecast_hours]
+        temps = hourly.get("temperature_2m", [])[:forecast_hours]
+        rains = hourly.get("precipitation", [])[:forecast_hours]
+        winds = hourly.get("wind_speed_10m", [])[:forecast_hours]
+
+        payload = {
+            "data": {
+                "temperature": [round(v, 1) if v is not None else None for v in temps],
+                "rainfall":    [round(v, 1) if v is not None else None for v in rains],
+                "wind":        [round(v, 1) if v is not None else None for v in winds],
+                "timestamps":  times,
+                "current": {
+                    "temperature": temps[-1] if temps else None,
+                    "rainfall":    rains[-1] if rains else None,
+                    "wind":        winds[-1] if winds else None,
+                },
+            },
+            "fetched_at": fetched_at,
+            "source": "open-meteo",
+            "region": region,
+            "horizon": horizon,
+            "stale": False,
+        }
+        _climate_cache[cache_key] = (now + OPEN_METEO_CACHE_TTL_SECONDS, payload)
+        return jsonify(payload), 200
+
+    except Exception:
+        logger.exception("Open-Meteo climate fetch failed")
+        last_good = cached[1] if cached else None
+        if last_good:
+            return jsonify({**last_good, "stale": True, "source": "cache"}), 200
+        return jsonify({
+            "data": None,
+            "fetched_at": fetched_at,
+            "source": "fallback",
+            "region": region,
+            "horizon": horizon,
+            "stale": True,
+            "error": "Live climate data unavailable",
+            "code": "UPSTREAM_ERROR",
+        }), 200
+
+
+@bp.route("/water_data", methods=["GET"])
+async def get_water_data():
+    """Live soil-moisture + reference ET (irrigation proxy) via Open-Meteo."""
+    region = (request.args.get("region") or "nile_delta").lower()
+    if region not in CLIMATE_REGIONS:
+        return jsonify({
+            "error": f"Unknown region '{region}'",
+            "code": "INVALID_REGION",
+            "allowed": sorted(CLIMATE_REGIONS),
+        }), 400
+
+    cache_key = (region, "water")
+    now = time.time()
+    cached = _climate_cache.get(cache_key)
+    if cached and cached[0] > now:
+        return jsonify(cached[1]), 200
+
+    lat, lon = CLIMATE_REGIONS[region]
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "hourly": "soil_moisture_0_to_7cm,et0_fao_evapotranspiration,precipitation",
+        "forecast_days": 7,
+        "timezone": "auto",
+    }
+
+    fetched_at = datetime.now(timezone.utc).isoformat()
+    try:
+        async with httpx.AsyncClient(timeout=OPEN_METEO_TIMEOUT_SECONDS) as client:
+            resp = await client.get(OPEN_METEO_FORECAST_URL, params=params)
+            resp.raise_for_status()
+            raw = resp.json()
+
+        hourly = raw.get("hourly", {})
+        soil = [v for v in hourly.get("soil_moisture_0_to_7cm", []) if v is not None]
+        et0 = [v for v in hourly.get("et0_fao_evapotranspiration", []) if v is not None]
+        rain = [v for v in hourly.get("precipitation", []) if v is not None]
+
+        avg_soil = round(sum(soil) / len(soil), 3) if soil else None
+        total_et0 = round(sum(et0), 2) if et0 else None
+        total_rain_mm = round(sum(rain), 1) if rain else 0.0
+        deficit_mm = round(total_et0 - total_rain_mm, 1) if total_et0 is not None else None
+
+        payload = {
+            "data": {
+                "soil_moisture_avg": avg_soil,
+                "et0_total_mm": total_et0,
+                "rain_total_mm": total_rain_mm,
+                "irrigation_deficit_mm": deficit_mm,
+                "series": {
+                    "soil_moisture": soil[:168],
+                    "et0": et0[:168],
+                    "rainfall": rain[:168],
+                },
+            },
+            "fetched_at": fetched_at,
+            "source": "open-meteo",
+            "region": region,
+            "stale": False,
+        }
+        _climate_cache[cache_key] = (now + OPEN_METEO_CACHE_TTL_SECONDS, payload)
+        return jsonify(payload), 200
+
+    except Exception:
+        logger.exception("Open-Meteo water fetch failed")
+        last_good = cached[1] if cached else None
+        if last_good:
+            return jsonify({**last_good, "stale": True, "source": "cache"}), 200
+        return jsonify({
+            "data": None,
+            "fetched_at": fetched_at,
+            "source": "fallback",
+            "region": region,
+            "stale": True,
+            "error": "Live water data unavailable",
+            "code": "UPSTREAM_ERROR",
         }), 200
 
 
@@ -997,7 +1142,6 @@ async def update_conversation():
         if not messages or messages[-1].get("role") != "assistant":
             raise ValueError("Last message must have role 'assistant'")
 
-        # If the penultimate message is a tool message, write it first
         if len(messages) > 1 and messages[-2].get("role") == "tool":
             await current_app.cosmos_conversation_client.create_message(
                 uuid=str(uuid.uuid4()),
@@ -1099,7 +1243,7 @@ async def list_conversations():
             user_id, offset=offset, limit=25
         )
         if not isinstance(conversations, list):
-            return jsonify({"error": f"No conversations found for user", "code": "NOT_FOUND"}), 404
+            return jsonify({"error": "No conversations found for user", "code": "NOT_FOUND"}), 404
 
         return jsonify(conversations), 200
     except Exception:
@@ -1210,7 +1354,7 @@ async def delete_all_conversations():
             await current_app.cosmos_conversation_client.delete_messages(conv["id"], user_id)
             await current_app.cosmos_conversation_client.delete_conversation(user_id, conv["id"])
 
-        return jsonify({"message": f"All conversations deleted for user"}), 200
+        return jsonify({"message": "All conversations deleted for user"}), 200
 
     except Exception:
         logger.exception("Exception in /history/delete_all")
@@ -1277,8 +1421,7 @@ async def ensure_cosmos():
 def _require_cosmos():
     """Abort if CosmosDB is not available."""
     if not current_app.cosmos_conversation_client:
-        current_app.cosmos_db_ready.set()  # ensure no deadlock
-        # Quart doesn't have abort with JSON easily; raise and let handler catch
+        current_app.cosmos_db_ready.set()
         raise _CosmosNotAvailableError("CosmosDB is not configured or unavailable")
 
 
@@ -1295,7 +1438,6 @@ async def _generate_title(conversation_messages: list[dict]) -> str:
         "Do not include any other commentary or description."
     )
 
-    # Truncate to avoid sending huge context to the title model
     truncated = conversation_messages[-MAX_CONVERSATION_MESSAGES_FOR_TITLE:]
     messages = [{"role": m["role"], "content": m["content"]} for m in truncated]
     messages.append({"role": "user", "content": title_prompt})
@@ -1303,7 +1445,6 @@ async def _generate_title(conversation_messages: list[dict]) -> str:
     try:
         client = current_app.azure_openai_client
         if not client:
-            # Fallback: use first user message content
             return _fallback_title(conversation_messages)
 
         response = await client.chat.completions.create(
@@ -1324,6 +1465,5 @@ def _fallback_title(conversation_messages: list[dict]) -> str:
     for m in conversation_messages:
         if m.get("role") == "user":
             content = m.get("content", "")
-            # Take first 50 chars, strip newlines
             return content[:50].replace("\n", " ").strip() + ("..." if len(content) > 50 else "")
     return "New Conversation"
