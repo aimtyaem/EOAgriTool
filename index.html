@@ -13,18 +13,23 @@
       <h1>Decision support for resilient farms.</h1>
       <p class="muted">Explore NASA Earth observation context, local soil information, crop characteristics and farmer priorities in one connected workspace.</p>
       <form id="loginForm" class="form-grid" style="margin:24px auto;text-align:left">
-        <input id="email" name="email" type="email" placeholder="Email address" required>
-        <input id="password" name="password" type="password" placeholder="Password" required>
+        <input id="email" name="email" type="email" autocomplete="email" placeholder="Email address" required>
+        <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Password" required>
         <button class="button" type="submit">Open farm workspace</button>
       </form>
-      <small class="muted">Demo authentication stores only a local browser flag.</small>
+      <small class="muted">Demo authentication accepts any valid email and password.</small>
     </section>
   </main>
   <script>
     document.getElementById('loginForm').addEventListener('submit', function (event) {
       event.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
+      if (!email) return;
+
       localStorage.setItem('eoagri-auth', 'true');
-      window.location.href = location.hostname.endsWith('github.io') ? 'dashboard.html' : '/dashboard';
+      localStorage.setItem('eoagri-user-email', email);
+      window.location.assign(location.hostname.endsWith('github.io') ? 'dashboard.html' : '/dashboard');
     });
   </script>
 </body>
