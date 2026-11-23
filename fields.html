@@ -1,20 +1,111 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fields | EOAgriTool</title><link rel="stylesheet" href="/assets/styles.css"></head>
-<body><script src="/assets/app.js"></script><main class="page">
-<section class="panel" style="padding:22px 24px;margin-top:8px"><div class="section-head"><div><h2 style="margin:0">Field operations</h2><div class="muted">Track crop status, field conditions and uploaded media</div></div><button class="button secondary" type="button" onclick="location.href='/dashboard'">Back to dashboard</button></div></section>
-<section class="metric-grid" style="margin-top:20px"><article class="panel metric-card"><span class="metric-icon">🌾</span><small>Active fields</small><strong id="activeFieldsCount">0</strong><span class="trend">Local records</span></article><article class="panel metric-card"><span class="metric-icon">💧</span><small>Avg. irrigation</small><strong id="irrigationValue">—</strong><span class="trend">Live ET₀ proxy</span></article><article class="panel metric-card"><span class="metric-icon">🧪</span><small>Soil health</small><strong>70/100</strong><span class="trend">Baseline</span></article><article class="panel metric-card"><span class="metric-icon">📸</span><small>Uploads</small><strong id="mediaCount">0</strong><span class="trend">Local media</span></article></section>
-<section class="panel" style="margin-top:14px;padding:14px 18px"><p id="dataRefreshStatus" class="refresh-status" style="margin:0" aria-live="polite"><span class="dot"></span>Live metrics not refreshed</p><div id="dataRefreshBanner" class="refresh-banner" role="status" hidden></div></section>
-<section class="content-grid"><article class="panel section-card"><div class="section-head"><div><h3>Field list</h3></div><button class="button" type="button" id="refreshBtn">Refresh live metrics</button></div><div id="fieldsGrid" class="grid"></div></article><article class="panel section-card"><div class="section-head"><div><h3>Add field</h3></div></div><div class="form-grid"><input id="fieldName" type="text" placeholder="Field name"><input id="fieldCrop" type="text" placeholder="Crop type"><select id="fieldHealth"><option value="good">Good health</option><option value="fair">Fair health</option><option value="poor">Poor health</option></select><input id="fieldYield" type="text" placeholder="Expected yield (t/ha)"><input id="mediaUpload" type="file" multiple accept="image/*,video/*"><div id="mediaPreview" class="grid" style="gap:8px"></div><button class="button" type="button" id="saveFieldBtn">Save field</button></div></article></section>
-</main><script>
-const fieldsGrid=document.getElementById('fieldsGrid'),mediaPreview=document.getElementById('mediaPreview'); let uploadedMedia=[];
-function defaultFields(){return [{name:'North Plot 01',crop:'Wheat',health:'good',yield:'6.4 t/ha',lastUpdated:new Date().toISOString(),media:[]},{name:'South Plot 02',crop:'Maize',health:'fair',yield:'5.2 t/ha',lastUpdated:new Date(Date.now()-3600000).toISOString(),media:[]},{name:'Irrigation Basin',crop:'Clover',health:'good',yield:'4.8 t/ha',lastUpdated:new Date(Date.now()-86400000).toISOString(),media:[]}]}
-function getFields(){try{const stored=JSON.parse(localStorage.getItem('fieldData')||'null');if(stored&&Array.isArray(stored.fields))return stored.fields}catch(e){}const fallback={fields:defaultFields()};localStorage.setItem('fieldData',JSON.stringify(fallback));return fallback.fields} function saveFields(fields){localStorage.setItem('fieldData',JSON.stringify({fields}))}
-function timeAgo(value){const diff=Math.max(1,Math.floor((Date.now()-new Date(value).getTime())/60000));return diff<60?`${diff} min ago`:diff<1440?`${Math.floor(diff/60)} hr ago`:`${Math.floor(diff/1440)} day ago`}
-function renderFields(){const fields=getFields();document.getElementById('activeFieldsCount').textContent=fields.length;document.getElementById('mediaCount').textContent=fields.reduce((n,f)=>n+(f.media||[]).length,0);fieldsGrid.innerHTML=fields.length?fields.map(field=>`<article class="panel" style="padding:16px;min-height:200px;position:relative"><div class="risk-dot ${field.health==='poor'?'critical':''}" style="position:absolute;right:16px;top:16px;background:${field.health==='good'?'#1a9f65':field.health==='fair'?'#f4b942':'#d95846'}"></div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><div style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#126b4a,#33a96d);color:#fff">🌾</div><div><strong style="display:block;color:var(--navy)">${field.name}</strong><span class="muted">${field.crop}</span></div></div><div style="display:grid;gap:6px;margin-top:16px;font-size:.9rem;color:var(--muted)"><div>Yield: <strong style="color:var(--navy)">${field.yield||'N/A'}</strong></div><div>Health: <strong style="color:var(--navy)">${field.health}</strong></div><div>User updated: <strong style="color:var(--navy)">${timeAgo(field.lastUpdated)}</strong></div></div></article>`).join(''):'<div class="empty">No fields yet. Add your first field.</div>'}
-async function refreshLiveMetrics(){const status=document.getElementById('dataRefreshStatus'),banner=document.getElementById('dataRefreshBanner'),button=document.getElementById('refreshBtn');button.innerHTML='<span class="spinner"></span> Refreshing';button.disabled=true;status.className='refresh-status';status.innerHTML='<span class="spinner"></span> Loading live metrics';banner.hidden=true;const result=await EOAgri.fetchJSON('/water_data?region=nile_delta');button.disabled=false;button.textContent='Refresh live metrics';if(!result.ok||!result.data){status.className='refresh-status error';status.innerHTML='<span class="dot"></span>Live metrics failed';banner.hidden=false;banner.className='refresh-banner error';banner.textContent=`${result.error||'Live irrigation data is unavailable.'} Field records were not changed.`;return}const d=result.data;document.getElementById('irrigationValue').textContent=d.et0_total_mm==null?'—':`${Number(d.et0_total_mm).toFixed(1)} mm`;const age=EOAgri.formatRefreshedAt(result.fetched_at);status.className=`refresh-status${result.stale?' stale':''}`;status.innerHTML=`<span class="dot"></span>Data refreshed ${age}`;if(result.stale){banner.hidden=false;banner.className='refresh-banner stale';banner.textContent=`Showing last successful irrigation data from ${age}. Field records remain local.`}}
-document.getElementById('saveFieldBtn').addEventListener('click',()=>{const name=document.getElementById('fieldName').value.trim(),crop=document.getElementById('fieldCrop').value.trim(),health=document.getElementById('fieldHealth').value,yieldValue=document.getElementById('fieldYield').value.trim()||'N/A';if(!name||!crop){alert('Please complete the field name and crop type.');return}const fields=getFields();fields.push({name,crop,health,yield:yieldValue,lastUpdated:new Date().toISOString(),media:uploadedMedia});saveFields(fields);uploadedMedia=[];mediaPreview.innerHTML='';document.getElementById('fieldName').value='';document.getElementById('fieldCrop').value='';document.getElementById('fieldYield').value='';renderFields()});
-document.getElementById('mediaUpload').addEventListener('change',event=>Array.from(event.target.files||[]).forEach(file=>{const reader=new FileReader();reader.onload=e=>{const item=document.createElement('div');item.style.cssText='border:1px solid var(--line);border-radius:12px;padding:8px';item.innerHTML=file.type.startsWith('image/')?`<img src="${e.target.result}" style="width:100%;height:90px;object-fit:cover;border-radius:10px">`:`<video src="${e.target.result}" controls style="width:100%;height:90px;object-fit:cover;border-radius:10px"></video>`;mediaPreview.appendChild(item);uploadedMedia.push({type:file.type,url:e.target.result})};reader.readAsDataURL(file)}));
-document.getElementById('refreshBtn').addEventListener('click',refreshLiveMetrics);renderFields();refreshLiveMetrics();
-</script></body></html>
-
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fields | EOAgriTool</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <script src="assets/app.js" defer></script>
+  <style>
+    .field-page .page-heading{padding:22px 24px;margin-top:8px}.field-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.field-card{padding:18px;min-height:180px}.field-card h3{margin:0;color:var(--navy)}.field-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.field-health{padding:5px 9px;border-radius:999px;background:var(--mint);color:var(--green);font-size:.72rem;font-weight:800;text-transform:capitalize}.field-health.fair{background:#fff5da;color:#7a5b00}.field-health.poor{background:#fdecea;color:var(--red)}.field-details{display:grid;gap:5px;margin-top:16px;font-size:.88rem}.field-details span{color:var(--muted)}.field-details strong{color:var(--navy)}.field-form{display:grid;gap:12px}.field-form label{display:grid;gap:6px;color:var(--muted);font-size:.82rem;font-weight:700}.field-form input,.field-form select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}.media-preview{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:8px}.media-preview img,.media-preview video{width:100%;height:84px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}@media(max-width:700px){.field-page .page-heading{padding:18px}.field-page .content-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="page field-page">
+    <section class="panel page-heading">
+      <div class="section-head"><div><h1 style="margin:0">Field operations</h1><p class="muted">Track locally stored crop status, field conditions, and uploaded media.</p></div><a class="button secondary" href="dashboard.html">Back to dashboard</a></div>
+    </section>
+    <section class="metric-grid" aria-live="polite">
+      <article class="panel metric-card"><span class="metric-icon">🌾</span><small>Active fields</small><strong id="activeFieldsCount">0</strong><span class="trend">Local records</span></article>
+      <article class="panel metric-card"><span class="metric-icon">💧</span><small>7-day reference ET₀</small><strong id="irrigationValue">—</strong><span class="trend">Regional live proxy</span></article>
+      <article class="panel metric-card"><span class="metric-icon">🩺</span><small>Fields to review</small><strong id="reviewCount">0</strong><span class="trend">Records marked fair or poor</span></article>
+      <article class="panel metric-card"><span class="metric-icon">📷</span><small>Uploaded media</small><strong id="mediaCount">0</strong><span class="trend">Saved with field records</span></article>
+    </section>
+    <section class="panel" style="margin-top:14px;padding:14px 18px">
+      <p id="dataRefreshStatus" class="refresh-status" style="margin:0" aria-live="polite"><span class="dot"></span>Live metrics not refreshed</p>
+      <div id="dataRefreshBanner" class="refresh-banner" role="status" hidden></div>
+    </section>
+    <section class="content-grid">
+      <article class="panel section-card">
+        <div class="section-head"><div><h2 style="margin:0">Field list</h2><p class="muted">Health and crop details from this browser</p></div><button class="button secondary" type="button" id="refreshBtn">Refresh live metrics</button></div>
+        <div id="fieldsGrid" class="field-card-grid"></div>
+      </article>
+      <article class="panel section-card">
+        <div class="section-head"><div><h2 style="margin:0">Add field</h2><p class="muted">Field records are saved locally in this browser.</p></div></div>
+        <form id="fieldForm" class="field-form">
+          <label for="fieldName">Field name<input id="fieldName" name="name" type="text" maxlength="100" placeholder="e.g. North Plot 01" required></label>
+          <label for="fieldCrop">Crop<input id="fieldCrop" name="crop" type="text" maxlength="80" placeholder="e.g. Wheat" required></label>
+          <label for="fieldHealth">Recorded health<select id="fieldHealth"><option value="good">Good</option><option value="fair">Fair</option><option value="poor">Poor</option></select></label>
+          <label for="fieldYield">Expected yield<input id="fieldYield" name="yield" type="text" maxlength="40" placeholder="e.g. 6.4 t/ha"></label>
+          <label for="mediaUpload">Photos or videos<input id="mediaUpload" type="file" accept="image/*,video/*" multiple></label>
+          <div id="mediaPreview" class="media-preview" aria-label="Selected media preview"></div>
+          <button class="button" type="submit">Save field</button>
+        </form>
+      </article>
+    </section>
+  </main>
+  <script>
+    (() => {
+      const $ = id => document.getElementById(id);
+      let uploadedMedia = [];
+      function timeAgo(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return 'date unavailable';
+        const minutes = Math.max(0, Math.floor((Date.now() - date.getTime()) / 60000));
+        return minutes < 60 ? `${minutes} min ago` : minutes < 1440 ? `${Math.floor(minutes / 60)} hr ago` : `${Math.floor(minutes / 1440)} day ago`;
+      }
+      function renderFields() {
+        const fields = EOAgri.fields();
+        $('activeFieldsCount').textContent = fields.length;
+        $('reviewCount').textContent = fields.filter(field => ['fair', 'poor'].includes(String(field.health || '').toLowerCase())).length;
+        $('mediaCount').textContent = fields.reduce((total, field) => total + (Array.isArray(field.media) ? field.media.length : 0), 0);
+        const grid = $('fieldsGrid'); grid.replaceChildren();
+        if (!fields.length) { const empty = document.createElement('p'); empty.className = 'empty'; empty.textContent = 'No field records yet. Add your first field to begin monitoring.'; grid.append(empty); return; }
+        fields.forEach((field, index) => {
+          const card = document.createElement('article'); card.className = 'panel field-card';
+          const head = document.createElement('div'); head.className = 'field-card-head';
+          const titleWrap = document.createElement('div'); const title = document.createElement('h3'); title.textContent = field.name || `Field ${index + 1}`; const crop = document.createElement('span'); crop.className = 'muted'; crop.textContent = field.crop || 'Crop not specified'; titleWrap.append(title, crop);
+          const health = document.createElement('span'); health.className = `field-health ${String(field.health || '').toLowerCase()}`; health.textContent = field.health || 'Not recorded'; head.append(titleWrap, health);
+          const details = document.createElement('div'); details.className = 'field-details';
+          [[`Expected yield: ${field.yield || 'Not recorded'}`], [`Updated: ${timeAgo(field.lastUpdated)}`], [`Media: ${(field.media || []).length}`]].forEach(([value]) => { const line = document.createElement('span'); line.textContent = value; details.append(line); });
+          card.append(head, details); grid.append(card);
+        });
+      }
+      $('mediaUpload').addEventListener('change', event => {
+        uploadedMedia = []; $('mediaPreview').replaceChildren();
+        Array.from(event.target.files || []).forEach(file => {
+          if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) return;
+          const reader = new FileReader(); reader.onload = () => {
+            uploadedMedia.push({type:file.type, url:reader.result});
+            const preview = file.type.startsWith('image/') ? document.createElement('img') : document.createElement('video');
+            preview.src = reader.result; if (preview.tagName === 'VIDEO') preview.controls = true;
+            preview.alt = file.name; $('mediaPreview').append(preview);
+          }; reader.readAsDataURL(file);
+        });
+      });
+      $('fieldForm').addEventListener('submit', event => {
+        event.preventDefault();
+        const fields = EOAgri.fields();
+        fields.push({name:$('fieldName').value.trim(), crop:$('fieldCrop').value.trim(), health:$('fieldHealth').value, yield:$('fieldYield').value.trim() || 'N/A', lastUpdated:new Date().toISOString(), media:uploadedMedia});
+        try { EOAgri.saveFields(fields); }
+        catch { EOAgri.toast('Could not save this field. Browser storage may be full; try removing large media files.'); return; }
+        event.currentTarget.reset(); uploadedMedia = []; $('mediaPreview').replaceChildren(); renderFields(); EOAgri.toast('Field saved in this browser');
+      });
+      async function refreshLiveMetrics() {
+        const status = $('dataRefreshStatus'), banner = $('dataRefreshBanner'), button = $('refreshBtn');
+        button.disabled = true; button.innerHTML = '<span class="spinner"></span> Refreshing'; status.className = 'refresh-status'; status.innerHTML = '<span class="spinner"></span> Loading live water metric'; banner.hidden = true;
+        const region = EOAgri.read('eoagri-region', 'nile_delta');
+        const result = await EOAgri.fetchJSON(`/water_data?region=${encodeURIComponent(region)}`);
+        button.disabled = false; button.textContent = 'Refresh live metrics';
+        if (!result.ok || !result.data) { status.className = 'refresh-status error'; status.textContent = 'Live metric unavailable'; banner.hidden = false; banner.className = 'refresh-banner error'; banner.textContent = `${result.error || 'Live irrigation data is unavailable.'} Field records were not changed.`; return; }
+        const et0 = result.data.et0_total_mm; $('irrigationValue').textContent = et0 == null ? '—' : `${Number(et0).toFixed(1)} mm`;
+        const age = EOAgri.formatRefreshedAt(result.fetched_at); status.className = `refresh-status${result.stale ? ' stale' : ''}`; status.textContent = `Live water metric updated ${age}`;
+        if (result.stale) { banner.hidden = false; banner.className = 'refresh-banner stale'; banner.textContent = `Showing cached water data from ${age}. This regional ET₀ value is a proxy, not a field-specific irrigation recommendation.`; }
+      }
+      $('refreshBtn').addEventListener('click', refreshLiveMetrics);
+      window.addEventListener('eoagri:fields', renderFields);
+      renderFields(); refreshLiveMetrics();
+    })();
+  </script>
+</body>
+</html>

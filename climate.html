@@ -1,127 +1,47 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>EOAgriTool — Climate</title>
-    <link rel="stylesheet" href="/assets/styles.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-  </head>
-  <body>
-    <main class="page">
-      <section class="panel" style="padding:22px 24px">
-        <div class="section-head">
-          <div>
-            <h1 style="margin:0">Climate outlook</h1>
-            <div class="muted">Live Open-Meteo forecast data for transparent climate-risk monitoring.</div>
-          </div>
-          <span class="live-dot">Live forecast</span>
-        </div>
-      </section>
-
-      <section class="panel" style="margin-top:20px;padding:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center" id="climateControls">
-        <label class="muted" for="regionSelect">Region</label>
-        <select id="regionSelect" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff">
-          <option value="nile_delta">Nile Delta</option>
-          <option value="sahel">Sahel</option>
-          <option value="mediterranean">Mediterranean</option>
-          <option value="southeast_asia">SE Asia</option>
-        </select>
-        <label class="muted" for="horizonSelect">Horizon</label>
-        <select id="horizonSelect" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff">
-          <option value="72h" selected>72h</option>
-          <option value="7d">7d</option>
-          <option value="30d">30d</option>
-        </select>
-        <button class="button" type="button" id="refreshClimateBtn">Refresh</button>
-        <span class="refresh-status" id="refreshStatus" aria-live="polite"><span class="dot"></span>Not refreshed</span>
-        <div class="refresh-banner" id="refreshBanner" role="status" hidden></div>
-      </section>
-
-      <section class="metric-grid" style="margin-top:20px" aria-live="polite">
-        <article class="panel metric-card"><span class="metric-icon">🌡️</span><small>Temperature</small><strong id="tempValue">—</strong><span class="trend">Current forecast</span></article>
-        <article class="panel metric-card"><span class="metric-icon">🌧️</span><small>Rainfall</small><strong id="rainValue">—</strong><span class="trend">Current forecast</span></article>
-        <article class="panel metric-card"><span class="metric-icon">💨</span><small>Wind</small><strong id="windValue">—</strong><span class="trend">Current forecast</span></article>
-        <article class="panel metric-card"><span class="metric-icon">⚠️</span><small>Risk</small><strong id="riskValue">—</strong><span class="trend">Derived from forecast</span></article>
-      </section>
-
-      <section class="content-grid">
-        <article class="panel section-card"><div class="section-head"><div><h3>Forecast trend</h3></div></div><div class="chart-wrap" style="height:320px"><canvas id="forecastChart"></canvas></div></article>
-        <article class="panel section-card"><div class="section-head"><div><h3>Climate signals</h3></div></div><div class="risk-list" id="climateSignals"></div></article>
-      </section>
-    </main>
-
-    <script src="/assets/app.js"></script>
-    <script>
-      let climateChart = null;
-      const $ = (id) => document.getElementById(id);
-      const controls = $('climateControls');
-
-      function setBanner(message, kind = '') {
-        const banner = $('refreshBanner');
-        banner.hidden = !message;
-        banner.className = `refresh-banner ${kind}`.trim();
-        banner.textContent = message;
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Climate | EOAgriTool</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="assets/app.js" defer></script>
+  <style>.climate-header{padding:22px 24px}.climate-controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:18px;padding:16px}.climate-controls select{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}.climate-chart{height:320px;position:relative}@media(max-width:600px){.climate-header{padding:18px}.climate-controls{align-items:stretch}.climate-controls select,.climate-controls button{flex:1}}</style>
+</head>
+<body>
+  <main class="page">
+    <section class="panel climate-header"><div class="section-head"><div><h1 style="margin:0">Climate outlook</h1><p class="muted">Live Open-Meteo forecast data for regional climate-risk monitoring.</p></div><span class="live-dot">Live forecast</span></div></section>
+    <section class="panel climate-controls" id="climateControls">
+      <label class="muted" for="regionSelect">Region</label><select id="regionSelect"><option value="nile_delta">Nile Delta</option><option value="sahel">Sahel</option><option value="mediterranean">Mediterranean</option><option value="southeast_asia">SE Asia</option></select>
+      <label class="muted" for="horizonSelect">Horizon</label><select id="horizonSelect"><option value="72h">72 hours</option><option value="7d">7 days</option><option value="30d">30 days</option></select>
+      <button class="button" type="button" id="refreshClimateBtn">Refresh</button><span class="refresh-status" id="refreshStatus" aria-live="polite"><span class="dot"></span>Not refreshed</span><div class="refresh-banner" id="refreshBanner" role="status" hidden></div>
+    </section>
+    <section class="metric-grid" aria-live="polite">
+      <article class="panel metric-card"><span class="metric-icon">🌡️</span><small>Temperature</small><strong id="tempValue">—</strong><span class="trend">Nearest forecast hour</span></article>
+      <article class="panel metric-card"><span class="metric-icon">🌧️</span><small>Rainfall</small><strong id="rainValue">—</strong><span class="trend">Nearest forecast hour</span></article>
+      <article class="panel metric-card"><span class="metric-icon">💨</span><small>Wind</small><strong id="windValue">—</strong><span class="trend">Nearest forecast hour</span></article>
+      <article class="panel metric-card"><span class="metric-icon">⚠️</span><small>Forecast risk</small><strong id="riskValue">—</strong><span class="trend">Derived from available values</span></article>
+    </section>
+    <section class="content-grid">
+      <article class="panel section-card"><div class="section-head"><div><h2 style="margin:0">Forecast trend</h2><p class="muted">Hourly temperature and precipitation.</p></div></div><div class="climate-chart"><canvas id="forecastChart"></canvas></div></article>
+      <article class="panel section-card"><div class="section-head"><div><h2 style="margin:0">Climate signals</h2><p class="muted">Based on the returned forecast, not field observations.</p></div></div><div class="risk-list" id="climateSignals"></div></article>
+    </section>
+  </main>
+  <script>
+    (() => {
+      let climateChart=null,requestId=0;const $=id=>document.getElementById(id);const controls=$('climateControls');
+      function setBanner(message,kind=''){const node=$('refreshBanner');node.hidden=!message;node.className=`refresh-banner ${kind}`.trim();node.textContent=message;}
+      function renderSignals(data){const current=data.current||{};const temp=current.temperature==null?null:Number(current.temperature),rain=current.rainfall==null?null:Number(current.rainfall),wind=current.wind==null?null:Number(current.wind);const signals=[];
+        if(temp!==null&&Number.isFinite(temp))signals.push({title:temp>=35?'High-temperature watch':'Temperature conditions',description:temp>=35?`The nearest forecast value is ${temp.toFixed(1)}°C, at or above the 35°C monitoring threshold.`:`The nearest forecast value is ${temp.toFixed(1)}°C.` ,critical:temp>=35});
+        if(rain!==null&&Number.isFinite(rain))signals.push({title:rain<=0.5?'Low immediate rainfall':'Rainfall in forecast',description:`The nearest forecast precipitation value is ${rain.toFixed(1)} mm. This is not a forecast-period total.`,critical:rain<=0.5});
+        if(wind!==null&&Number.isFinite(wind))signals.push({title:wind>=10?'High-wind watch':'Wind conditions',description:`The nearest forecast wind value is ${wind.toFixed(1)} m/s.`,critical:wind>=10});
+        const root=$('climateSignals');root.replaceChildren();signals.forEach(item=>{const row=document.createElement('div');row.className='risk-item';const dot=document.createElement('i');dot.className=`risk-dot${item.critical?' critical':''}`;const body=document.createElement('div');const title=document.createElement('strong');title.textContent=item.title;const description=document.createElement('span');description.textContent=item.description;body.append(title,description);row.append(dot,body);root.append(row);});
       }
-
-      function renderSignals(data) {
-        const current = data.current || {};
-        const rain = Number(current.rainfall);
-        const temp = Number(current.temperature);
-        const wind = Number(current.wind);
-        const signals = [];
-        signals.push({ title: temp >= 35 ? 'Heat stress risk' : 'Temperature conditions', description: temp >= 35 ? 'Forecast temperature is above the 35°C heat-stress threshold.' : 'Temperature is below the heat-stress threshold.' , critical: temp >= 35 });
-        signals.push({ title: rain <= 0.5 ? 'Moisture stress' : 'Rainfall available', description: rain <= 0.5 ? 'Little or no rainfall is forecast for the current period.' : `${rain.toFixed(1)} mm of rainfall is forecast in the current period.`, critical: rain <= 0.5 });
-        signals.push({ title: wind >= 10 ? 'Wind turbulence' : 'Wind conditions', description: wind >= 10 ? 'High wind may reduce irrigation efficiency.' : 'Wind is within the normal monitoring range.', critical: wind >= 10 });
-        $('climateSignals').innerHTML = signals.map(item => `<div class="risk-item"><i class="risk-dot ${item.critical ? 'critical' : ''}"></i><div><strong>${item.title}</strong><span>${item.description}</span></div></div>`).join('');
-      }
-
-      function renderChart(data) {
-        const labels = (data.timestamps || []).map((value, index) => {
-          const date = new Date(value);
-          return Number.isNaN(date.getTime()) ? `H+${index + 1}` : date.toLocaleString([], {month:'short', day:'numeric', hour:'2-digit'});
-        });
-        climateChart?.destroy();
-        climateChart = new Chart($('forecastChart'), { type:'line', data:{ labels, datasets:[
-          {label:'Temperature (°C)', data:data.temperature || [], borderColor:'#126b4a', backgroundColor:'rgba(18,107,74,.08)', fill:true, tension:.35, yAxisID:'y'},
-          {label:'Rainfall (mm)', data:data.rainfall || [], borderColor:'#2f7eea', backgroundColor:'rgba(47,126,234,.06)', fill:true, tension:.35, yAxisID:'y1'}
-        ]}, options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false}, plugins:{legend:{position:'bottom'}}, scales:{y:{title:{display:true,text:'Temperature °C'},grid:{color:'rgba(19,43,61,.06)'}},y1:{position:'right',title:{display:true,text:'Rainfall mm'},grid:{drawOnChartArea:false}}}} });
-      }
-
-      async function refreshClimate() {
-        const region = $('regionSelect').value;
-        const horizon = $('horizonSelect').value;
-        controls.setAttribute('aria-busy', 'true');
-        $('refreshClimateBtn').innerHTML = '<span class="spinner"></span> Refreshing';
-        $('refreshStatus').className = 'refresh-status';
-        $('refreshStatus').innerHTML = '<span class="spinner"></span> Loading live data';
-        setBanner('');
-        const result = await EOAgri.fetchJSON(`/climate_data?region=${encodeURIComponent(region)}&horizon=${encodeURIComponent(horizon)}`);
-        controls.removeAttribute('aria-busy');
-        $('refreshClimateBtn').textContent = 'Refresh';
-        if (!result.ok || !result.data) {
-          $('refreshStatus').className = 'refresh-status error';
-          $('refreshStatus').innerHTML = '<span class="dot"></span>Refresh failed';
-          setBanner(`${result.error || 'Live climate data is unavailable.'} Existing chart data was preserved.`, 'error');
-          return;
-        }
-        const current = result.data.current || {};
-        $('tempValue').textContent = current.temperature == null ? '—' : `${Number(current.temperature).toFixed(1)}°C`;
-        $('rainValue').textContent = current.rainfall == null ? '—' : `${Number(current.rainfall).toFixed(1)} mm`;
-        $('windValue').textContent = current.wind == null ? '—' : `${Number(current.wind).toFixed(1)} m/s`;
-        const risk = Number(current.temperature) >= 35 || Number(current.rainfall) <= .5 ? 'Elevated' : Number(current.temperature) >= 30 ? 'Moderate' : 'Low';
-        $('riskValue').textContent = risk;
-        renderChart(result.data); renderSignals(result.data);
-        const age = EOAgri.formatRefreshedAt(result.fetched_at);
-        $('refreshStatus').className = `refresh-status${result.stale ? ' stale' : ''}`;
-        $('refreshStatus').innerHTML = `<span class="dot"></span>Updated ${age}`;
-        if (result.stale) setBanner(`Live refresh unavailable. Showing the last successful reading from ${age}.`, 'stale');
-      }
-      $('regionSelect').addEventListener('change', refreshClimate);
-      $('horizonSelect').addEventListener('change', refreshClimate);
-      $('refreshClimateBtn').addEventListener('click', refreshClimate);
-      refreshClimate();
-    </script>
-  </body>
+      function renderChart(data){if(!window.Chart)return;const timestamps=Array.isArray(data.timestamps)?data.timestamps:[];const labels=timestamps.map((value,index)=>{const date=new Date(value);return Number.isNaN(date.getTime())?`H+${index+1}`:date.toLocaleString([],{month:'short',day:'numeric',hour:'2-digit'});});climateChart?.destroy();climateChart=new Chart($('forecastChart'),{type:'line',data:{labels,datasets:[{label:'Temperature (°C)',data:data.temperature||[],borderColor:'#126b4a',backgroundColor:'rgba(18,107,74,.08)',fill:true,tension:.35,yAxisID:'y'},{label:'Rainfall (mm)',data:data.rainfall||[],borderColor:'#2f7eea',backgroundColor:'rgba(47,126,234,.06)',fill:true,tension:.35,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom'}},scales:{y:{title:{display:true,text:'Temperature °C'},grid:{color:'rgba(19,43,61,.06)'}},y1:{position:'right',title:{display:true,text:'Rainfall mm'},grid:{drawOnChartArea:false}}}}});}
+      async function refreshClimate(){const id=++requestId,region=$('regionSelect').value,horizon=$('horizonSelect').value;EOAgri.write('eoagri-region',region);controls.setAttribute('aria-busy','true');$('refreshClimateBtn').innerHTML='<span class="spinner"></span> Refreshing';$('refreshStatus').className='refresh-status';$('refreshStatus').innerHTML='<span class="spinner"></span> Loading live data';setBanner('');const result=await EOAgri.fetchJSON(`/climate_data?region=${encodeURIComponent(region)}&horizon=${encodeURIComponent(horizon)}`);if(id!==requestId)return;controls.removeAttribute('aria-busy');$('refreshClimateBtn').textContent='Refresh';if(!result.ok||!result.data){$('refreshStatus').className='refresh-status error';$('refreshStatus').textContent='Refresh failed';setBanner(`${result.error||'Live climate data is unavailable.'} Existing chart data was preserved.`,'error');return;}const data=result.data,current=data.current||{};const formatted=(value,unit)=>value==null?'—':`${Number(value).toFixed(1)}${unit}`;$('tempValue').textContent=formatted(current.temperature,'°C');$('rainValue').textContent=formatted(current.rainfall,' mm');$('windValue').textContent=formatted(current.wind,' m/s');const temp=current.temperature==null?null:Number(current.temperature),rain=current.rainfall==null?null:Number(current.rainfall);$('riskValue').textContent=temp===null&&rain===null?'—':(temp!==null&&temp>=35)||(rain!==null&&rain<=.5)?'Elevated':temp!==null&&temp>=30?'Moderate':'Low';renderChart(data);renderSignals(data);const age=EOAgri.formatRefreshedAt(result.fetched_at);$('refreshStatus').className=`refresh-status${result.stale?' stale':''}`;$('refreshStatus').textContent=`Updated ${age}${result.stale?' · stale':''}`;if(result.stale)setBanner(`Showing cached forecast data from ${age}. Check the reading time before acting.`,'stale');}
+      $('regionSelect').value=EOAgri.read('eoagri-region','nile_delta');$('regionSelect').addEventListener('change',refreshClimate);$('horizonSelect').addEventListener('change',refreshClimate);$('refreshClimateBtn').addEventListener('click',refreshClimate);refreshClimate();
+    })();
+  </script>
+</body>
 </html>
-

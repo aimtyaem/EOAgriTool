@@ -1,35 +1,49 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Water | EOAgriTool</title>
-    <link rel="stylesheet" href="/assets/styles.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-  </head>
-  <body>
-    <main class="page">
-      <section class="panel" style="padding:22px 24px"><div class="section-head"><div><h2 style="margin:0;font-size:2rem">Water &amp; irrigation</h2><div class="muted">Live soil moisture, evapotranspiration and irrigation-deficit monitoring.</div></div><span class="live-dot">Live forecast</span></div></section>
-      <section class="panel" id="waterControls" style="margin-top:20px;padding:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-        <label class="muted" for="regionSelect">Region</label><select id="regionSelect" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff"><option value="nile_delta">Nile Delta</option><option value="sahel">Sahel</option><option value="mediterranean">Mediterranean</option><option value="southeast_asia">SE Asia</option></select>
-        <button class="button" type="button" id="refreshWaterBtn">Refresh</button><span class="refresh-status" id="refreshStatus" aria-live="polite"><span class="dot"></span>Not refreshed</span><div class="refresh-banner" id="refreshBanner" role="status" hidden></div>
-      </section>
-      <section class="metric-grid" style="margin-top:20px" aria-live="polite">
-        <article class="panel metric-card"><span class="metric-icon">💧</span><small>Soil moisture</small><strong id="soilValue">—</strong><span class="trend">7-day average</span></article>
-        <article class="panel metric-card"><span class="metric-icon">🚿</span><small>Irrigation deficit</small><strong id="deficitValue">—</strong><span class="trend">ET₀ less rainfall</span></article>
-        <article class="panel metric-card"><span class="metric-icon">☀️</span><small>Evapotranspiration</small><strong id="et0Value">—</strong><span class="trend">7-day total</span></article>
-        <article class="panel metric-card"><span class="metric-icon">⚠️</span><small>Water risk</small><strong id="riskValue">—</strong><span class="trend">Derived from live data</span></article>
-      </section>
-      <section class="content-grid"><article class="panel section-card"><div class="section-head"><div><h3>Water balance trend</h3></div></div><div class="chart-wrap" style="height:320px"><canvas id="waterChart"></canvas></div></article><article class="panel section-card"><div class="section-head"><div><h3>Water signals</h3></div></div><div class="risk-list" id="waterSignals"></div></article></section>
-    </main>
-    <script src="/assets/app.js"></script>
-    <script>
-      let waterChart = null; const $ = id => document.getElementById(id); const controls = $('waterControls');
-      function banner(message, kind='') { const node=$('refreshBanner'); node.hidden=!message; node.className=`refresh-banner ${kind}`.trim(); node.textContent=message; }
-      function renderSignals(data) { const deficit=Number(data.irrigation_deficit_mm), soil=Number(data.soil_moisture_avg), rain=Number(data.rain_total_mm); const items=[{title:deficit>30?'High irrigation deficit':'Irrigation balance',description:deficit>30?`${deficit.toFixed(1)} mm of additional irrigation may be needed.`:'Forecast rainfall offsets most reference evapotranspiration.',critical:deficit>30},{title:soil<.2?'Low soil moisture':'Soil moisture baseline',description:soil<.2?'Average soil moisture is below the monitoring threshold.':'Average soil moisture is within the monitoring range.',critical:soil<.2},{title:rain<5?'Limited rainfall':'Rainfall contribution',description:rain<5?'Only limited rainfall is forecast for this period.':`${rain.toFixed(1)} mm of rainfall is included in the balance.`,critical:rain<5}]; $('waterSignals').innerHTML=items.map(item=>`<div class="risk-item"><i class="risk-dot ${item.critical?'critical':''}"></i><div><strong>${item.title}</strong><span>${item.description}</span></div></div>`).join(''); }
-      function renderChart(series) { const count=Math.max(series.soil_moisture?.length||0,series.et0?.length||0); const labels=Array.from({length:count},(_,i)=>`H+${i+1}`); waterChart?.destroy(); waterChart=new Chart($('waterChart'),{type:'line',data:{labels,datasets:[{label:'Soil moisture',data:series.soil_moisture||[],borderColor:'#126b4a',backgroundColor:'rgba(18,107,74,.08)',fill:true,tension:.35,yAxisID:'y'},{label:'ET₀ (mm)',data:series.et0||[],borderColor:'#f4b942',backgroundColor:'rgba(244,185,66,.08)',fill:true,tension:.35,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom'}},scales:{y:{title:{display:true,text:'Soil moisture'}},y1:{position:'right',title:{display:true,text:'ET₀ mm'},grid:{drawOnChartArea:false}}}}}); }
-      async function refreshWater(){ controls.setAttribute('aria-busy','true'); $('refreshWaterBtn').innerHTML='<span class="spinner"></span> Refreshing'; $('refreshStatus').className='refresh-status'; $('refreshStatus').innerHTML='<span class="spinner"></span> Loading live data'; banner(''); const result=await EOAgri.fetchJSON(`/water_data?region=${encodeURIComponent($('regionSelect').value)}`); controls.removeAttribute('aria-busy'); $('refreshWaterBtn').textContent='Refresh'; if(!result.ok||!result.data){$('refreshStatus').className='refresh-status error';$('refreshStatus').innerHTML='<span class="dot"></span>Refresh failed';banner(`${result.error||'Live water data is unavailable.'} Existing chart data was preserved.`,'error');return;} const d=result.data; $('soilValue').textContent=d.soil_moisture_avg==null?'—':`${(Number(d.soil_moisture_avg)*100).toFixed(1)}%`; $('deficitValue').textContent=d.irrigation_deficit_mm==null?'—':`${Number(d.irrigation_deficit_mm).toFixed(1)} mm`; $('et0Value').textContent=d.et0_total_mm==null?'—':`${Number(d.et0_total_mm).toFixed(1)} mm`; $('riskValue').textContent=Number(d.irrigation_deficit_mm)>30||Number(d.soil_moisture_avg)<.2?'Elevated':Number(d.irrigation_deficit_mm)>15?'Moderate':'Low'; renderChart(d.series||{}); renderSignals(d); const age=EOAgri.formatRefreshedAt(result.fetched_at); $('refreshStatus').className=`refresh-status${result.stale?' stale':''}`; $('refreshStatus').innerHTML=`<span class="dot"></span>Updated ${age}`; if(result.stale) banner(`Live refresh unavailable. Showing the last successful reading from ${age}.`,'stale'); }
-      $('regionSelect').addEventListener('change',refreshWater); $('refreshWaterBtn').addEventListener('click',refreshWater); refreshWater();
-    </script>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Water | EOAgriTool</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="assets/app.js" defer></script>
+  <style>.water-controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:18px;padding:16px}.water-controls select{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}.water-header{padding:22px 24px}.water-chart{height:320px;position:relative}.water-signals{min-height:100px}@media(max-width:600px){.water-header{padding:18px}.water-controls{align-items:stretch}.water-controls select,.water-controls button{flex:1}}</style>
+</head>
+<body>
+  <main class="page">
+    <section class="panel water-header"><div class="section-head"><div><h1 style="margin:0">Water &amp; irrigation</h1><p class="muted">Regional forecast-based soil moisture and water-balance monitoring. Values are indicators, not field-specific prescriptions.</p></div><span class="live-dot">Live data</span></div></section>
+    <section class="panel water-controls" id="waterControls">
+      <label class="muted" for="regionSelect">Region</label>
+      <select id="regionSelect"><option value="nile_delta">Nile Delta</option><option value="sahel">Sahel</option><option value="mediterranean">Mediterranean</option><option value="southeast_asia">SE Asia</option></select>
+      <button class="button" type="button" id="refreshWaterBtn">Refresh</button>
+      <span class="refresh-status" id="refreshStatus" aria-live="polite"><span class="dot"></span>Not refreshed</span>
+      <div class="refresh-banner" id="refreshBanner" role="status" hidden></div>
+    </section>
+    <section class="metric-grid" aria-live="polite">
+      <article class="panel metric-card"><span class="metric-icon">💧</span><small>Soil moisture</small><strong id="soilValue">—</strong><span class="trend">7-day average · m³/m³</span></article>
+      <article class="panel metric-card"><span class="metric-icon">🚿</span><small>Water balance indicator</small><strong id="deficitValue">—</strong><span class="trend">7-day ET₀ minus rainfall</span></article>
+      <article class="panel metric-card"><span class="metric-icon">☀️</span><small>Reference ET₀</small><strong id="et0Value">—</strong><span class="trend">7-day total</span></article>
+      <article class="panel metric-card"><span class="metric-icon">🌧️</span><small>Rainfall</small><strong id="rainValue">—</strong><span class="trend">7-day total</span></article>
+    </section>
+    <section class="content-grid">
+      <article class="panel section-card"><div class="section-head"><div><h2 style="margin:0">Water balance trend</h2><p class="muted">Hourly values returned by the regional forecast source.</p></div></div><div class="water-chart"><canvas id="waterChart"></canvas></div></article>
+      <article class="panel section-card"><div class="section-head"><div><h2 style="margin:0">Water signals</h2><p class="muted">Derived from the returned regional data.</p></div></div><div class="risk-list water-signals" id="waterSignals"></div></article>
+    </section>
+  </main>
+  <script>
+    (() => {
+      const $ = id => document.getElementById(id); const controls = $('waterControls'); let chart = null; let requestId = 0;
+      function banner(message,kind=''){const node=$('refreshBanner');node.hidden=!message;node.className=`refresh-banner ${kind}`.trim();node.textContent=message;}
+      function renderSignals(data){const deficit=Number(data.irrigation_deficit_mm),soil=Number(data.soil_moisture_avg),rain=Number(data.rain_total_mm);const items=[];
+        if(Number.isFinite(deficit))items.push({title:deficit>30?'Elevated water-balance deficit':'Water-balance indicator',description:`ET₀ minus rainfall is ${deficit.toFixed(1)} mm for the returned 7-day period. Validate locally before making irrigation decisions.`,critical:deficit>30});
+        if(Number.isFinite(soil))items.push({title:'Regional soil-moisture reading',description:`Seven-day average: ${soil.toFixed(3)} m³/m³. This is regional forecast data, not a measurement from an individual field.`});
+        if(Number.isFinite(rain))items.push({title:rain<5?'Limited forecast rainfall':'Forecast rainfall',description:`Reported 7-day precipitation total: ${rain.toFixed(1)} mm.`});
+        const root=$('waterSignals');root.replaceChildren();items.forEach(item=>{const row=document.createElement('div');row.className='risk-item';const dot=document.createElement('i');dot.className=`risk-dot${item.critical?' critical':''}`;const body=document.createElement('div');const title=document.createElement('strong');title.textContent=item.title;const text=document.createElement('span');text.textContent=item.description;body.append(title,text);row.append(dot,body);root.append(row);});
+      }
+      function renderChart(series){if(!window.Chart)return;const soil=Array.isArray(series.soil_moisture)?series.soil_moisture:[],et0=Array.isArray(series.et0)?series.et0:[],rain=Array.isArray(series.rainfall)?series.rainfall:[];const count=Math.max(soil.length,et0.length,rain.length);const labels=Array.from({length:count},(_,i)=>`H+${i+1}`);chart?.destroy();chart=new Chart($('waterChart'),{type:'line',data:{labels,datasets:[{label:'Soil moisture (m³/m³)',data:soil,borderColor:'#126b4a',backgroundColor:'rgba(18,107,74,.08)',fill:true,tension:.3,yAxisID:'y'},{label:'ET₀ (mm/hour)',data:et0,borderColor:'#f4b942',tension:.3,yAxisID:'y1'},{label:'Rainfall (mm/hour)',data:rain,borderColor:'#2f7eea',tension:.3,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom'}},scales:{y:{title:{display:true,text:'Soil moisture'}},y1:{position:'right',title:{display:true,text:'mm/hour'},grid:{drawOnChartArea:false}}}}});}
+      async function refreshWater(){const id=++requestId;const region=$('regionSelect').value;EOAgri.write('eoagri-region',region);controls.setAttribute('aria-busy','true');$('refreshWaterBtn').innerHTML='<span class="spinner"></span> Refreshing';$('refreshStatus').className='refresh-status';$('refreshStatus').innerHTML='<span class="spinner"></span> Loading live data';banner('');const result=await EOAgri.fetchJSON(`/water_data?region=${encodeURIComponent(region)}`);if(id!==requestId)return;controls.removeAttribute('aria-busy');$('refreshWaterBtn').textContent='Refresh';if(!result.ok||!result.data){$('refreshStatus').className='refresh-status error';$('refreshStatus').textContent='Refresh failed';banner(`${result.error||'Live water data is unavailable.'} Existing data was preserved.`,'error');return;}const data=result.data;const display=(value,digits=1)=>value==null?'—':`${Number(value).toFixed(digits)} mm`;$('soilValue').textContent=data.soil_moisture_avg==null?'—':`${Number(data.soil_moisture_avg).toFixed(3)} m³/m³`;$('deficitValue').textContent=display(data.irrigation_deficit_mm);$('et0Value').textContent=display(data.et0_total_mm);$('rainValue').textContent=display(data.rain_total_mm);renderSignals(data);renderChart(data.series||{});const age=EOAgri.formatRefreshedAt(result.fetched_at);$('refreshStatus').className=`refresh-status${result.stale?' stale':''}`;$('refreshStatus').textContent=`Updated ${age}${result.stale?' · stale':''}`;if(result.stale)banner(`Showing the last successful regional reading from ${age}. Do not treat this as a live measurement.`,'stale');}
+      $('regionSelect').value=EOAgri.read('eoagri-region','nile_delta');$('regionSelect').addEventListener('change',refreshWater);$('refreshWaterBtn').addEventListener('click',refreshWater);refreshWater();
+    })();
+  </script>
+</body>
 </html>
-
