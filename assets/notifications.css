@@ -1,0 +1,47 @@
+/* Notification-center presentation; complements the shared EOAgriTool theme. */
+.alerts-page{max-width:1180px}
+.alerts-hero{padding:26px 28px;background:linear-gradient(135deg,rgba(255,255,255,.97),rgba(234,247,239,.88))}
+.alerts-hero h1{margin:8px 0;font-size:clamp(1.8rem,4vw,2.4rem)}
+.alerts-hero .section-head{margin:0;align-items:flex-start}
+.alerts-hero .muted{max-width:720px;margin-bottom:0}
+.alerts-freshness{margin-top:20px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--muted);font-size:.88rem}
+.alerts-freshness[data-kind="error"]{border-color:#f2b8b5;background:#fdecea;color:var(--red)}
+.alerts-freshness[data-kind="stale"]{border-color:#f4d58a;background:#fff8e6;color:#7a5b00}
+.alerts-summary{margin-top:16px}
+.alerts-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:end;margin-top:18px;padding:18px}
+.alerts-filters,.alerts-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.alerts-filters label{font-size:.78rem;color:var(--muted);font-weight:700}
+.alerts-filters select{min-height:42px;padding:9px 30px 9px 11px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+.alerts-actions{justify-content:flex-end}
+.alerts-actions .button{white-space:nowrap}
+.alerts-list-panel{margin-top:18px;padding:22px}
+.alerts-list-panel .section-head{margin-bottom:10px}
+.alerts-list-panel h2{margin:0;font-size:1.35rem}
+.alerts-list-panel .muted{margin:5px 0 0}
+.alerts-list{display:grid;gap:10px}
+.alert-card{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:13px;align-items:start;padding:16px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.alert-card.is-unread{background:linear-gradient(100deg,#f5fbf7,#fff 48%);border-left:4px solid var(--green)}
+.alert-card[data-priority="critical"]{border-left-color:var(--red)}
+.alert-card[data-priority="warning"]{border-left-color:var(--amber)}
+.alert-card[data-priority="info"]{border-left-color:var(--blue)}
+.alert-indicator{width:10px;height:10px;margin-top:5px;border-radius:50%;background:var(--blue)}
+.alert-card[data-priority="critical"] .alert-indicator{background:var(--red)}
+.alert-card[data-priority="warning"] .alert-indicator{background:var(--amber)}
+.alert-content{min-width:0}
+.alert-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:5px}
+.alert-category,.alert-priority{display:inline-flex;padding:4px 8px;border-radius:999px;background:var(--mint);color:var(--green);font-size:.68rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.alert-priority{background:#edf4ff;color:#245eae}
+.alert-card[data-priority="critical"] .alert-priority{background:#fdecea;color:var(--red)}
+.alert-card[data-priority="warning"] .alert-priority{background:#fff5da;color:#7a5b00}
+.alert-content h3{margin:0 0 4px;color:var(--navy);font-size:1rem}
+.alert-content p{margin:0;color:var(--muted);font-size:.88rem}
+.alert-source{display:block;margin-top:8px;color:var(--muted);font-size:.74rem}
+.alert-controls{display:flex;gap:7px;align-items:center}
+.alert-controls button{border:1px solid var(--line);border-radius:9px;padding:7px 9px;background:#fff;color:var(--green);font:inherit;font-size:.78rem;font-weight:700;cursor:pointer}
+.alert-controls button:hover{background:var(--mint)}
+.alert-link{display:inline-block;margin-top:10px;color:var(--green);font-size:.82rem;font-weight:800}
+.alert-empty{padding:34px 18px;text-align:center;color:var(--muted)}
+.alert-empty strong{display:block;margin-bottom:5px;color:var(--navy)}
+.alerts-disclaimer{max-width:900px;margin:14px auto;color:var(--muted);font-size:.78rem;text-align:center}
+@media(max-width:900px){.alerts-toolbar{grid-template-columns:1fr}.alerts-actions{justify-content:flex-start}}
+@media(max-width:600px){.alerts-page{padding-left:14px;padding-right:14px}.alerts-hero{padding:20px}.alerts-hero .section-head{align-items:flex-start;flex-direction:column}.alerts-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.alerts-toolbar,.alerts-list-panel{padding:15px}.alerts-filters{display:grid;grid-template-columns:1fr 1fr}.alerts-filters label{align-self:end}.alerts-filters select{width:100%;min-width:0}.alerts-actions{display:grid;grid-template-columns:1fr}.alerts-actions .button{width:100%}.alert-card{grid-template-columns:10px minmax(0,1fr)}.alert-controls{grid-column:2;justify-content:flex-end}}

@@ -1,4 +1,59 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Alerts | EOAgriTool</title><link rel="stylesheet" href="assets/styles.css"><script src="assets/app.js" defer></script></head>
-<body><main class="page"><section class="panel"><div class="section-head"><div><span class="eyebrow">Action center</span><h1>Farm alerts</h1><p class="muted">Each alert links directly to the module that helps resolve it.</p></div><a class="button secondary" href="/dashboard">Back to dashboard</a></div><div class="grid"><article class="card"><span class="eyebrow">Water</span><h2>Rainfall deficit</h2><p class="muted">Review irrigation demand and prioritise high-value crops.</p><a class="button" href="/water">Open water planning →</a></article><article class="card"><span class="eyebrow">Climate</span><h2>Heat stress watch</h2><p class="muted">Review the forecast trend before scheduling field work.</p><a class="button" href="/climate">Open climate →</a></article><article class="card"><span class="eyebrow">Soil</span><h2>Organic matter low</h2><p class="muted">Inspect affected fields and update the crop record.</p><a class="button" href="/fields">Open fields →</a></article></div></section></main></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#126b4a">
+  <title>Alerts | EOAgriTool</title>
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/notifications.css">
+  <script src="assets/app.js" defer></script>
+  <script src="assets/notifications.js" defer></script>
+</head>
+<body>
+  <main class="page alerts-page">
+    <section class="panel alerts-hero">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Action center</span>
+          <h1>Farm alerts</h1>
+          <p class="muted">Evidence-based alerts from live climate and water data and your locally saved field records. Unavailable or stale data is clearly identified, never replaced with estimates.</p>
+        </div>
+        <a class="button secondary" href="dashboard.html" data-page="dashboard">Back to dashboard</a>
+      </div>
+      <div class="alerts-freshness" id="alertsFreshness" role="status" aria-live="polite">Preparing farm data…</div>
+    </section>
 
+    <section class="metric-grid alerts-summary" aria-label="Alert summary" aria-live="polite">
+      <article class="panel metric-card"><small>Active alerts</small><strong id="activeCount">—</strong><span class="trend">Based on available farm data</span></article>
+      <article class="panel metric-card"><small>Unread</small><strong id="unreadCount">—</strong><span class="trend">Needs your attention</span></article>
+      <article class="panel metric-card"><small>Fields monitored</small><strong id="fieldCount">—</strong><span class="trend">Stored in this browser</span></article>
+      <article class="panel metric-card"><small>Data sources</small><strong id="sourceCount">—</strong><span class="trend">Live sources successfully checked</span></article>
+    </section>
+
+    <section class="panel alerts-toolbar" aria-label="Alert controls">
+      <div class="alerts-filters">
+        <label for="categoryFilter">Source</label>
+        <select id="categoryFilter"><option value="all">All sources</option><option value="climate">Climate</option><option value="water">Water</option><option value="fields">Fields</option><option value="data">Data status</option></select>
+        <label for="priorityFilter">Priority</label>
+        <select id="priorityFilter"><option value="all">All priorities</option><option value="critical">Critical</option><option value="warning">Warning</option><option value="info">Info</option></select>
+        <label for="regionSelect">Region</label>
+        <select id="regionSelect"><option value="nile_delta">Nile Delta</option><option value="sahel">Sahel</option><option value="mediterranean">Mediterranean</option><option value="southeast_asia">SE Asia</option></select>
+        <label for="horizonSelect">Climate horizon</label>
+        <select id="horizonSelect"><option value="72h">72 hours</option><option value="7d">7 days</option><option value="30d">30 days</option></select>
+      </div>
+      <div class="alerts-actions">
+        <button class="button" type="button" id="refreshAlerts">Refresh data</button>
+        <button class="button secondary" type="button" id="markAllRead">Mark all read</button>
+        <button class="button secondary" type="button" id="clearDismissed">Clear dismissed</button>
+      </div>
+    </section>
+
+    <section class="panel alerts-list-panel">
+      <div class="section-head"><div><h2>Notifications</h2><p class="muted" id="resultsLabel">Loading farm signals…</p></div></div>
+      <div class="alerts-list" id="alertsList" aria-live="polite" aria-busy="true"></div>
+    </section>
+    <p class="alerts-disclaimer">Alerts are monitoring signals, not irrigation prescriptions or agronomic diagnoses. Thresholds should be validated for your crop, location, and season. Field records are stored locally in this browser.</p>
+  </main>
+</body>
+</html>
